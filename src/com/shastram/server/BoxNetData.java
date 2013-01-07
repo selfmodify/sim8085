@@ -46,7 +46,6 @@ public class BoxNetData {
         private BoxNetUser user;
     }
 
-
     @XmlRootElement(name = "user")
     public static class BoxNetUser {
         private String login;
@@ -74,23 +73,26 @@ public class BoxNetData {
     public static class BoxNetFileUploadConflicts {
         public String type;
         public String id;
+
         public BoxNetFileUploadConflicts() {
-            
+
         }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class BoxNetFileUploadContextInfo {
         public List<BoxNetFileUploadConflicts> conflicts;
+
         public BoxNetFileUploadContextInfo() {
-            
+
         }
     }
 
     /**
      * Box.net response for every entry of file uploaded.
+     * 
      * @author vijay
-     *
+     * 
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class BoxNetFileUploadResponseEntry {
@@ -109,15 +111,17 @@ public class BoxNetData {
         public String message;
         public String code;
         public BoxNetFileUploadContextInfo context_info;
+
         public BoxNetFileUploadResponseEntry() {
-            
+
         }
     }
-    
+
     /**
      * Box.net response
+     * 
      * @author vijay
-     *
+     * 
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class BoxNetFileUploadResponse {
@@ -126,7 +130,7 @@ public class BoxNetData {
         public List<BoxNetFileUploadResponseEntry> entries;
 
         public BoxNetFileUploadResponse() {
-            
+
         }
     }
 

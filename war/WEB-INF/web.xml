@@ -8,7 +8,7 @@
   
   <servlet-mapping>
     <servlet-name>greetServlet</servlet-name>
-    <url-pattern>/sim8085/greet</url-pattern>
+    <url-pattern>/sim8085/services</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->

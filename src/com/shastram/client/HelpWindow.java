@@ -7,8 +7,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class HelpWindow extends Composite {
 
-    private static HelpWindowUiBinder uiBinder = GWT
-            .create(HelpWindowUiBinder.class);
+    private static HelpWindowUiBinder uiBinder = GWT.create(HelpWindowUiBinder.class);
 
     interface HelpWindowUiBinder extends UiBinder<Widget, HelpWindow> {
     }

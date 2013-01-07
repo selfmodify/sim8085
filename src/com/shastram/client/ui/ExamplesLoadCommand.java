@@ -23,16 +23,14 @@ public class ExamplesLoadCommand implements Command {
     }
 
     protected void loadRemoteExample(final String name) {
-        RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-                "/sim8085/testCases/" + name);
+        RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, "/sim8085/testCases/" + name);
         builder.setCallback(new RequestCallback() {
             @Override
             public void onResponseReceived(Request request, Response response) {
                 if (response.getStatusCode() == Response.SC_OK) {
                     code = response.getText();
-                    SignalSlot.instance.notifyAbout(
-                            SignalSlot.Signals.EXAMPLE_SOURCE_CODE_AVAILABLE,
-                            "name", name, "code", code);
+                    SignalSlot.instance.notifyAbout(SignalSlot.Signals.EXAMPLE_SOURCE_CODE_AVAILABLE, "name", name,
+                            "code", code);
                 } else {
                     ClientUtils.showError(response.getStatusText());
                 }

@@ -14,14 +14,13 @@ import com.shastram.test.TestInstructions;
  * The server side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
-public class Sim8085ServicesImpl extends RemoteServiceServlet implements
-		Sim8085Services {
+public class Sim8085ServicesImpl extends RemoteServiceServlet implements Sim8085Services {
 
     private static Logger logger = Logger.getLogger(Sim8085ServicesImpl.class.getName());
 
     private static final long serialVersionUID = 6343983694137057114L;
 
-    //private static BoxNetService boxNetService = new BoxNetService();
+    // private static BoxNetService boxNetService = new BoxNetService();
 
     @Override
     public List<String> getExampleNames() {
@@ -30,26 +29,18 @@ public class Sim8085ServicesImpl extends RemoteServiceServlet implements
     }
 
     @Override
-    public String getExampleSourceCode(String name) {
-        // InputStream systemResourceAsStream =
-        // ClassLoader.getSystemResourceAsStream(name);
-        return "";
-    }
-
-    @Override
     public String getTicket() throws Exception {
-        //BoxNetData.BoxNetTicketResponse newTicket = boxNetService.getNewTicket();
-        //return newTicket.getTicket();
-    	return null;
+        // BoxNetData.BoxNetTicketResponse newTicket =
+        // boxNetService.getNewTicket();
+        // return newTicket.getTicket();
+        return null;
     }
 
     @Override
     public String saveFile(SaveFileData saveFileData) {
         BoxNetService service = new BoxNetService();
         BoxNetFileUploadResponse response = service.saveFileToBoxNet(saveFileData);
-        String str = response.exception != null ?
-                response.exception.getMessage() :
-                    response.entries.get(0).message;
+        String str = response.exception != null ? response.exception.getMessage() : response.entries.get(0).message;
         return str;
     }
 }

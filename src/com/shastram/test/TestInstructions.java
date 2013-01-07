@@ -21,12 +21,11 @@ import com.shastram.client.MicroCode;
 
 public class TestInstructions {
 
-	
     private static Logger logger = Logger.getLogger(TestInstructions.class.getName());
 
     @Before
     public void setup() {
-    	//Config.printInstructions = false;
+        // Config.printInstructions = false;
     }
 
     @SuppressWarnings("unused")
@@ -40,8 +39,7 @@ public class TestInstructions {
         testFile(testName);
     }
 
-    public void testFile(String testName) throws FileNotFoundException,
-            IOException {
+    public void testFile(String testName) throws FileNotFoundException, IOException {
         String fullTestcaseName = "src/com/shastram/public/testCases/" + testName;
         BufferedReader in = new BufferedReader(new FileReader(fullTestcaseName));
         Scanner s = new Scanner(in);
@@ -64,11 +62,9 @@ public class TestInstructions {
 
     private static String[] testNames = {
             // "temp_test.85",
-            "inout_test.85", "interrupt_test.85", "rst_test.85",
-            "stack_test.85", "branch_test.85", "complement_test.85",
-            "rotate_test.85", "logical_test.85", "compare_test.85",
-            "arithmetic_tests.85", "load_store.85", "mov_tests.85",
-            "lxi_tests.85", };
+            "inout_test.85", "interrupt_test.85", "rst_test.85", "stack_test.85", "branch_test.85",
+            "complement_test.85", "rotate_test.85", "logical_test.85", "compare_test.85", "arithmetic_tests.85",
+            "load_store.85", "mov_tests.85", "lxi_tests.85", };
 
     public static String[] getTestNames() {
         return testNames;
@@ -76,72 +72,72 @@ public class TestInstructions {
 
     @Test
     public void testLoadStore() throws Exception {
-    	testFile("load_store.85");
+        testFile("load_store.85");
     }
 
     @Test
     public void testMov() throws Exception {
-    	testFile("mov_tests.85");
+        testFile("mov_tests.85");
     }
 
     @Test
     public void testLxi() throws Exception {
-    	testFile("lxi_tests.85");
+        testFile("lxi_tests.85");
     }
 
     @Test
     public void testTemp() throws Exception {
-    	testFile("temp_test.85");
+        testFile("temp_test.85");
     }
 
     @Test
     public void testLogical() throws Exception {
-    	testFile("logical_test.85");
+        testFile("logical_test.85");
     }
 
     @Test
     public void testCompare() throws Exception {
-    	testFile("compare_test.85");
+        testFile("compare_test.85");
     }
 
     @Test
     public void testArithmetic() throws Exception {
-    	testFile("arithmetic_tests.85");
+        testFile("arithmetic_tests.85");
     }
 
     @Test
     public void testStack() throws Exception {
-    	testFile("stack_test.85");
+        testFile("stack_test.85");
     }
 
     @Test
     public void testBranch() throws Exception {
-    	testFile("branch_test.85");
+        testFile("branch_test.85");
     }
 
     @Test
     public void testComplement() throws Exception {
-    	testFile("complement_test.85");
+        testFile("complement_test.85");
     }
 
     @Test
     public void testRotate() throws Exception {
-    	testFile("rotate_test.85");
+        testFile("rotate_test.85");
     }
 
     @Test
     public void testInout() throws Exception {
-    	testFile("inout_test.85");
+        testFile("inout_test.85");
     }
 
     @Test
     public void testInterrupt() throws Exception {
-    	testFile("interrupt_test.85");
+        testFile("interrupt_test.85");
     }
 
     @Test
     public void testRst() throws Exception {
-    	testFile("rst_test.85");
+        testFile("rst_test.85");
     }
 
     @Ignore

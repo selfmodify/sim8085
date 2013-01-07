@@ -11,10 +11,10 @@ public class SaveFileData implements Serializable {
     private String fileId;
 
     public SaveFileData() {
-        
+
     }
 
-    public SaveFileData(String authToken, String fileName,  String fileId, String data) {
+    public SaveFileData(String authToken, String fileName, String fileId, String data) {
         this.setAuthToken(authToken);
         this.fileName = fileName;
         this.data = data;
@@ -52,7 +52,7 @@ public class SaveFileData implements Serializable {
     public void setFileId(String fileId) {
         this.fileId = fileId;
     }
-    
+
     public String toString() {
         return "fileId=" + fileId + " authToken=" + authToken + " fileName=" + fileName;
     }

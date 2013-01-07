@@ -11,8 +11,6 @@ import com.shastram.client.rpc.SaveFileData;
 public interface Sim8085ServicesAsync {
     void getExampleNames(AsyncCallback<List<String>> callback);
 
-    void getExampleSourceCode(String name, AsyncCallback<String> callback);
-
     void saveFile(SaveFileData saveFileData, AsyncCallback<String> callback);
 
     void getTicket(AsyncCallback<String> callback);

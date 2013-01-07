@@ -11,8 +11,9 @@ import com.google.gwt.user.client.ui.TextArea;
 
 /**
  * Utility functions to help the UI
+ * 
  * @author vijay
- *
+ * 
  */
 public class UiHelper {
 
@@ -43,7 +44,7 @@ public class UiHelper {
         Map<String, List<String>> map = Window.Location.getParameterMap();
         List<String> authCodeList = map.get("auth_token");
         List<String> ticketList = map.get("ticket");
-        if (authCodeList!=null && !authCodeList.isEmpty()) {
+        if (authCodeList != null && !authCodeList.isEmpty()) {
             Cookies.setCookie(BOX_NET_AUTH, authCodeList.get(0));
             authCodeSaved = true;
         }
@@ -52,7 +53,7 @@ public class UiHelper {
         }
         return authCodeSaved;
     }
-    
+
     public static String getAuthToken() {
         return Cookies.getCookie(BOX_NET_AUTH);
     }

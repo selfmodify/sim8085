@@ -4,5 +4,4 @@ public class ClientUtils {
 
     public static void showError(String message) {
     }
-
 }
