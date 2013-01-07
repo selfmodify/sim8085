@@ -15,7 +15,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mortbay.log.Log;
 
-import com.shastram.client.Config;
 import com.shastram.client.Exe;
 import com.shastram.client.MicroCode;
 

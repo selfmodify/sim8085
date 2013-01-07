@@ -53,6 +53,7 @@ public class SaveFileData implements Serializable {
         this.fileId = fileId;
     }
 
+    @Override
     public String toString() {
         return "fileId=" + fileId + " authToken=" + authToken + " fileName=" + fileName;
     }
