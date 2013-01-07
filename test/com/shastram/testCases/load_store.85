@@ -1,0 +1,74 @@
+
+# -----------------------------------------
+# Store Accumulator Directly in Memory
+# [address] = a
+mvi a,11
+sta 0
+.assert [0]=11
+ 
+# -----------------------------------------
+#test lda <16 bit address>
+# The contents of the memory location specified are transferred to the accumulator
+lda 0
+.assert a=11
+
+# -----------------------------------------
+# ldax - Load Accumulator from Address in Register Pair
+# test ldax bc/de.
+# a = [bc] 
+mvi a,0
+mvi b,0
+mvi c,0
+ldax b
+# a = [de]
+.assert a=11
+mvi a,0
+mvi d,0
+mvi e,0
+ldax d
+.assert a=11
+
+# -----------------------------------------
+# lhld <address>
+# l = [addr]
+# h = [addr+1]
+mvi h,1
+mvi l,1
+lhld 0
+.assert h=11, l=11
+
+# -----------------------------------------
+# shld <address>
+# [addr] = l
+# [addr+1] = h
+mvi l,5
+mvi h,6
+shld 0
+.assert [0]=5
+.assert [1]=6 
+
+# -----------------------------------------
+# STAX : Store accumulator indirect
+# The contents of the accumulator are copied into the memory location specified
+# by the contents of the register pair.
+# [BC] = A or [DE] = A
+mvi b,0
+mvi c,0
+mvi a, 1
+stax b
+.assert [0] = 1
+
+mvi d, 1
+mvi e, 0
+stax d
+.assert [100h] = 1
+
+# -------------------------------------------
+# XCHG          Exchange H & L with D & E
+mvi h,1
+mvi l,2
+mvi d,3
+mvi e,4
+xchg
+.assert h=3,l=4,d=1,e=2
+

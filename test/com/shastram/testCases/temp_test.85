@@ -1,0 +1,5 @@
+# Store Accumulator Directly in Memory
+# [address] = a
+mvi a,11
+sta 0
+.assert [0]=11
