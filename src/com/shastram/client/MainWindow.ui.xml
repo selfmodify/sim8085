@@ -5,23 +5,23 @@
   >
   <ui:style field="css" src="Style.css" />
     
-  <g:HorizontalPanel>
+  <g:HorizontalPanel width="90%" horizontalAlignment="ALIGN_CENTER">
     <g:VerticalPanel spacing="15">
      <!-- BEGIN Editor/Simulator Window -->
       <g:Label addStyleNames="{css.mainLabel}">Web based 8085
         Microprocessor Simulator</g:Label>
       <g:HTMLPanel>
-          <a href="mailto:kumar__v@hotmail.com"
-            onClick="_gaq.push(['_trackEvent', 'EmailMe', 'Click', 'SendEmail']);">
-            Email me </a>
-          &nbsp;&nbsp;
           <a href="/terms-of-service.html"
             onClick="_gaq.push(['_trackEvent', 'TermsOfService', 'Click', 'Read']);">
             Read the terms of service before using this app.</a>
           <br></br>
+          <a href="mailto:kumar__v@hotmail.com"
+            onClick="_gaq.push(['_trackEvent', 'EmailMe', 'Click', 'SendEmail']);">
+            Email me </a>
+          &nbsp;&nbsp;
           <a href="/help/index.html" 
             onClick="_gaq.push(['_trackEvent', 'HelpOnInstructions', 'Click', 'Read']);">
-            Help for all 8085 assembly instructions</a>
+            Help for 8085 Instructions</a>
       </g:HTMLPanel>
       <g:Label ui:field="statusUpdateLabel"></g:Label>
       <g:MenuBar addStyleNames="{css.menubarItem}" ui:field="menuBar">
@@ -54,11 +54,6 @@
           <g:Label addStyleNames="{css.bigLabel}">Output</g:Label>
           <g:TextArea ui:field="errorWindow" width="100%"
             height="80px"></g:TextArea>
-          <g:VerticalPanel width="100%">
-            <g:HTMLPanel>
-              <HR></HR>
-            </g:HTMLPanel>
-          </g:VerticalPanel>
         </g:VerticalPanel>
 
         <g:VerticalPanel addStyleNames="{css.border}"
