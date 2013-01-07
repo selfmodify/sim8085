@@ -24,7 +24,7 @@ public class ExamplesLoadCommand implements Command {
 
     protected void loadRemoteExample(final String name) {
         RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-                "/simulator/test_cases/" + name);
+                "/sim8085/testCases/" + name);
         builder.setCallback(new RequestCallback() {
             @Override
             public void onResponseReceived(Request request, Response response) {

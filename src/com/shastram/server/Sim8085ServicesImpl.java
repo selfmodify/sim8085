@@ -8,7 +8,7 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.shastram.client.Sim8085Services;
 import com.shastram.client.rpc.SaveFileData;
 import com.shastram.server.BoxNetData.BoxNetFileUploadResponse;
-import com.shastram.testCases.TestInstructions;
+import com.shastram.test.TestInstructions;
 
 /**
  * The server side implementation of the RPC service.

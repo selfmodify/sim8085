@@ -1,6 +1,8 @@
-package com.shastram.testCases;
+package com.shastram.test;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -40,8 +42,9 @@ public class TestInstructions {
 
     public void testFile(String testName) throws FileNotFoundException,
             IOException {
-        String fullTestcaseName = this.getClass().getResource(testName).getPath();
-        Scanner s = new Scanner(this.getClass().getResourceAsStream(testName));
+        String fullTestcaseName = "src/com/shastram/public/testCases/" + testName;
+        BufferedReader in = new BufferedReader(new FileReader(fullTestcaseName));
+        Scanner s = new Scanner(in);
         StringBuffer buffer = new StringBuffer();
         while (s.hasNext()) {
             buffer.append(s.nextLine()).append("\n");
@@ -141,6 +144,7 @@ public class TestInstructions {
     	testFile("rst_test.85");
     }
 
+    @Ignore
     @Test
     public void testMicrocodeSelfTest() throws Exception {
         MicroCode.selfTest();
