@@ -16,6 +16,7 @@ import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.StringBody;
+import org.junit.Ignore;
 
 import com.shastram.client.rpc.SaveFileData;
 import com.shastram.server.BoxNetData.BoxNetFileUploadResponse;
@@ -24,6 +25,7 @@ public class TestBoxNetService extends TestCase {
 
     private static Logger logger = Logger.getLogger(TestBoxNetService.class.getName());
 
+    @Ignore
     public void testBoxExchange() throws Exception {
         BoxNetService boxNet = mock(BoxNetService.class);
         // read the error response data
@@ -56,12 +58,14 @@ public class TestBoxNetService extends TestCase {
      * 
      * @throws IOException
      */
+    @Ignore
     public void testBoxNetFileUploadResponseParsing() throws IOException {
         BoxNetData.BoxNetFileUploadResponse readValue = BoxNetService.jsonReader.readValue(new File(
                 "box-net-file-upload-response.txt"), BoxNetData.BoxNetFileUploadResponse.class);
         assertNotNull(readValue);
     }
 
+    @Ignore
     public void testBoxNetFileUploadErrorResponseParsing() throws IOException {
         BoxNetData.BoxNetFileUploadResponse readValue = BoxNetService.jsonReader.readValue(new File(
                 "box-net-file-upload-error-response.txt"), BoxNetData.BoxNetFileUploadResponse.class);
@@ -76,7 +80,7 @@ public class TestBoxNetService extends TestCase {
     public void testBoxNetFileUpload() throws Exception {
         BoxNetService boxNetService = new BoxNetService();
         BoxNetFileUploadResponse saveResult = boxNetService.saveFileToBoxNet(new SaveFileData(
-                "s7q6hkklutef9ex5jxk4z0kj7bkgcjq6", "noname-1.85", "3011590059", "This is test data.3"));
+                "s7q6hkklutef9ex5jxk4z0kj7bkgcjq6", "noname-1.85", null /*"3011590059"*/, "This is test data. 4"));
         logger.info("Exception is : " + saveResult.exception);
         logger.info("Data is " + saveResult.toString());
         assertNotNull(saveResult);

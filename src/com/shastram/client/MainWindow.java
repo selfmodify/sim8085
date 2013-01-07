@@ -113,6 +113,18 @@ public class MainWindow extends Composite implements Observer {
     @UiField
     Label statusUpdateLabel;
 
+    @UiField
+    VerticalPanel askForFilenamePanel;
+
+    @UiField
+    TextBox userEnteredFilename;
+
+    @UiField
+    Button userEnteredFilenameSave;
+    
+    @UiField
+    Button userEnteredFilenameCancel;
+
     Timer multiStepTimer;
     public static Sim8085ServicesAsync rpcService = GWT.create(Sim8085Services.class);
 
@@ -140,6 +152,8 @@ public class MainWindow extends Composite implements Observer {
     private final int maxMemoryWindowRows = 5;
 
     private final int maxDisassemblyRows = 10;
+
+    private String filename;
 
     public MainWindow() {
         initWidget(uiBinder.createAndBindUi(this));
@@ -172,10 +186,14 @@ public class MainWindow extends Composite implements Observer {
             @Override
             public void execute() {
                 saveFileLocally();
-                if (UiHelper.getAuthToken() == null) {
-                    getBoxNetAuthToken();
+                if (Utils.isEmpty(filename)) {
+                    askUserForFilename();
                 } else {
-                    saveSourceCodeToBoxNet("filename.85", null, sourceCode.getText(), statusUpdateLabel);
+                    if (UiHelper.getAuthToken() == null) {
+                        getBoxNetAuthToken();
+                    } else {
+                        saveSourceCodeToBoxNet(filename, null, sourceCode.getText(), statusUpdateLabel);
+                    }
                 }
             }
         });
@@ -183,6 +201,11 @@ public class MainWindow extends Composite implements Observer {
             // an auth code was saved, now save the file on box.net
             saveSourceCodeToBoxNet("filename.85", null, sourceCode.getText(), statusUpdateLabel);
         }
+    }
+
+    private void askUserForFilename() {
+        askForFilenamePanel.setVisible(true);
+        userEnteredFilename.setFocus(true);
     }
 
     private void setMemoryScrollMouseHandler() {
@@ -708,5 +731,20 @@ public class MainWindow extends Composite implements Observer {
                         label.setText("Failed to save file " + caught.getMessage());
                     }
                 });
+    }
+    
+    @UiHandler("userEnteredFilenameSave")
+    public void userEnteredFilenameSaveHandler(ClickEvent e) {
+        String fileNameTemp = userEnteredFilename.getText().trim();
+        if (!Utils.isEmpty(fileNameTemp)) {
+            this.filename = fileNameTemp;
+            saveSourceCodeToBoxNet(filename, null, sourceCode.getText(), statusUpdateLabel);
+            userEnteredFilenameCancelHandler(null);
+        }
+    }
+
+    @UiHandler("userEnteredFilenameCancel")
+    public void userEnteredFilenameCancelHandler(ClickEvent e) {
+        askForFilenamePanel.setVisible(false);
     }
 }

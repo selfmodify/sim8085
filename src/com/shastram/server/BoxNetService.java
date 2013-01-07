@@ -73,19 +73,21 @@ public class BoxNetService {
 
     public String getFileUploadResponse(SaveFileData saveFileData) throws Exception {
         ByteArrayBody body = new ByteArrayBody(saveFileData.getData().getBytes(), saveFileData.getFileName());
-        MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-        entity.addPart("filename1", body);
+        MultipartEntity entity = new MultipartEntity(HttpMultipartMode.STRICT);
+        entity.addPart("filename", body);
         entity.addPart("folder_id", new StringBody("0"));
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         entity.writeTo(baos);
 
         String fileId = saveFileData.getFileId();
-        String urlString = fileId == null ? "https://api.box.com/2.0/files/" + fileId + "/data"
-                : "https://api.box.com/2.0/files/data";
+        String urlString = fileId != null ? "https://api.box.com/2.0/files/" + fileId + "/content"
+                : "https://api.box.com/2.0/files/content";
         URL url2 = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url2.openConnection();
         connection.setRequestProperty("Authorization", "BoxAuth api_key=e2ldex7lk8ydcmmnlv7s1oajh4siymqf"
                 + "&auth_token=" + saveFileData.getAuthToken());
+        connection.setRequestProperty("Content-Disposition",
+                "form-data; name=\"filename\"; filename=\"" + saveFileData.getFileName() + "\"");
         connection.setRequestMethod("POST");
         Header contentType = entity.getContentType();
         connection.setRequestProperty(contentType.getName(), contentType.getValue());
@@ -109,9 +111,9 @@ public class BoxNetService {
      */
     @Nullable
     public BoxNetFileUploadResponse saveFileToBoxNet(SaveFileData saveFileData) {
-        HttpPost httpPost = new HttpPost("https://api.box.com/2.0/files/data");
-        httpPost.addHeader("Authorization", "BoxAuth api_key=e2ldex7lk8ydcmmnlv7s1oajh4siymqf" + "&auth_token="
-                + saveFileData.getAuthToken());
+//        HttpPost httpPost = new HttpPost("https://api.box.com/2.0/files/data");
+//        httpPost.addHeader("Authorization", "BoxAuth api_key=e2ldex7lk8ydcmmnlv7s1oajh4siymqf" + "&auth_token="
+//                + saveFileData.getAuthToken());
         BoxNetData.BoxNetFileUploadResponse boxNetResponse = new BoxNetFileUploadResponse();
         // Try the upload twice because the first time around box.net might
         // return
@@ -122,6 +124,16 @@ public class BoxNetService {
             for (int i = 0; i < 2; ++i) {
                 String result = getFileUploadResponse(saveFileData);
                 logger.info("SaveFileData=" + saveFileData.toString() + " Result=" + result);
+                BoxNetData.BoxNetFileUploadResponseEntry resp = jsonReader.readValue(result, BoxNetData.BoxNetFileUploadResponseEntry.class);
+                if (resp != null &&
+                    resp.type.equalsIgnoreCase("error") &&
+                    resp.context_info != null &&
+                    resp.context_info.conflicts != null &&
+                    resp.context_info.conflicts.size() > 0) {
+                    saveFileData.setFileId(resp.context_info.conflicts.get(0).id);
+                    continue;
+                }
+                /*
                 boxNetResponse = jsonReader.readValue(result, BoxNetData.BoxNetFileUploadResponse.class);
                 if (boxNetResponse.entries.size() > 0) {
                     BoxNetData.BoxNetFileUploadResponseEntry entry = boxNetResponse.entries.get(0);
@@ -134,6 +146,7 @@ public class BoxNetService {
                         continue;
                     }
                 }
+                */
                 // there was no error hence we bailout.
                 break;
             }

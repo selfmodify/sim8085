@@ -22,4 +22,8 @@ public class Utils {
         return str;
     }
 
+    public static boolean isEmpty(String filename) {
+        return filename == null || filename.trim().isEmpty();
+    }
+
 }
