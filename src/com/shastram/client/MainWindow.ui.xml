@@ -6,16 +6,22 @@
   <ui:style field="css" src="Style.css" />
     
   <g:HorizontalPanel>
-    <g:VerticalPanel spacing="15" width="480px">
+    <g:VerticalPanel spacing="15">
      <!-- BEGIN Editor/Simulator Window -->
       <g:Label addStyleNames="{css.mainLabel}">Web based 8085
         Microprocessor Simulator</g:Label>
       <g:HTMLPanel>
-          <a href="mailto:kumar__v@hotmail.com">Email me </a>
+          <a href="mailto:kumar__v@hotmail.com"
+            onClick="_gaq.push(['_trackEvent', 'EmailMe', 'Click', 'SendEmail']);">
+            Email me </a>
           &nbsp;&nbsp;
-          <a href="/terms-of-service.html">Read the terms of service before using this app.</a>
+          <a href="/terms-of-service.html"
+            onClick="_gaq.push(['_trackEvent', 'TermsOfService', 'Click', 'Read']);">
+            Read the terms of service before using this app.</a>
           <br></br>
-          <a href="/help/index.html">Help for all 8085 assembly instructions</a>
+          <a href="/help/index.html" 
+            onClick="_gaq.push(['_trackEvent', 'HelpOnInstructions', 'Click', 'Read']);">
+            Help for all 8085 assembly instructions</a>
       </g:HTMLPanel>
       <g:Label ui:field="statusUpdateLabel"></g:Label>
       <g:MenuBar addStyleNames="{css.menubarItem}" ui:field="menuBar">
@@ -139,11 +145,5 @@
       </g:VerticalPanel>
            <!-- END Editor/Simulator Window -->
     </g:VerticalPanel>
-    <g:ScrollPanel height="1200px" width="630px">
-    <g:VerticalPanel>
-        <g:Label addStyleNames="{css.helpTitle}">HELP!</g:Label>
-        <my:HelpWindow></my:HelpWindow>
-    </g:VerticalPanel>
-    </g:ScrollPanel>
   </g:HorizontalPanel>
 </ui:UiBinder> 
