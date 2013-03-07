@@ -16,7 +16,6 @@ import javax.xml.bind.JAXBContext;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.http.Header;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
