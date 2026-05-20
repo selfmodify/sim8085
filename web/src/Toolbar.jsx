@@ -9,8 +9,19 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
   const color = pct > 0.9 ? 'var(--red)' : pct > 0.7 ? 'var(--amber)' : 'var(--accent)';
   const textOpacity = running ? 1 : 0.5;
 
-  const valText = m >= 1000 ? (m/1000).toFixed(1) : m >= 1 ? m.toFixed(1) : (m*1000).toFixed(0);
-  const unitText = m >= 1000 ? 'G' : m >= 1 ? 'M' : 'k';
+  let valText, unitText;
+  const hz = m * 1000000;
+  if (hz >= 1000000) {
+    valText = m >= 100 ? m.toFixed(0) : m >= 10 ? m.toFixed(1) : m.toFixed(2);
+    unitText = 'MHz';
+  } else if (hz >= 1000) {
+    const k = hz / 1000;
+    valText = k >= 100 ? k.toFixed(0) : k >= 10 ? k.toFixed(1) : k.toFixed(2);
+    unitText = 'kHz';
+  } else {
+    valText = Math.max(0, hz).toFixed(0);
+    unitText = 'Hz';
+  }
 
   if (size === 'sm') {
     const dash = 42.41;
@@ -32,7 +43,7 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
         </svg>
         <span style={{ minWidth: '72px', textAlign: 'right', display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '4px', color: color, opacity: textOpacity, transition: 'opacity 0.6s' }}>
           <span style={{ fontFamily: '"DSEG7 Classic", "Digital-7", var(--mono)', fontSize: 13, fontStyle: 'italic', letterSpacing: '1px' }}>{valText}</span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700 }}>{unitText}Hz</span>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700 }}>{unitText}</span>
         </span>
       </div>
     )
@@ -56,12 +67,9 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
         </g>
         <circle cx="48" cy="48" r="5" fill="var(--text)" stroke="var(--border2)" strokeWidth="2" />
       </svg>
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, 8px)', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <span style={{ display: 'flex', alignItems: 'baseline', gap: '2px', color: color, opacity: textOpacity, textShadow: running ? '0 0 10px currentColor' : 'none', transition: 'opacity 0.6s' }}>
-          <span style={{ fontFamily: '"DSEG7 Classic", "Digital-7", var(--mono)', fontSize: 18, fontStyle: 'italic', lineHeight: 1 }}>{valText}</span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700 }}>{unitText}</span>
-        </span>
-        <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: color, opacity: running ? 0.6 : 0.3, fontWeight: 700, letterSpacing: '1px', marginTop: 0, transition: 'opacity 0.6s' }}>Hz</span>
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, 6px)', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <span style={{ fontFamily: '"DSEG7 Classic", "Digital-7", var(--mono)', fontSize: 18, fontStyle: 'italic', lineHeight: 1, color: color, opacity: textOpacity, textShadow: running ? '0 0 10px currentColor' : 'none', transition: 'opacity 0.6s' }}>{valText}</span>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: color, opacity: running ? 0.6 : 0.3, fontWeight: 700, letterSpacing: '1px', marginTop: 2, transition: 'opacity 0.6s' }}>{unitText}</span>
       </div>
     </div>
   )

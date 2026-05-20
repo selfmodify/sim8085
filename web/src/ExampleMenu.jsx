@@ -41,7 +41,20 @@ export function ExampleMenu({ onLoad }) {
               <div className={`exmenu-cat${activeCat === cat ? ' exmenu-cat-active' : ''}`} onMouseEnter={() => setActiveCat(cat)} onClick={() => setActiveCat(activeCat === cat ? null : cat)}>
                 <span>{cat}</span><span className="exmenu-arrow">▶</span>
                 {activeCat === cat && (
-                  <div className="exmenu-sub" onClick={e => e.stopPropagation()}>{Object.keys(programs).map(name => (<button key={name} className="exmenu-sub-item" onClick={() => { onLoad(`${cat}::${name}`); setOpen(false); setActiveCat(null) }}>{name}</button>))}</div>
+                  <div className="exmenu-sub" onClick={e => e.stopPropagation()}>
+                  {Object.keys(programs).map((name, idx) => {
+                      if (name.startsWith('---')) {
+                        const title = name.replace(/^--- ?/, '');
+                      return title ? (
+                        <div key={name} style={{ display: 'flex', flexDirection: 'column' }}>
+                          {idx > 0 && <hr className="exmenu-sep" style={{ marginTop: 4, marginBottom: 4 }} />}
+                          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', padding: '2px 14px 2px', letterSpacing: 1, textTransform: 'uppercase' }}>{title}</div>
+                        </div>
+                      ) : <hr key={name} className="exmenu-sep" />;
+                      }
+                      return <button key={name} className="exmenu-sub-item" onClick={() => { onLoad(`${cat}::${name}`); setOpen(false); setActiveCat(null) }}>{name}</button>
+                    })}
+                  </div>
                 )}
               </div>
             </div>

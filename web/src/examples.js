@@ -932,6 +932,7 @@ loop:
   },
 
   'Arithmetic': {
+    '--- 8-Bit': null,
     'Add': `; 8-bit addition: mem[val1] + mem[val2] → mem[result]
 ; If the sum overflows 8 bits, CY flag is set.
     org 100H
@@ -1045,6 +1046,7 @@ quotient:
 remainder:
     ds 1`,
 
+    '--- 16-Bit & 32-Bit': null,
     '16-bit Add': `; Add two 16-bit values using DAD (HL = HL + DE).
 ; Operand 1 at 'op1', operand 2 at 'op2'.
 ; 16-bit result stored at 'result'. CY = carry out.
@@ -1065,42 +1067,6 @@ op2:
     dw 0E73H            ; second operand = 0E73H (3699)
 result:
     ds 2                ; (sum = 2117H = 8471)`,
-
-    'BCD Add': `; BCD (packed) addition using DAA.
-; Two BCD digits in A and B are added and adjusted.
-; Result in A is a valid two-digit BCD number.
-    org 100H
-    kickoff 100H
-    mvi a, 47H          ; BCD 47 (= decimal 47)
-    mvi b, 35H          ; BCD 35 (= decimal 35)
-    add b               ; binary sum = 7CH (wrong for BCD)
-    daa                 ; adjust → A = 82H (BCD 82 = decimal 82)
-    sta result
-    hlt
-
-; --- Data Section ---
-    org 200H
-result:
-    ds 1`,
-
-    'BCD Counter': `; Count from BCD 00 to BCD 99 using DAA.
-; Each pass: binary +1 then DAA corrects to valid packed BCD.
-; Watch 'counter' (200H) in the Memory panel to see the value tick.
-; CY=1 from DAA means the count wrapped past 99 → done.
-    org 100H
-    kickoff 100H
-    mvi a, 00H
-loop:
-    sta counter         ; store current BCD value
-    adi 01H             ; binary +1
-    daa                 ; adjust to packed BCD (tens in upper nibble)
-    jnc loop            ; CY=0: still 00..99 → continue
-    hlt                 ; CY=1: overflowed past 99 → done
-
-; --- Data Section ---
-    org 200H
-counter:
-    ds 1`,
 
     '32-bit Add': `; Add two 32-bit little-endian numbers using ADC carry chain.
 ; A at 'val_a', B at 'val_b', sum at 'result'.
@@ -1156,6 +1122,43 @@ val_b:
     db 01H, 00H, 00H, 00H     ; B = 00000001h
 result:
     ds 5                      ; 32-bit sum + 1 byte for final carry`,
+
+    '--- BCD (Decimal)': null,
+    'BCD Add': `; BCD (packed) addition using DAA.
+; Two BCD digits in A and B are added and adjusted.
+; Result in A is a valid two-digit BCD number.
+    org 100H
+    kickoff 100H
+    mvi a, 47H          ; BCD 47 (= decimal 47)
+    mvi b, 35H          ; BCD 35 (= decimal 35)
+    add b               ; binary sum = 7CH (wrong for BCD)
+    daa                 ; adjust → A = 82H (BCD 82 = decimal 82)
+    sta result
+    hlt
+
+; --- Data Section ---
+    org 200H
+result:
+    ds 1`,
+
+    'BCD Counter': `; Count from BCD 00 to BCD 99 using DAA.
+; Each pass: binary +1 then DAA corrects to valid packed BCD.
+; Watch 'counter' (200H) in the Memory panel to see the value tick.
+; CY=1 from DAA means the count wrapped past 99 → done.
+    org 100H
+    kickoff 100H
+    mvi a, 00H
+loop:
+    sta counter         ; store current BCD value
+    adi 01H             ; binary +1
+    daa                 ; adjust to packed BCD (tens in upper nibble)
+    jnc loop            ; CY=0: still 00..99 → continue
+    hlt                 ; CY=1: overflowed past 99 → done
+
+; --- Data Section ---
+    org 200H
+counter:
+    ds 1`,
   },
 
   'Logic': {
@@ -1709,6 +1712,7 @@ dest:
   },
 
   'I/O': {
+    '--- Basic Ports': null,
     'Port Echo': `; Read a byte from input port 01H, write it to output port 02H.
 ; Before running: set port 01H value in the I/O Ports panel.
     org 100H
@@ -1768,6 +1772,7 @@ read:
 done:
     hlt`,
 
+    '--- Built-in Hardware': null,
     'LED Count': `; Count 00000000 → 99999999 on all 8 LED fields.
 ; One decimal digit (0-9) stored per byte at 300H-307H.
 ; Field 0 (leftmost) = ten-millions; field 7 (rightmost) = units.
@@ -1886,6 +1891,7 @@ dloop:
     jnz  dloop
     ret`,
 
+    '--- External Chips': null,
     'Traffic Light': `; Traffic Light Controller — 8255 PPI (Ports 00H–03H)
 ; Open the 🪟 Panels menu and enable "8255 PPI" to watch the lights.
 ; Run at Fast or Turbo speed to see the full cycle.
