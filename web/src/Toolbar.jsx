@@ -43,7 +43,7 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
         </svg>
         <span style={{ minWidth: '72px', textAlign: 'right', display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', gap: '4px', color: color, opacity: textOpacity, transition: 'opacity 0.6s' }}>
           <span style={{ fontFamily: '"DSEG7 Classic", "Digital-7", var(--mono)', fontSize: 13, fontStyle: 'italic', letterSpacing: '1px' }}>{valText}</span>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700 }}>{unitText}</span>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700 }}>{unitText}</span>
         </span>
       </div>
     )
@@ -69,7 +69,7 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
       </svg>
       <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, 6px)', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <span style={{ fontFamily: '"DSEG7 Classic", "Digital-7", var(--mono)', fontSize: 18, fontStyle: 'italic', lineHeight: 1, color: color, opacity: textOpacity, textShadow: running ? '0 0 10px currentColor' : 'none', transition: 'opacity 0.6s' }}>{valText}</span>
-        <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: color, opacity: running ? 0.6 : 0.3, fontWeight: 700, letterSpacing: '1px', marginTop: 2, transition: 'opacity 0.6s' }}>{unitText}</span>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 14, color: color, opacity: running ? 0.6 : 0.3, fontWeight: 700, letterSpacing: '1px', marginTop: 2, transition: 'opacity 0.6s' }}>{unitText}</span>
       </div>
     </div>
   )
