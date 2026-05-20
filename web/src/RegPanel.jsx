@@ -6,7 +6,7 @@ import { hex4, fmtWord, fmtByte, BASE_CYCLE } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-export function RegPanel({ regs, prev, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:0, flags:0 }, prev = {}, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit, onShowDialog } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('reg', false)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_regs_popped_out') === 'true')
@@ -102,7 +102,7 @@ export function RegPanel({ regs, prev, onJump, dragHandleProps, dropTargetProps,
     )
   }
 
-  const nextBase = BASE_CYCLE[(BASE_CYCLE.indexOf(regBase) + 1) % 3]
+  const nextBase = BASE_CYCLE[(BASE_CYCLE.indexOf(regBase || 'hex') + 1) % 3]
 
   const content = (
       <div className="panel-anim-body" style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
@@ -173,7 +173,7 @@ export function RegPanel({ regs, prev, onJump, dragHandleProps, dropTargetProps,
               <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 <button className="reg-base-btn" onClick={() => onRegBase(nextBase)}
-                  title="Toggle display: hex / dec / bin">{regBase.toUpperCase()}</button>
+                  title="Toggle display: hex / dec / bin">{(regBase || 'hex').toUpperCase()}</button>
                 <PanelHelp panel="REGISTERS" />
               </div>
               <span className="panel-chevron">{collapsed ? '▶' : '▼'}</span>
@@ -189,7 +189,7 @@ export function RegPanel({ regs, prev, onJump, dragHandleProps, dropTargetProps,
               <span><span className="panel-icon">🧠</span>REGISTERS</span>
               <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
                 <button className="reg-base-btn" onClick={() => onRegBase(nextBase)}
-                  title="Toggle display: hex / dec / bin">{regBase.toUpperCase()}</button>
+                  title="Toggle display: hex / dec / bin">{(regBase || 'hex').toUpperCase()}</button>
                 <PanelHelp panel="REGISTERS" />
               </div>
             </div>

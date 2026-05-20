@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { PanelHelp } from './PanelHelp.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-export function ConsolePanel({ output, port, onSetPort, onClear, theme, popoutCrtProps }) {
+export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme, popoutCrtProps }) {
   const bodyRef  = useRef(null)
   const panelRef = useRef(null)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_console_popped_out') === 'true')
-  const [portBuf, setPortBuf] = useState(() => port.toString(16).toUpperCase().padStart(2,'0'))
+  const [portBuf, setPortBuf] = useState(() => (port ?? 0).toString(16).toUpperCase().padStart(2,'0'))
   const [height, setHeight] = useState(() => localStorage.getItem('sim8085_console_height') || '')
 
-  useEffect(() => { setPortBuf(port.toString(16).toUpperCase().padStart(2,'0')) }, [port])
+  useEffect(() => { setPortBuf((port ?? 0).toString(16).toUpperCase().padStart(2,'0')) }, [port])
 
   useEffect(() => {
     localStorage.setItem('sim8085_console_popped_out', String(poppedOut))
@@ -44,11 +44,12 @@ export function ConsolePanel({ output, port, onSetPort, onClear, theme, popoutCr
     document.addEventListener('mouseup', onUp)
   }
 
-  const lines = output.split('\n')
+  const safeOutput = output || ''
+  const lines = safeOutput.split('\n')
 
   const content = (
       <div className="console-body" ref={bodyRef} style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
-        {output === ''
+        {safeOutput === ''
           ? <span className="console-empty">No output yet — use OUT {portBuf}H to print ASCII characters</span>
           : lines.map((line, i) => (
               <div key={i} className="console-line">{line || ' '}</div>

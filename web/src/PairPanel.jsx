@@ -12,7 +12,7 @@ const PAIR_DEFS = [
   { name: 'HL', hi: 'h', lo: 'l' },
 ]
 
-export function PairPanel({ regs, prev, onJump, onMemoryEdited, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, onJump, onMemoryEdited, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('pairs', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_pairs_popped_out') === 'true')
