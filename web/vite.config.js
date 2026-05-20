@@ -68,6 +68,9 @@ export default defineConfig({
   server: {
     watch: { usePolling: true }
   },
+  esbuild: {
+    jsx: 'automatic',
+  },
   test: {
     globals: true,
     environment: 'happy-dom',
