@@ -772,14 +772,6 @@ export default function App() {
                 <button className="btn mobile-hidden" onClick={() => window.dispatchEvent(new Event('sim-dock-all'))} title="Dock all popped-out windows (F12)">⧉ Dock All</button>
               </div>
             </div>
-            {/* Editor/Code/Regs tabs — inline in topbar on mobile, hidden on desktop */}
-            {activeView === 'simulator' && (
-              <div className="mobile-tabs">
-                {[['editor','✏ Editor','Code editor and help'],['code','📋 Code','Disassembly, memory, and trace'],['regs','🧠 Regs','Registers, flags, and I/O']].map(([id, label, tooltip]) => (
-                  <button key={id} className={`mobile-tab${mobileTab===id?' active':''}`} onClick={() => setMobileTab(id)} title={tooltip}>{label}</button>
-                ))}
-              </div>
-            )}
 
             <HelpMenu 
               onShowWelcome={() => { localStorage.removeItem('sim8085_welcomed'); setShowWelcome(true) }}
@@ -916,6 +908,18 @@ export default function App() {
           <span className="sbar-counter sc-cycles" title={`${engine.cycles.toLocaleString()} T-states elapsed (A T-state is a single clock cycle of the 8085 microprocessor)`} style={{ cursor: 'help' }}>{fmtCount(engine.cycles)} T</span>
         </div>
       </div>
+
+      {/* ── Mobile Bottom Nav ── */}
+      {activeView === 'simulator' && (
+        <div className="mobile-bottom-nav mobile-only">
+          {[['editor','✏️','Editor'],['code','📋','Debug'],['regs','🧠','CPU']].map(([id, icon, label]) => (
+            <button key={id} className={`mobile-nav-item${mobileTab===id?' active':''}`} onClick={() => setMobileTab(id)}>
+              <span className="mobile-nav-icon">{icon}</span>
+              <span className="mobile-nav-label">{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {showWelcome && <WelcomeModal onClose={dismissWelcome} onBrewCoffee={onBrewCoffee} />}
       {helpInst && <HelpModal instruction={helpInst} onClose={() => setHelpInst(null)} />}
       

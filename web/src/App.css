@@ -2568,66 +2568,67 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
     background: transparent;
   }
 
-  /* Mobile tabs — now inline inside the topbar row */
-  .mobile-tabs {
-    display: flex;
-    flex: 1;
-    background: none;
-    border: none;
-    border-left: 1px solid var(--border);
-    margin-left: 6px;
+  /* Remove old mobile tabs */
+  .mobile-tabs { display: none !important; }
+
+  /* Mobile Bottom Nav */
+  .mobile-bottom-nav {
+    display: flex !important;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    height: calc(56px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    flex-shrink: 0;
+    z-index: 100;
   }
-  .mobile-tab {
+  .mobile-nav-item {
     flex: 1;
-    padding: 0 4px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text3);
-    font-family: var(--mono);
-    font-size: 12px;
-    cursor: pointer;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: color .12s, border-color .12s, background .12s;
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    transition: color .15s, background .15s;
+    gap: 4px;
+    padding: 0 4px;
   }
-  .mobile-tab.active {
-    background: var(--accent);
-    color: var(--bg);
-    border-bottom-color: var(--accent);
+  .mobile-nav-item:hover { background: var(--bg3); }
+  .mobile-nav-item.active {
+    color: var(--accent);
+    background: var(--tint-accent);
+    border-top: 2px solid var(--accent);
+    margin-top: -1px;
   }
-  .mobile-tab:hover:not(.active) { color: var(--text2) }
+  .mobile-nav-icon { font-size: 20px; line-height: 1; margin-bottom: 2px; }
+  .mobile-nav-label { font-family: var(--sans); font-size: 11px; font-weight: 600; line-height: 1; }
 
   /* Workspace: positioning context; absolute columns fill it exactly */
   .workspace { position: relative; overflow: hidden }
   .col-editor,
   .col-center,
   .col-right {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
+    position: static !important;
     width: auto !important;
-    flex: none !important;
+    flex: 1 1 auto !important;
     min-width: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    display: flex !important;
   }
-  /* Prevent panels from shrinking to fit — forces column to overflow and scroll */
-  .col-editor > *,
-  .col-center > *,
-  .col-right > * { flex-shrink: 0 }
   /* Hide inactive tab columns */
   .mobile-hidden { display: none !important }
   /* Hide drag handles */
   .col-resize-handle { display: none }
 
-  /* Editor: viewport-relative height so the column can overflow and scroll to reach help/LED panels.
-     flex-grow on editor-panel causes WebKit to misreport scroll height, blocking touch scroll. */
-  .editor-panel { flex: 0 0 auto !important; }
-  .editor-inner { height: 40vh !important; min-height: 150px; flex: none !important; }
+  /* Editor: take remaining height */
+  .editor-panel { flex: 1 1 auto !important; min-height: 50vh; }
+  .editor-inner { height: 100% !important; min-height: 200px; flex: 1 1 auto !important; }
 
   /* Ensure mobile tap targets are at least 44x44px */
-  .btn, .mobile-tab, .exmenu-trigger, .bmenu-trigger { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .btn, .mobile-nav-item, .exmenu-trigger, .bmenu-trigger { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
   .mem-btn, .reg-base-btn, .help-close, .panel-help-btn, .calc-float-close, .chat-float-close, .watch-rm, .watch-brk, .bp-list-del, .int-btn {
     min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center;
   }
@@ -2638,11 +2639,14 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   .disasm-bp { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
   .speed-slider { height: 44px; }
 
-  /* Fix layout collapses on mobile by replacing flex with fixed heights */
-  .disasm-panel { flex: 0 0 auto !important; height: 450px; }
-  .trace-panel  { flex: 0 0 auto !important; height: 250px; }
-  .watch-panel  { flex: 0 0 auto !important; height: 250px; }
-  .mem-panel    { flex: 0 0 auto !important; height: 280px; }
+  /* Let center and right panels dictate their height naturally with vh */
+  .col-center > *, .col-right > * { flex-shrink: 0; }
+  .disasm-panel { flex: 0 0 auto !important; height: 50vh !important; }
+  .mem-panel    { flex: 0 0 auto !important; height: 45vh !important; }
+  .trace-panel  { flex: 0 0 auto !important; height: 35vh !important; }
+  .watch-panel  { flex: 0 0 auto !important; height: 35vh !important; }
+  .console-panel{ flex: 0 0 auto !important; height: 30vh !important; }
+  .stack-panel  { flex: 0 0 auto !important; height: 30vh !important; }
 
   /* Disable resize handles on touch screens */
   .mem-resize-handle, .stack-resize-handle, .help-resize-handle, .console-resize-handle, .watch-resize-handle { display: none; }
