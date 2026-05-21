@@ -7,18 +7,18 @@ import { PopoutWindow } from './PopoutWindow.jsx';
 export function TracePanel({ trace, onClear, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('trace', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_trace_popped_out') === 'true')
-  const bodyRef = useRef(null)
+  const [bodyEl, setBodyEl] = useState(null)
   
   useEffect(() => {
-    if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
-  }, [trace])
+    if (bodyEl) bodyEl.scrollTop = bodyEl.scrollHeight
+  }, [trace, bodyEl])
 
   useEffect(() => {
     localStorage.setItem('sim8085_trace_popped_out', String(poppedOut))
   }, [poppedOut])
 
   const content = (
-      <div className="panel-anim-body trace-body" ref={bodyRef}>
+      <div className="panel-anim-body trace-body" ref={setBodyEl}>
         {trace.length === 0
           ? <div className="trace-empty">Step through code to record execution</div>
           : trace.map((e, i) => (

@@ -30,11 +30,18 @@ export function ExampleMenu({ onLoad }) {
 
   return (
     <>
+      <style>{`
+        .example-menu-dropdown .exmenu-cat:hover,
+        .example-menu-dropdown .exmenu-cat.exmenu-cat-active,
+        .example-menu-dropdown .exmenu-sub-item:hover {
+          color: var(--accent);
+        }
+      `}</style>
       <button ref={btnRef} className="btn exmenu-trigger" onClick={toggle}>
         Examples <span className="exmenu-chevron">{open ? '▴' : '▾'}</span>
       </button>
       {open && (
-        <div ref={dropRef} className="exmenu-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}>
+        <div ref={dropRef} className="exmenu-dropdown example-menu-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}>
           {Object.entries(EXAMPLES).map(([cat, programs], i) => (
             <div key={cat}>
               {['Basic', 'Memory', 'I/O'].includes(cat) && <hr className="exmenu-sep" />}

@@ -105,7 +105,7 @@ export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInp
           <>
             <div className="panel-hd" {...dragHandleProps}>
               <span><span className="panel-icon">🔌</span>I/O PORTS</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="I/O PORTS" />
               </div>
             </div>
@@ -119,7 +119,7 @@ export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInp
           <>
             <div className="panel-hd collapsible" onClick={toggleCollapsed} {...dragHandleProps}>
               <span><span className="panel-icon">🔌</span>I/O PORTS</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 <PanelHelp panel="I/O PORTS" />
               </div>
@@ -134,7 +134,7 @@ export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInp
           <div className="panel ioport-panel" style={{ flex: 1, border: 'none', borderRadius: 0, paddingBottom: 0 }}>
             <div className="panel-hd">
               <span><span className="panel-icon">🔌</span>I/O PORTS</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="I/O PORTS" />
               </div>
             </div>

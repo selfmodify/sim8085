@@ -961,6 +961,44 @@ body {
   line-height: 1.7;
 }
 
+/* ── Dropdown, Context Menu & Chat Scrollbars ─────────────────────── */
+.bmenu-dropdown, .exmenu-dropdown, .ctx-menu,
+.chat-messages, .chat-md-pre {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--bg1);
+}
+.bmenu-dropdown::-webkit-scrollbar,
+.exmenu-dropdown::-webkit-scrollbar,
+.ctx-menu::-webkit-scrollbar,
+.chat-messages::-webkit-scrollbar,
+.chat-md-pre::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.bmenu-dropdown::-webkit-scrollbar-track,
+.exmenu-dropdown::-webkit-scrollbar-track,
+.ctx-menu::-webkit-scrollbar-track,
+.chat-messages::-webkit-scrollbar-track,
+.chat-md-pre::-webkit-scrollbar-track {
+  background: var(--bg1);
+  border-left: 1px solid var(--border2);
+}
+.bmenu-dropdown::-webkit-scrollbar-thumb,
+.exmenu-dropdown::-webkit-scrollbar-thumb,
+.ctx-menu::-webkit-scrollbar-thumb,
+.chat-messages::-webkit-scrollbar-thumb,
+.chat-md-pre::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 0;
+}
+.bmenu-dropdown::-webkit-scrollbar-thumb:hover,
+.exmenu-dropdown::-webkit-scrollbar-thumb:hover,
+.ctx-menu::-webkit-scrollbar-thumb:hover,
+.chat-messages::-webkit-scrollbar-thumb:hover,
+.chat-md-pre::-webkit-scrollbar-thumb:hover {
+  background: var(--accent2);
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -1137,7 +1175,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   align-items: center;
   justify-content: space-between;
   padding: 4px 8px;
-  background: var(--bg2);
+  background: var(--bg3);
   border-bottom: 1px solid var(--border);
   font-family: var(--mono);
   font-size: 11px;
@@ -1704,7 +1742,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
 .calc-float-hd {
   display: flex; align-items: center; justify-content: space-between;
   padding: 5px 8px 5px 10px;
-  background: var(--bg2);
+  background: var(--bg3);
   border-bottom: 1px solid var(--border);
   cursor: move;
   font-family: var(--mono); font-size: 11px; font-weight: 700;
@@ -1750,7 +1788,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
 }
 .chat-float-hd {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 5px 8px 5px 10px; background: var(--bg2);
+  padding: 5px 8px 5px 10px; background: var(--bg3);
   border-bottom: 1px solid var(--border); cursor: move;
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2); user-select: none;
@@ -1869,7 +1907,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
 .ppi-float-hd {
   display: flex; align-items: center; justify-content: space-between;
   padding: 5px 8px 5px 10px;
-  background: var(--bg2);
+  background: var(--bg3);
   border-bottom: 1px solid var(--border);
   cursor: move;
   font-family: var(--mono); font-size: 11px; font-weight: 700;
@@ -2139,7 +2177,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
 .welcome-hd {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 18px;
-  background: var(--bg2);
+  background: var(--bg3);
   border-bottom: 1px solid var(--border);
   gap: 12px;
 }
@@ -2191,7 +2229,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
 .help-hd {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 14px;
-  background: var(--bg2);
+  background: var(--bg3);
   border-bottom: 1px solid var(--border);
 }
 .help-mnem { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: 1px }
@@ -2225,7 +2263,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   align-items: baseline;
   gap: 10px;
   padding: 8px 12px;
-  background: var(--bg2);
+  background: var(--bg3);
   border-bottom: 1px solid var(--border);
 }
 .help-popup-body {
@@ -2349,9 +2387,9 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 4px 8px; font-family: var(--mono); font-size: 10px;
   font-weight: 700; letter-spacing: 1px; color: var(--red);
-  cursor: pointer; background: var(--bg2); user-select: none;
+  cursor: pointer; background: var(--bg3); user-select: none;
 }
-.bp-list-hd:hover { background: var(--bg3) }
+.bp-list-hd:hover { background: var(--border) }
 .bp-list { max-height: 100px; overflow-y: auto }
 .bp-list-row { display: flex; align-items: center; gap: 6px; padding: 2px 8px; font-family: var(--mono); font-size: 12px }
 .bp-list-row:hover { background: var(--bg2) }

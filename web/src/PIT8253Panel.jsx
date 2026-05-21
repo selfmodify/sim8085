@@ -64,7 +64,7 @@ export function PIT8253Panel({ outputPorts, onClose, pos, onPosChange }) {
     <div className="ppi-float" style={{ left: pos.x, top: pos.y }}>
       <div className="ppi-float-hd" onMouseDown={onDragDown}>
         <span><span className="panel-icon">⏱️</span>8253 PIT</span>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: 'auto' }}>
           <PanelHelp panel="8253 PIT" />
           <button className="ppi-float-close" onClick={onClose} title="Close">✕</button>
         </div>

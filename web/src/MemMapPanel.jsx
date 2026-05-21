@@ -68,7 +68,7 @@ export function MemMapPanel({ regs, programRegion, presetAddrs, onJump, onGotoLi
           <>
             <div className="panel-hd" {...dragHandleProps}>
               <span><span className="panel-icon">🗺️</span>MEMORY MAP</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="MEMORY MAP" />
               </div>
             </div>
@@ -82,7 +82,7 @@ export function MemMapPanel({ regs, programRegion, presetAddrs, onJump, onGotoLi
           <>
             <div className="panel-hd collapsible" onClick={toggleCollapsed} {...dragHandleProps}>
               <span><span className="panel-icon">🗺️</span>MEMORY MAP</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 <PanelHelp panel="MEMORY MAP" />
               </div>
@@ -97,7 +97,7 @@ export function MemMapPanel({ regs, programRegion, presetAddrs, onJump, onGotoLi
           <div className="panel memmap-panel" style={{ flex: 1, border: 'none', borderRadius: 0, paddingBottom: 0 }}>
             <div className="panel-hd">
               <span><span className="panel-icon">🗺️</span>MEMORY MAP</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="MEMORY MAP" />
               </div>
             </div>

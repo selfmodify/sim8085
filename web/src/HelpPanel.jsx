@@ -61,7 +61,7 @@ export function HelpPanel({ instruction, theme, popoutCrtProps }) {
         <div className="help-resize-handle" onMouseDown={onResizeDown} />
         <div className="panel-hd">
           <span><span className="panel-icon">📖</span>INSTRUCTION HELP</span>
-          <div className="panel-hd-right">
+          <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
             {!poppedOut && <button className="reg-base-btn" onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>}
             <PanelHelp panel="INSTRUCTION HELP" />
           </div>
@@ -79,7 +79,7 @@ export function HelpPanel({ instruction, theme, popoutCrtProps }) {
           <div className="panel" style={{ flex: 1, border: 'none', borderRadius: 0 }}>
             <div className="panel-hd" style={{ flexShrink: 0 }}>
               <span><span className="panel-icon">📖</span>INSTRUCTION HELP</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="INSTRUCTION HELP" />
               </div>
             </div>

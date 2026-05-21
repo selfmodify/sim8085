@@ -241,12 +241,6 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
             <ConsolePanel output={engine.consoleOutput} port={engine.consolePort} onSetPort={engine.changeConsolePort} onClear={() => { sim.simClearConsoleOutput(); engine.setConsoleOutput('') }} theme={theme} popoutCrtProps={popoutCrtProps} />
           </div>
         </div>
-        <div className="jump-row">
-          <button className="btn btn-xs" onClick={()=>engine.setMemStart(engine.regs.pc & 0xFFF0)}>→ PC</button>
-          <button className="btn btn-xs" onClick={()=>engine.setMemStart(engine.regs.sp & 0xFFF0)}>→ SP</button>
-          <button className="btn btn-xs" onClick={()=>engine.setMemStart(0x100)}>→ 100H</button>
-          <button className="btn btn-xs" onClick={()=>engine.setMemStart(0x200)}>→ 200H</button>
-        </div>
       </div>
       <div className="col-resize-handle" onMouseDown={onRightResizeDown} />
 

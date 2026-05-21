@@ -178,7 +178,7 @@ export function BreadboardView({ engine, panels, togglePanel, ppiPos, setPpiPos,
       <div className="panel" style={{ position: 'absolute', top: 20, right: 24, zIndex: 100, width: panelWidth, boxShadow: 'var(--shadow-pop)', transition: 'width 0.2s ease' }}>
         <div className="panel-hd collapsible" onClick={toggleInfoCollapsed}>
           <span><span className="panel-icon">ℹ️</span>INFO &amp; CONNECTIONS</span>
-          <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+          <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
             <button className={`reg-base-btn${textSize === 0 ? ' active' : ''}`} onClick={() => setTextSize(0)} title="Small Text">A</button>
             <button className={`reg-base-btn${textSize === 1 ? ' active' : ''}`} style={{ fontSize: '11px' }} onClick={() => setTextSize(1)} title="Medium Text">A</button>
             <button className={`reg-base-btn${textSize === 2 ? ' active' : ''}`} style={{ fontSize: '12px' }} onClick={() => setTextSize(2)} title="Large Text">A</button>

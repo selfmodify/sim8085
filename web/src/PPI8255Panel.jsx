@@ -105,7 +105,7 @@ export function PPI8255Panel({ outputPorts, inputPresets, onSetInput, onClose, p
     <div className="ppi-float" style={{ left: pos.x, top: pos.y }}>
       <div className="ppi-float-hd" onMouseDown={onDragDown}>
         <span><span className="panel-icon">🕹️</span>8255 PPI</span>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: 'auto' }}>
           <PanelHelp panel="8255 PPI" />
           <button className="ppi-float-close" onClick={onClose} title="Close">✕</button>
         </div>

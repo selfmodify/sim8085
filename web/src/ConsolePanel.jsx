@@ -3,7 +3,7 @@ import { PanelHelp } from './PanelHelp.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
 export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme, popoutCrtProps }) {
-  const bodyRef  = useRef(null)
+  const [bodyEl, setBodyEl] = useState(null)
   const panelRef = useRef(null)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_console_popped_out') === 'true')
   const [portBuf, setPortBuf] = useState(() => (port ?? 0).toString(16).toUpperCase().padStart(2,'0'))
@@ -16,8 +16,8 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
   }, [poppedOut])
 
   useEffect(() => {
-    if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
-  }, [output])
+    if (bodyEl) bodyEl.scrollTop = bodyEl.scrollHeight
+  }, [output, bodyEl])
 
   function commitPort() {
     const n = parseInt(portBuf.replace(/h$/i,''), 16)
@@ -48,7 +48,7 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
   const lines = safeOutput.split('\n')
 
   const content = (
-      <div className="console-body" ref={bodyRef} style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
+      <div className="console-body" ref={setBodyEl} style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
         {safeOutput === ''
           ? <span className="console-empty">No output yet — use OUT {portBuf}H to print ASCII characters</span>
           : lines.map((line, i) => (
@@ -65,7 +65,7 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
           <>
             <div className="panel-hd">
               <span><span className="panel-icon">🖥</span>CONSOLE</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="CONSOLE" />
               </div>
             </div>
@@ -80,7 +80,7 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
             <div className="console-resize-handle" onMouseDown={onResizeDown} />
             <div className="panel-hd">
               <span><span className="panel-icon">🖥</span>CONSOLE</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 <span className="console-port-label">OUT</span>
                 <input className="console-port-input" value={portBuf} maxLength={2}
@@ -102,7 +102,7 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
           <div className="panel console-panel" style={{ flex: 1, border: 'none', borderRadius: 0, paddingBottom: 0, maxHeight: 'none' }}>
             <div className="panel-hd">
               <span><span className="panel-icon">🖥</span>CONSOLE</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <span className="console-port-label">OUT</span>
                 <input className="console-port-input" value={portBuf} maxLength={2}
                   onChange={e => setPortBuf(e.target.value.toUpperCase())}

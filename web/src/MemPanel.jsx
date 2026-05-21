@@ -30,8 +30,8 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   const [exportTo, setExportTo]     = useState('')
   const [searchRan, setSearchRan]   = useState(false)
   const addrFocused = useRef(false)
-  const COLS = 16
-  const scrollRef = useRef(null)
+  const [COLS, setCols] = useState(16)
+  const [scrollEl, setScrollEl] = useState(null)
   const panelRef  = useRef(null)
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
     if (memVisibleRangeRef) {
       memVisibleRangeRef.current = { start: memStart, len: COLS * rows }
     }
-  }, [memStart, rows, memVisibleRangeRef])
+  }, [memStart, rows, COLS, memVisibleRangeRef])
 
   function manualJump(addr) {
     setFollowPC(false)
@@ -72,7 +72,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
     if (regs.pc < memStart || regs.pc > visEnd) {
       onJump((regs.pc >> 4) << 4)
     }
-  }, [regs.pc, followPC, memStart, rows, onJump])
+  }, [regs.pc, followPC, memStart, rows, COLS, onJump])
 
   // When viewport jumps externally (address input, ◀/▶), clamp cursor into view
   useEffect(() => {
@@ -80,7 +80,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
       const visEnd = memStart + COLS * rows - 1
       return (c < memStart || c > visEnd) ? memStart : c
     })
-  }, [memStart, rows])
+  }, [memStart, rows, COLS])
 
   useEffect(() => {
     if (flashReq?.addr === undefined) return
@@ -90,13 +90,20 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   }, [flashReq])
 
   useEffect(() => {
-    if (!scrollRef.current) return
+    if (!scrollEl) return
     const ro = new ResizeObserver(([e]) => {
       setRows(r => { const n = Math.max(2, Math.floor((e.contentRect.height - 22) / 20)); return n !== r ? n : r })
+      setCols(c => {
+        if (!poppedOut) return 16;
+        const w = e.contentRect.width;
+        if (w >= 1600) return 64;
+        if (w >= 850) return 32;
+        return 16;
+      })
     })
-    ro.observe(scrollRef.current)
+    ro.observe(scrollEl)
     return () => ro.disconnect()
-  }, [poppedOut])
+  }, [scrollEl, poppedOut])
 
   function onHandleMouseDown(e) {
     e.preventDefault()
@@ -116,7 +123,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   }
 
   function refresh() { setMem(sim.simGetMemory(memStart, COLS * rows)) }
-  useEffect(refresh, [memStart, regs.pc, rows, buildId])
+  useEffect(refresh, [memStart, regs.pc, rows, COLS, buildId])
 
   function commit(addr, raw) {
     const v = parseInt(raw, 16)
@@ -220,7 +227,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   const fullHeader = (
     <div className="panel-hd">
       <span><span className="panel-icon">💾</span>MEMORY</span>
-      <div className="panel-hd-right">
+      <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
       <span className="mem-ctrl">
         <button className={`mem-btn${followPC ? ' mem-btn-active' : ''}`} style={{ width: 42 }}
           title={followPC ? 'Following PC — click to unlock' : 'Not following PC — click to lock'}
@@ -309,8 +316,8 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
           <button className="mem-btn" onClick={runExport}>Download .bin</button>
         </div>
       )}
-      <div className="mem-scroll" ref={scrollRef}
-        onWheel={e => { e.preventDefault(); const delta = e.deltaY > 0 ? COLS : -COLS; manualJump(Math.max(0, Math.min(0xFFF0, memStart + delta))) }}>
+      <div className="mem-scroll" ref={setScrollEl}
+        onWheel={e => { e.preventDefault(); const delta = e.deltaY > 0 ? COLS : -COLS; setFollowPC(false); onJump(Math.max(0, Math.min(0xFFF0, memStart + delta))) }}>
         <table className="mem-tbl">
           <thead>
             <tr>
@@ -366,6 +373,13 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
           </tbody>
         </table>
       </div>
+      <div className="jump-row">
+        <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)', margin: 'auto 6px auto 2px' }}>JUMP TO:</span>
+        <button className="mem-btn" style={memStart === (regs.pc & 0xFFF0) ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(regs.pc & 0xFFF0)}>PC</button>
+        <button className="mem-btn" style={memStart === (regs.sp & 0xFFF0) ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(regs.sp & 0xFFF0)}>SP</button>
+        <button className="mem-btn" style={memStart === 0x0100 ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(0x0100)}>100H</button>
+        <button className="mem-btn" style={memStart === 0x0200 ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(0x0200)}>200H</button>
+      </div>
       <div className="mem-legend">
         <span className="legend-pc">■</span> PC &nbsp;
         <span className="legend-sp">■</span> SP &nbsp;
@@ -384,7 +398,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
           <>
             <div className="panel-hd">
               <span><span className="panel-icon">💾</span>MEMORY</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="MEMORY" wide />
               </div>
             </div>

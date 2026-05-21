@@ -77,7 +77,7 @@ export function ChatPanel({ regs, src, symbols, breakpoints, callStack, onClose,
   }, [])
 
   const posRef    = useRef(pos)
-  const scrollRef = useRef(null)
+  const [scrollEl, setScrollEl] = useState(null)
   const inputRef  = useRef(null)
   const wrapRef   = useRef(null)
 
@@ -111,8 +111,8 @@ export function ChatPanel({ regs, src, symbols, breakpoints, callStack, onClose,
   }
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-  }, [messages, loading])
+    if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight
+  }, [messages, loading, scrollEl])
 
   function saveKey() {
     const k = keyDraft.trim()
@@ -199,7 +199,7 @@ export function ChatPanel({ regs, src, symbols, breakpoints, callStack, onClose,
     <div ref={wrapRef} className={wrapperClass} style={wrapperStyle} data-chat-size={fontSize}>
       <div className="chat-float-hd" onMouseDown={onDragDown} style={{ cursor: isPoppedOut ? 'default' : 'move' }}>
         <span><span className="panel-icon">🤖</span>AI ASSISTANT</span>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: 'auto' }}>
           {['sm','md','lg'].map(s => (
             <button key={s} className={`chat-fs-btn${fontSize === s ? ' active' : ''}`}
               onClick={() => { setFontSize(s); localStorage.setItem('sim8085_chat_fs', s) }}
@@ -232,7 +232,7 @@ export function ChatPanel({ regs, src, symbols, breakpoints, callStack, onClose,
         </div>
       )}
 
-      <div className="chat-messages" ref={scrollRef}>
+      <div className="chat-messages" ref={setScrollEl}>
         {messages.length === 0 && !setupOpen &&
           <div className="chat-empty">Ask anything about 8085 assembly…</div>}
         {messages.map((m, i) => (

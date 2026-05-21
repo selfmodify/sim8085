@@ -710,6 +710,21 @@ export default function App() {
   return (
     <SimulatorContext.Provider value={simCtxValue}>
     <div className={`app${isRetroTheme && crtGlitch !== 'off' ? ` crt-glitch-${crtGlitch}` : ''}${isRetroTheme && !crtVignette ? ' crt-no-vignette' : ''}`} style={isRetroTheme ? { filter: `brightness(${crtBrightness}) contrast(${crtContrast})` } : undefined}>
+      <style>{`
+        .panel-icon {
+          display: inline-block;
+          transition: filter 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .panel:hover .panel-icon,
+        .calc-float:hover .panel-icon,
+        .calc-window:hover .panel-icon,
+        .chat-float:hover .panel-icon,
+        .chat-window:hover .panel-icon,
+        .ppi-float:hover .panel-icon {
+          filter: grayscale(1) sepia(1) hue-rotate(75deg) saturate(300%) drop-shadow(0 0 2px var(--accent));
+          transform: scale(1.15);
+        }
+      `}</style>
       {isRetroTheme && crtGlitch === 'chaos' && chaosCalm && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: 'none',
           background: 'repeating-linear-gradient(90deg, rgba(255,0,0,.35) 0px, rgba(255,0,0,.35) 1px, rgba(0,255,0,.28) 1px, rgba(0,255,0,.28) 2px, rgba(0,0,255,.35) 2px, rgba(0,0,255,.35) 3px, transparent 3px, transparent 4px)'
@@ -956,7 +971,7 @@ export default function App() {
         <div className="panel" style={{ flex: 1, border: 'none', borderRadius: 0 }}>
           <div className="panel-hd" style={{ flexShrink: 0 }}>
             <span><span className="panel-icon">🔌</span>HARDWARE</span>
-            <div className="panel-hd-right">
+            <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
               <Speedometer mhz={engine.mhz} running={engine.running} size="sm" style={{ borderLeft: 'none', paddingLeft: 0 }} />
             </div>
           </div>

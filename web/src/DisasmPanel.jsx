@@ -149,6 +149,12 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
 
   const bpList = useMemo(() => [...breakpoints.keys()].sort((a,b) => a-b), [breakpoints])
 
+  function manualJump(addr) {
+    setViewStart(addr & 0xFFFF)
+    setFollowPC(false)
+    ignorePcScrollRef.current = true
+  }
+
   const headerRight = (
     <>
       <input className="disasm-addr-input" placeholder="addr" value={addrInput}
@@ -157,8 +163,8 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
         onKeyDown={e => {
           if (e.key === 'Enter') {
             const v = parseInt(addrInput, 16)
-            if (!isNaN(v)) { setViewStart(v & 0xFFFF); setFollowPC(false) }
-            setAddrInput(''); ignorePcScrollRef.current = true
+            if (!isNaN(v)) manualJump(v & 0xFFFF)
+            setAddrInput('')
           }
           if (e.key === 'Escape') setAddrInput('')
         }}
@@ -263,6 +269,14 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
         })}
       </div>
 
+      <div className="jump-row" style={{ flexShrink: 0 }}>
+        <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--mono)', margin: 'auto 6px auto 2px' }}>JUMP TO:</span>
+        <button className="mem-btn" style={viewStart === regs.pc ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(regs.pc)}>PC</button>
+        <button className="mem-btn" style={viewStart === regs.sp ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(regs.sp)}>SP</button>
+        <button className="mem-btn" style={viewStart === 0x0100 ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(0x0100)}>100H</button>
+        <button className="mem-btn" style={viewStart === 0x0200 ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(0x0200)}>200H</button>
+      </div>
+
       {bpList.length > 0 && (
         <div className="bp-list-wrap">
           <div className="bp-list-hd" onClick={() => setShowBpList(s => !s)}>
@@ -332,7 +346,7 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
           <>
             <div className="panel-hd">
               <span><span className="panel-icon">📋</span>DISASSEMBLY</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="DISASSEMBLY" />
               </div>
             </div>
@@ -346,7 +360,7 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
           <>
             <div className="panel-hd">
               <span><span className="panel-icon">📋</span>DISASSEMBLY</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 {headerRight}
               </div>
@@ -360,7 +374,7 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
           <div className="panel disasm-panel" style={{ flex: 1, border: 'none', borderRadius: 0, paddingBottom: 0 }}>
             <div className="panel-hd">
               <span><span className="panel-icon">📋</span>DISASSEMBLY</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 {headerRight}
               </div>
             </div>

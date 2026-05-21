@@ -29,11 +29,16 @@ export function PanelsMenu({ panels, onToggle }) {
 
   return (
     <>
+      <style>{`
+        .panels-menu-dropdown .bmenu-item:hover {
+          color: var(--accent);
+        }
+      `}</style>
       <button ref={btnRef} className="btn" onClick={toggle} title="Show/hide panels">
         🪟 Panels <span className="exmenu-chevron">{open ? '▴' : '▾'}</span>
       </button>
       {open && (
-        <div ref={dropRef} className="bmenu-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, maxHeight: '70vh', overflowY: 'auto' }}>
+        <div ref={dropRef} className="bmenu-dropdown panels-menu-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, maxHeight: '70vh', overflowY: 'auto' }}>
           {[
             ['regs','Registers'],['pairs','Reg Pairs'],['flags','Flags'],
             ['ints','Interrupts'],['io','I/O Ports'],['memmap','Mem Map'],

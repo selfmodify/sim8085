@@ -55,7 +55,7 @@ export function CalcFloat({ onClose, onPopout, isPoppedOut }) {
     <div className={wrapperClass} style={wrapperStyle}>
       <div className="calc-float-hd" onMouseDown={onDragDown} style={{ cursor: isPoppedOut ? 'default' : 'move' }}>
         <span><span className="panel-icon">🖩</span>CALCULATOR</span>
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: 'auto' }}>
           {!isPoppedOut && onPopout && (
             <button className="reg-base-btn" onClick={onPopout} title="Open in separate window">⧉</button>
           )}

@@ -27,7 +27,14 @@ export function BrandMenu({ onShowWelcome, onShowShortcuts, onNew, onImport, onL
   }
 
   return (
-    <div className="bmenu-wrap" ref={wrapRef}>
+    <div className="bmenu-wrap brand-menu-wrap" ref={wrapRef}>
+      <style>{`
+        .brand-menu-wrap .bmenu-item:hover,
+        .brand-menu-wrap .exmenu-cat.exmenu-cat-active,
+        .brand-menu-wrap .exmenu-sub-item:hover {
+          color: var(--accent);
+        }
+      `}</style>
       <button className="brand-chip bmenu-trigger" onClick={() => setOpen(o => !o)} title="Menu">
         <span className="brand-chevron">☰</span><span className="brand-name"> 8085</span>
       </button>

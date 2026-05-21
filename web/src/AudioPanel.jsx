@@ -137,7 +137,7 @@ export function AudioPanel({ running, onShowDialog, dragHandleProps, dropTargetP
           <>
             <div className="panel-hd" {...dragHandleProps}>
               <span><span className="panel-icon">🔊</span>AUDIO (PORT 40H)</span>
-              <div className="panel-hd-right">
+              <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="AUDIO OUTPUT" />
               </div>
             </div>
@@ -151,7 +151,7 @@ export function AudioPanel({ running, onShowDialog, dragHandleProps, dropTargetP
           <>
             <div className="panel-hd collapsible" onClick={toggleCollapsed} {...dragHandleProps}>
               <span><span className="panel-icon">🔊</span>AUDIO (PORT 40H)</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 <PanelHelp panel="AUDIO OUTPUT" />
               </div>
@@ -166,7 +166,7 @@ export function AudioPanel({ running, onShowDialog, dragHandleProps, dropTargetP
           <div className="panel audio-panel" style={{ flex: 1, border: 'none', borderRadius: 0, paddingBottom: 0 }}>
             <div className="panel-hd">
               <span><span className="panel-icon">🔊</span>AUDIO (PORT 40H)</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <PanelHelp panel="AUDIO OUTPUT" />
               </div>
             </div>
