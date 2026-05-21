@@ -2637,7 +2637,20 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   .mem-panel    { flex: 0 0 auto !important; height: 280px; }
 
   /* Disable resize handles on touch screens */
-  .mem-resize-handle, .stack-resize-handle, .help-resize-handle, .console-resize-handle { display: none; }
+  .mem-resize-handle, .stack-resize-handle, .help-resize-handle, .console-resize-handle, .watch-resize-handle { display: none; }
+
+  /* Panel header buttons: reduce min-width to keep headers from overflowing on narrow screens */
+  .panel-hd .reg-base-btn,
+  .panel-hd .panel-help-btn {
+    min-width: 32px;
+    padding: 2px 6px;
+  }
+
+  /* Jump-row: allow wrapping so buttons don't overflow on narrow screens */
+  .jump-row { flex-wrap: wrap; }
+
+  /* Console port label: shrink text so the header fits on one line */
+  .console-port-label { font-size: 10px; }
 
   /* Stack the memory and watch sections vertically */
   .mem-watch-row, .disasm-trace-row { flex-direction: column; height: auto !important; overflow: visible; }
