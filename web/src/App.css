@@ -1600,6 +1600,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
 }
 .mem-resize-handle:hover { border-top-color: var(--accent) }
 .mem-ctrl { display: flex; align-items: center; gap: 6px }
+.mem-hd-secondary { display: contents }
 .mem-btn {
   background: none;
   border: 1px solid var(--border);
@@ -2648,10 +2649,14 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
 
   /* Panel header buttons: reduce min-width to keep headers from overflowing on narrow screens */
   .panel-hd .reg-base-btn,
-  .panel-hd .panel-help-btn {
-    min-width: 32px;
+  .panel-hd .panel-help-btn,
+  .panel-hd .mem-btn {
+    min-width: 32px !important;
     padding: 2px 6px;
   }
+
+  /* Hide MemPanel secondary controls (search/fill/export/clear/popout) — desktop-only features */
+  .mem-hd-secondary { display: none; }
 
   /* Jump-row: allow wrapping so buttons don't overflow on narrow screens */
   .jump-row { flex-wrap: wrap; }

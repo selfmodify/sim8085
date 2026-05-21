@@ -252,19 +252,21 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
       <button className="mem-btn" onClick={() => manualJump(Math.min(0xFFF0, memStart + COLS*rows))}>▶</button>
       <button className="mem-btn" title="Forward 4 pages" onClick={() => manualJump(Math.min(0xFFF0, memStart + COLS*rows*4))}>»</button>
       </span>
-      <span style={{width:8, flexShrink:0}} />
-      <button className={`mem-btn${showSearch ? ' mem-btn-active' : ''}`}
-        title="Find byte in memory (toggle)"
-        onClick={() => { setShowSearch(s => !s); setShowFill(false); setShowExport(false) }}>🔍</button>
-      <button className={`mem-btn${showFill ? ' mem-btn-active' : ''}`}
-        title="Fill memory range (toggle)"
-        onClick={() => { setShowFill(s => !s); setShowSearch(false); setShowExport(false) }}>⊞</button>
-      <button className={`mem-btn${showExport ? ' mem-btn-active' : ''}`}
-        title="Export memory range (toggle)"
-        onClick={() => { setShowExport(s => !s); setShowSearch(false); setShowFill(false) }}>⬇</button>
-    <button className="mem-btn" title="Clear all memory" onClick={clearMemory}>🗑</button>
-      {!poppedOut && <button className="reg-base-btn" style={{ marginLeft: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>}
-      <PanelHelp panel="MEMORY" wide />
+      <span className="mem-hd-secondary">
+        <span style={{width:8, flexShrink:0}} />
+        <button className={`mem-btn${showSearch ? ' mem-btn-active' : ''}`}
+          title="Find byte in memory (toggle)"
+          onClick={() => { setShowSearch(s => !s); setShowFill(false); setShowExport(false) }}>🔍</button>
+        <button className={`mem-btn${showFill ? ' mem-btn-active' : ''}`}
+          title="Fill memory range (toggle)"
+          onClick={() => { setShowFill(s => !s); setShowSearch(false); setShowExport(false) }}>⊞</button>
+        <button className={`mem-btn${showExport ? ' mem-btn-active' : ''}`}
+          title="Export memory range (toggle)"
+          onClick={() => { setShowExport(s => !s); setShowSearch(false); setShowFill(false) }}>⬇</button>
+        <button className="mem-btn" title="Clear all memory" onClick={clearMemory}>🗑</button>
+        {!poppedOut && <button className="reg-base-btn" style={{ marginLeft: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>}
+        <PanelHelp panel="MEMORY" wide />
+      </span>
       </div>
     </div>
   )
