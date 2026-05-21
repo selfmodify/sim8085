@@ -721,7 +721,7 @@ export default function App() {
         .chat-float:hover .panel-icon,
         .chat-window:hover .panel-icon,
         .ppi-float:hover .panel-icon {
-          filter: grayscale(1) sepia(1) hue-rotate(75deg) saturate(300%) drop-shadow(0 0 2px var(--accent));
+          filter: grayscale(1) sepia(1) hue-rotate(75deg) saturate(300%);
           transform: scale(1.15);
         }
       `}</style>

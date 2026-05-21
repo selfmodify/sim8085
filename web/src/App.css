@@ -1191,7 +1191,16 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
 .panel-title { display: flex; align-items: center; }
 .panel-body { flex: 1; overflow-y: auto; min-height: 0; animation: panel-body-expand .18s ease-out; }
 .panel-hd.collapsible { cursor: pointer; user-select: none }
-.panel-hd.collapsible:hover { background: var(--bg3) }
+.panel:hover .panel-hd,
+.calc-float:hover .calc-float-hd, .calc-window:hover .calc-float-hd,
+.chat-float:hover .chat-float-hd, .chat-window:hover .chat-float-hd,
+.ppi-float:hover .ppi-float-hd {
+  background: var(--border);
+}
+.panel-hd:hover,
+.calc-float-hd:hover, .chat-float-hd:hover, .ppi-float-hd:hover {
+  background: var(--border2);
+}
 
 @keyframes panel-body-expand {
   from { opacity: 0; transform: translateY(-3px) }
@@ -1444,6 +1453,9 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   color: var(--text2);
   width: 52px;
   flex-shrink: 0;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  transition: outline .15s;
 }
 .int-label.int-masked { color: var(--text3); text-decoration: line-through }
 .int-vec {
@@ -1453,6 +1465,23 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   display: flex;
   align-items: center;
   gap: 3px;
+}
+
+.panel:hover {
+  outline-color: var(--border2);
+}
+.calc-float, .chat-float, .ppi-float,
+.bmenu-dropdown, .exmenu-dropdown, .exmenu-sub, .ctx-menu {
+  transition: border-color .15s, box-shadow .15s;
+}
+.calc-float:hover, .chat-float:hover, .ppi-float:hover,
+.bmenu-dropdown:hover, .exmenu-dropdown:hover, .exmenu-sub:hover {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2), var(--shadow-menu);
+}
+.ctx-menu:hover {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2), var(--shadow-pop);
 }
 .int-mask-tag {
   font-family: var(--mono);
@@ -1748,6 +1777,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2);
   user-select: none;
+  transition: background .15s;
 }
 .calc-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -1793,6 +1823,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2); user-select: none;
   flex-shrink: 0;
+  transition: background .15s;
 }
 .chat-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -1913,6 +1944,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2);
   user-select: none;
+  transition: background .15s;
 }
 .ppi-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -2173,6 +2205,29 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   box-shadow: var(--shadow-modal);
   display: flex; flex-direction: column;
   overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+}
+.welcome-modal:hover {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2), var(--shadow-modal);
+  transition: border-color .15s, box-shadow .15s;
+}
+.help-modal:hover {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2), var(--shadow-menu);
+  transition: border-color .15s, box-shadow .15s;
+}
+.shortcuts-modal:hover {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2), var(--shadow-menu);
+}
+
+.ui-dialog {
+  transition: border-color .15s, box-shadow .15s;
+}
+.ui-dialog:hover {
+  border-color: var(--border2);
+  box-shadow: 0 0 0 1px var(--border2), var(--shadow-modal);
 }
 .welcome-hd {
   display: flex; align-items: center; justify-content: space-between;
