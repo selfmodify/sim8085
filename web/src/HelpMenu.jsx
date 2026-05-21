@@ -28,8 +28,6 @@ export function HelpMenu({ onShowWelcome, onShowShortcuts, onManageGithub }) {
           <button className="exmenu-sub-item" onClick={onShowWelcome}>📖 Welcome guide</button>
           <button className="exmenu-sub-item" onClick={onShowShortcuts}>⌨ Keyboard shortcuts</button>
           <hr className="exmenu-sep" />
-          <button className="exmenu-sub-item" onClick={() => window.open('https://github.com/selfmodify/sim8085', '_blank')}>⭐ View on GitHub</button>
-          <button className="exmenu-sub-item" onClick={() => window.open('https://github.com/selfmodify/sim8085/issues/new', '_blank')}>🐛 Report a Bug</button>
           <button className="exmenu-sub-item" onClick={() => window.open('https://github.com/selfmodify/sim8085/discussions', '_blank')}>💬 Ask a Question</button>
           <button className="exmenu-sub-item" onClick={onManageGithub}>🔑 Manage GitHub API Token</button>
           <hr className="exmenu-sep" />

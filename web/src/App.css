@@ -1105,6 +1105,16 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   padding: 3px 8px;
 }
 
+button.build-chip {
+  cursor: pointer;
+  outline: none;
+  transition: background 0.12s, color 0.12s;
+}
+button.build-chip:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+
 /* Speed slider */
 .speed-label { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 12px; color: var(--text3); white-space: nowrap }
 .speed-slider { width: 70px; accent-color: var(--accent); cursor: pointer }
@@ -2384,7 +2394,7 @@ button.engine-chip:disabled { cursor: wait; opacity: 0.5; }
   align-items: stretch;
   background: var(--bg1);
   border-top: 1px solid var(--border);
-  overflow: hidden;
+  overflow: visible;
   font-family: var(--mono);
   font-size: 13px;
 }

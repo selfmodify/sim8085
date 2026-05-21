@@ -41,8 +41,80 @@ const BUILD_TIME_STR = (() => {
   const mins = String(d.getMinutes()).padStart(2, '0')
   const ampm = hours >= 12 ? 'PM' : 'AM'
   const h12 = hours % 12 || 12
-  return `${yyyy}-${mm}-${dd} ${String(h12).padStart(2, '0')}:${mins} ${ampm}`
+  const timeStr = `${yyyy}-${mm}-${dd} ${String(h12).padStart(2, '0')}:${mins} ${ampm}`
+  const hash = typeof __COMMIT_HASH__ !== 'undefined' ? __COMMIT_HASH__ : ''
+  return hash ? `${timeStr} (${hash})` : timeStr
 })()
+
+function VersionMenu({ onShowDialog }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = e => {
+      if (!wrapRef.current?.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const hash = typeof __COMMIT_HASH__ !== 'undefined' && __COMMIT_HASH__ ? __COMMIT_HASH__ : '';
+  const dateStr = BUILD_TIME_STR.split(' (')[0];
+  const shortDate = dateStr.split(' ')[0];
+
+  return (
+    <div className="bmenu-wrap" ref={wrapRef} style={{ display: 'flex', alignItems: 'center' }}>
+      <button className="build-chip" onClick={() => setOpen(o => !o)} title="Simulator web app release version" style={{ marginLeft: '6px', background: open ? 'var(--bg3)' : 'transparent', color: open ? 'var(--text)' : 'var(--text2)' }}>
+        App Ver: {hash || shortDate} {open ? '▴' : '▾'}
+      </button>
+      {open && (
+        <div className="exmenu-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 5px)', right: 0, left: 'auto', top: 'auto', minWidth: '220px', padding: '12px 14px', cursor: 'default', zIndex: 1000 }} onClick={e => e.stopPropagation()}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: 1, marginBottom: 4 }}>BUILD DATE</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)', marginBottom: 12 }}>
+            {dateStr}
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: 1, marginBottom: 4 }}>COMMIT HASH</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)' }}>
+            {hash ? (
+              <a href={`https://github.com/selfmodify/sim8085/commit/${hash}`} target="_blank" rel="noreferrer" style={{ color: 'var(--blue)', textDecoration: 'none' }}>
+                {hash} ↗
+              </a>
+            ) : 'Unknown'}
+          </div>
+          <hr className="exmenu-sep" style={{ margin: '12px 0 8px' }} />
+          <button className="exmenu-sub-item" style={{ padding: '4px 0', color: 'var(--text2)' }} onClick={() => { window.open('https://github.com/selfmodify/sim8085', '_blank'); setOpen(false); }}>
+            ⭐ GitHub Repository
+          </button>
+          <button className="exmenu-sub-item" style={{ padding: '4px 0', color: 'var(--text2)' }} onClick={() => { window.open('https://github.com/selfmodify/sim8085/releases', '_blank'); setOpen(false); }}>
+            📦 View Releases
+          </button>
+          <button className="exmenu-sub-item" style={{ padding: '4px 0', color: 'var(--text2)' }} onClick={() => { window.open('https://github.com/selfmodify/sim8085/issues', '_blank'); setOpen(false); }}>
+            🐛 Issue Tracker
+          </button>
+          <hr className="exmenu-sep" style={{ margin: '8px 0' }} />
+          <button className="exmenu-sub-item" style={{ padding: '4px 0', color: 'var(--amber)' }} onClick={() => {
+            setOpen(false);
+            onShowDialog?.({
+              type: 'confirm',
+              title: 'Reset Preferences',
+              message: 'Are you sure you want to reset all local preferences, theme settings, and UI layouts? This will reload the simulator.',
+              confirmText: 'Reset and reload',
+              onConfirm: () => {
+                Object.keys(localStorage).forEach(k => {
+                  if (k.startsWith('sim8085_') || k === 'ant_key') localStorage.removeItem(k);
+                });
+                window.location.reload();
+              }
+            });
+          }}>
+            ⚠️ Reset Preferences
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Root app ─────────────────────────────────────────────────────────────
 export default function App() {
@@ -898,9 +970,7 @@ export default function App() {
           >
             {engine.engineSwitching ? '…' : `Engine: ${engine.engineMode.toUpperCase()} ⇄`}
           </button>
-          <span className="build-chip" title="Simulator web app release version" style={{ marginLeft: '6px', cursor: 'help' }}>
-            App Ver: {BUILD_TIME_STR}
-          </span>
+          <VersionMenu onShowDialog={setAppDialog} />
           <span className="sbar-sep" style={{ marginLeft: '6px' }}>·</span>
           {engine.isDirty && <><span className="sbar-counter" style={{ color: 'var(--amber)', fontWeight: 600 }}>• editor out of sync</span><span className="sbar-sep">·</span></>}
           <span className="sbar-counter sc-steps" title={`${engine.steps.toLocaleString()} instructions executed (A step is one complete assembly instruction, which may take multiple T-states)`} style={{ cursor: 'help' }}>{fmtCount(engine.steps)} steps</span>
