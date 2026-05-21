@@ -599,8 +599,10 @@ describe('DisasmPanel', () => {
       len: 2, cycles: 7, mnem: 'MVI',
     });
     render(<DisasmPanel {...baseDisasmProps} regs={{ pc: 0x100 }} />);
-    const opSpan = document.querySelector('.disasm-text span');
-    expect(opSpan).not.toBeNull();
+    const curRow = document.querySelector('.disasm-row.cur');
+    const spans = curRow.querySelectorAll('.disasm-text span');
+    expect(spans.length).toBeGreaterThan(0);
+    const opSpan = spans[spans.length - 1];
     expect(opSpan.textContent).toBe('A,01H');
   });
 });

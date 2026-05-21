@@ -60,19 +60,24 @@ function VersionMenu({ onShowDialog }) {
   }, [open]);
 
   const hash = typeof __COMMIT_HASH__ !== 'undefined' && __COMMIT_HASH__ ? __COMMIT_HASH__ : '';
+  const branch = typeof __BRANCH_NAME__ !== 'undefined' && __BRANCH_NAME__ ? __BRANCH_NAME__ : '';
   const dateStr = BUILD_TIME_STR.split(' (')[0];
   const shortDate = dateStr.split(' ')[0];
 
   return (
     <div className="bmenu-wrap" ref={wrapRef} style={{ display: 'flex', alignItems: 'center' }}>
       <button className="build-chip" onClick={() => setOpen(o => !o)} title="Simulator web app release version" style={{ marginLeft: '6px', background: open ? 'var(--bg3)' : 'transparent', color: open ? 'var(--text)' : 'var(--text2)' }}>
-        App Ver: {hash || shortDate} {open ? '▴' : '▾'}
+        App Ver: {branch ? `${branch}@` : ''}{hash || shortDate} {open ? '▴' : '▾'}
       </button>
       {open && (
         <div className="exmenu-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 5px)', right: 0, left: 'auto', top: 'auto', minWidth: '220px', padding: '12px 14px', cursor: 'default', zIndex: 1000 }} onClick={e => e.stopPropagation()}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: 1, marginBottom: 4 }}>BUILD DATE</div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)', marginBottom: 12 }}>
             {dateStr}
+          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: 1, marginBottom: 4 }}>BRANCH</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)', marginBottom: 12 }}>
+            {branch || 'Unknown'}
           </div>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: 1, marginBottom: 4 }}>COMMIT HASH</div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)' }}>

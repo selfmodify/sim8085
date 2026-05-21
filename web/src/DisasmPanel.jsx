@@ -248,9 +248,21 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
                 style={{opacity: hasHit ? Math.max(0.15, hit / currentMax) : 0}} />
               <span className="disasm-text">
                 {(() => {
+                  const m = row.text.match(/^([0-9A-Fa-f]{4})(\s+)((?:[0-9A-Fa-f]{2}\s+)+)(.*)$/);
+                  if (m) {
+                    const [, addr, s1, hex, rest] = m;
+                    const prefix = <><span style={{ color: 'var(--text3)' }}>{addr}</span>{s1}<span style={{ opacity: 0.6 }}>{hex}</span></>;
+                    if (cur) {
+                      const mCur = rest.match(/^([a-zA-Z0-9_]+)(\s+)(.+)$/);
+                      if (mCur) {
+                        return <>{prefix}{mCur[1]}{mCur[2]}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{mCur[3]}</span></>;
+                      }
+                    }
+                    return <>{prefix}{rest}</>;
+                  }
                   if (!cur) return row.text;
-                  const m = row.text.match(/^([0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+[a-zA-Z0-9_]+)(\s+)(.+)$/);
-                  if (m) return <>{m[1]}{m[2]}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{m[3]}</span></>;
+                  const mFallback = row.text.match(/^([0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+[a-zA-Z0-9_]+)(\s+)(.+)$/);
+                  if (mFallback) return <>{mFallback[1]}{mFallback[2]}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{mFallback[3]}</span></>;
                   return row.text;
                 })()}
               </span>

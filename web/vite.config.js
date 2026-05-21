@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { exec } from 'child_process'
+import { exec, execSync } from 'child_process'
 import { existsSync } from 'fs'
 import path from 'path'
 
@@ -58,13 +58,26 @@ function wasmBuildPlugin() {
 // Change base to '/your-repo-name/' for GitHub Pages, or '/' for Netlify/Vercel
 const buildTime = Date.now()
 
+let commitHash = '';
+let branchName = '';
+try {
+  commitHash = execSync('git rev-parse --short HEAD').toString().trim();
+  branchName = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+} catch (e) {
+  console.warn('Could not get git info', e);
+}
+
 export default defineConfig({
   plugins: [
     react(),
     wasmBuildPlugin(),
   ],
   base: '/sim8085/',   // ← must match your repo name exactly
-  define: { __BUILD_TIME__: JSON.stringify(buildTime) },
+  define: { 
+    __BUILD_TIME__: JSON.stringify(buildTime),
+    __COMMIT_HASH__: JSON.stringify(commitHash),
+    __BRANCH_NAME__: JSON.stringify(branchName)
+  },
   server: {
     watch: { usePolling: true }
   },

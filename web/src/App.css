@@ -1201,7 +1201,7 @@ button.build-chip:hover {
   color: var(--text2);
   flex-shrink: 0;
   text-transform: uppercase;
-  transition: background .15s;
+  transition: background .15s, color .15s, text-shadow .15s;
 }
 
 .panel-icon { letter-spacing: 0; margin-right: 5px; font-size: 13px; text-transform: none }
@@ -1212,11 +1212,9 @@ button.build-chip:hover {
 .calc-float:hover .calc-float-hd, .calc-window:hover .calc-float-hd,
 .chat-float:hover .chat-float-hd, .chat-window:hover .chat-float-hd,
 .ppi-float:hover .ppi-float-hd {
-  background: var(--border);
-}
-.panel-hd:hover,
-.calc-float-hd:hover, .chat-float-hd:hover, .ppi-float-hd:hover {
   background: var(--border2);
+  color: var(--text);
+  text-shadow: 0 0 8px currentColor;
 }
 
 @keyframes panel-body-expand {
@@ -1795,7 +1793,7 @@ button.build-chip:hover {
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2);
   user-select: none;
-  transition: background .15s;
+  transition: background .15s, color .15s, text-shadow .15s;
 }
 .calc-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -1841,7 +1839,7 @@ button.build-chip:hover {
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2); user-select: none;
   flex-shrink: 0;
-  transition: background .15s;
+  transition: background .15s, color .15s, text-shadow .15s;
 }
 .chat-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -1962,7 +1960,7 @@ button.build-chip:hover {
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2);
   user-select: none;
-  transition: background .15s;
+  transition: background .15s, color .15s, text-shadow .15s;
 }
 .ppi-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -2653,10 +2651,12 @@ button.build-chip:hover {
   .col-center > *, .col-right > * { flex-shrink: 0; }
   .disasm-panel { flex: 0 0 auto !important; height: 50vh !important; }
   .mem-panel    { flex: 0 0 auto !important; height: 45vh !important; }
-  .trace-panel  { flex: 0 0 auto !important; height: 35vh !important; }
   .watch-panel  { flex: 0 0 auto !important; height: 35vh !important; }
   .console-panel{ flex: 0 0 auto !important; height: 30vh !important; }
   .stack-panel  { flex: 0 0 auto !important; height: 30vh !important; }
+
+  /* Hide advanced panels on mobile to reduce clutter */
+  .trace-panel, .callstack-panel, .memmap-panel, .audio-panel { display: none !important; }
 
   /* Disable resize handles on touch screens */
   .mem-resize-handle, .stack-resize-handle, .help-resize-handle, .console-resize-handle, .watch-resize-handle { display: none; }
