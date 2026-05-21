@@ -882,7 +882,7 @@ body {
 .exmenu-cat-active .exmenu-arrow { color: var(--accent) }
 .exmenu-sub {
   position: absolute;
-  left: calc(100% + 2px);
+  left: 100%;
   top: -4px;
   background: var(--bg1);
   border: 1px solid var(--border2);
