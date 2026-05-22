@@ -1058,10 +1058,10 @@ input:focus-visible, select:focus-visible { outline: 1px solid var(--accent); bo
 .btn-step-out   { border-color: #503050; color: #c08cff }
 .btn-step-out:hover:not(:disabled) { background: #201425 }
 .btn-run   { border-color: #3a6040; color: var(--accent); font-weight: 600; margin-left: 4px }
-.btn-run:hover:not(:disabled) { background: #1a3020; border-color: var(--accent2); box-shadow: 0 0 10px rgba(74,240,160,.2) }
-.btn-step:hover:not(:disabled) { background: #1a2520; box-shadow: 0 0 7px rgba(74,240,160,.14) }
+.btn-run:hover:not(:disabled) { background: #1a3020; border-color: var(--accent2); }
+.btn-step:hover:not(:disabled) { background: #1a2520; }
 .btn-stop  { border-color: #6a2020; color: var(--red); font-weight: 600 }
-.btn-stop:hover { background: #2a1010; box-shadow: 0 0 8px rgba(255,64,64,.2) }
+.btn-stop:hover { background: #2a1010; }
 .btn-reset  { color: var(--amber) }
 .btn-back   { color: var(--text2) }
 
@@ -1137,7 +1137,7 @@ button.build-chip:hover {
 .status-steps  { color: var(--text3) }
 .status-cycles { color: var(--text3); font-size: 11px }
 .status-idle .status-msg    { color: var(--text2) }
-.status-running .status-msg { color: var(--accent); animation: blink 1s infinite; text-shadow: 0 0 10px currentColor }
+.status-running .status-msg { color: var(--accent); animation: blink 1s infinite; }
 .status-halted .status-msg  { color: var(--amber);  text-shadow: 0 0 8px currentColor }
 .status-error .status-msg   { color: var(--red);    text-shadow: 0 0 8px currentColor }
 
@@ -1201,7 +1201,7 @@ button.build-chip:hover {
   color: var(--text2);
   flex-shrink: 0;
   text-transform: uppercase;
-  transition: background .15s, color .15s, text-shadow .15s;
+  transition: background .15s, color .15s;
 }
 
 .panel-icon { letter-spacing: 0; margin-right: 5px; font-size: 13px; text-transform: none }
@@ -1214,7 +1214,6 @@ button.build-chip:hover {
 .ppi-float:hover .ppi-float-hd {
   background: var(--border2);
   color: var(--text);
-  text-shadow: 0 0 8px currentColor;
 }
 
 @keyframes panel-body-expand {
@@ -1793,7 +1792,7 @@ button.build-chip:hover {
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2);
   user-select: none;
-  transition: background .15s, color .15s, text-shadow .15s;
+  transition: background .15s, color .15s;
 }
 .calc-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -1839,7 +1838,7 @@ button.build-chip:hover {
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2); user-select: none;
   flex-shrink: 0;
-  transition: background .15s, color .15s, text-shadow .15s;
+  transition: background .15s, color .15s;
 }
 .chat-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -1960,7 +1959,7 @@ button.build-chip:hover {
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   letter-spacing: 2px; color: var(--text2);
   user-select: none;
-  transition: background .15s, color .15s, text-shadow .15s;
+  transition: background .15s, color .15s;
 }
 .ppi-float-close {
   background: none; border: none; color: var(--text3); cursor: pointer;
@@ -2001,7 +2000,7 @@ button.build-chip:hover {
 .memmap-data { background: var(--tint-green-pre); border-top: 1px solid rgba(74,240,160,.5); border-bottom: 1px solid rgba(74,240,160,.5) }
 .memmap-stack { background: var(--tint-amber-sp); border-top: 1px solid var(--amber) }
 .memmap-marker { position: absolute; left: -2px; right: -2px; height: 2px; z-index: 10; transition: top .1s linear; cursor: pointer }
-.memmap-pc { background: var(--accent); box-shadow: 0 0 6px var(--accent) }
+.memmap-pc { background: var(--accent); }
 .memmap-legend { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text2); font-family: var(--mono) }
 .memmap-legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 4px; }
 .memmap-swatch { display: inline-block; width: 12px; height: 12px; border: 1px solid; border-radius: 2px; margin-right: 6px; vertical-align: middle }
@@ -2419,7 +2418,7 @@ button.build-chip:hover {
 .statusbar-entry.sbar-success { color: var(--accent) }
 .statusbar-entry.sbar-error   { color: var(--red) }
 .statusbar-entry.sbar-halted  { color: var(--amber) }
-.statusbar-entry.sbar-running { color: var(--accent); animation: blink 1s infinite; text-shadow: 0 0 10px currentColor }
+.statusbar-entry.sbar-running { color: var(--accent); animation: blink 1s infinite; }
 .statusbar-empty { padding: 0 10px; color: var(--text3); align-self: center }
 .statusbar-events { flex: 1; min-width: 0; display: flex; align-items: stretch; overflow: hidden }
 .statusbar-counters {
@@ -2565,16 +2564,8 @@ button.build-chip:hover {
   .speed-label { gap: 4px }
   .editor-hint { display: none }
 
-  .speedometer-main {
-    position: relative;
-    top: 0;
-    right: 0;
-    transform: scale(0.45);
-    margin: -25px -25px -25px auto;
-    box-shadow: none;
-    border-color: transparent;
-    background: transparent;
-  }
+  /* Hide the speedometer (watch dial) on mobile */
+  .speedometer-main, .toolbar-speedometer { display: none !important; }
 
   /* Remove old mobile tabs */
   .mobile-tabs { display: none !important; }
