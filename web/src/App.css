@@ -2647,7 +2647,7 @@ button.build-chip:hover {
   .stack-panel  { flex: 0 0 auto !important; height: 30vh !important; }
 
   /* Hide advanced panels on mobile to reduce clutter */
-  .trace-panel, .callstack-panel, .memmap-panel, .audio-panel { display: none !important; }
+  .trace-panel, .callstack-panel, .memmap-panel, .audio-panel, .stack-panel { display: none !important; }
 
   /* Disable resize handles on touch screens */
   .mem-resize-handle, .stack-resize-handle, .help-resize-handle, .console-resize-handle, .watch-resize-handle { display: none; }
@@ -2662,6 +2662,24 @@ button.build-chip:hover {
 
   /* Hide MemPanel secondary controls (search/fill/export/clear/popout) — desktop-only features */
   .mem-hd-secondary { display: none; }
+
+  /* Hide panel collapse chevrons on mobile since panels take up full tabs */
+  .panel-chevron { display: none !important; }
+
+  /* Globally hide all panel popout buttons on mobile screens */
+  button[title="Open in separate window"],
+  button[title="Open hardware view in a secondary monitor window"] {
+    display: none !important;
+  }
+
+  /* Hide memory legend on mobile to save vertical space and prevent layout issues */
+  .mem-legend { display: none; }
+
+  /* Make memory table more compact to fit 16 hex columns without horizontal scrolling */
+  .mem-tbl { font-size: 11px; }
+  .mem-th-addr, .mem-th { padding: 1px 2px; font-size: 10px; }
+  .mem-row-addr { padding: 1px 4px 1px 2px; font-size: 11px; }
+  .mem-cell { padding: 1px; min-width: 18px; }
 
   /* Jump-row: allow wrapping so buttons don't overflow on narrow screens */
   .jump-row { flex-wrap: wrap; }
