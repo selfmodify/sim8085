@@ -97,17 +97,29 @@ export function ChatPanel({ regs, src, symbols, breakpoints, callStack, onClose,
   function onDragDown(e) {
     if (isPoppedOut) return
     if (e.target.closest('button') || e.target.closest('input')) return
-    e.preventDefault()
-    const ox = e.clientX - posRef.current.x, oy = e.clientY - posRef.current.y
+    
+    const isTouch = e.type === 'touchstart'
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY
+    const ox = clientX - posRef.current.x, oy = clientY - posRef.current.y
+    
     function onMove(ev) {
-      const p = { x: ev.clientX - ox, y: Math.max(0, ev.clientY - oy) }
+      const cx = ev.type === 'touchmove' ? ev.touches[0].clientX : ev.clientX
+      const cy = ev.type === 'touchmove' ? ev.touches[0].clientY : ev.clientY
+      const p = { x: cx - ox, y: Math.max(0, cy - oy) }
       posRef.current = p; setPos(p)
     }
     function onUp() { 
-      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
+      document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onMove)
+      document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onUp)
       localStorage.setItem('sim8085_chat_pos', JSON.stringify(posRef.current))
     }
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
+    if (isTouch) {
+      document.addEventListener('touchmove', onMove, { passive: false }); document.addEventListener('touchend', onUp)
+    } else {
+      e.preventDefault()
+      document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
+    }
   }
 
   useEffect(() => {
@@ -197,7 +209,7 @@ export function ChatPanel({ regs, src, symbols, breakpoints, callStack, onClose,
 
   return (
     <div ref={wrapRef} className={wrapperClass} style={wrapperStyle} data-chat-size={fontSize}>
-      <div className="chat-float-hd" onMouseDown={onDragDown} style={{ cursor: isPoppedOut ? 'default' : 'move' }}>
+      <div className="chat-float-hd" onMouseDown={onDragDown} onTouchStart={onDragDown} style={{ cursor: isPoppedOut ? 'default' : 'move', touchAction: 'none' }}>
         <span><span className="panel-icon">🤖</span>AI ASSISTANT</span>
         <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: 'auto' }}>
           {['sm','md','lg'].map(s => (

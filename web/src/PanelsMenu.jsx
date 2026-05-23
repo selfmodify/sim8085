@@ -51,7 +51,7 @@ export function PanelsMenu({ panels, onToggle }) {
             ['audio','Audio'],['ppi','8255 PPI'],['pit','8253 PIT'],
             ['stack','Stack'],['callstack','Call Stack'],['trace','Trace'],
           ].map(([k, l]) => (
-            <button key={k} className={`bmenu-item${['trace', 'callstack', 'memmap', 'audio'].includes(k) ? ' mobile-hidden' : ''}`} onClick={() => onToggle(k)}>
+            <button key={k} className={`bmenu-item${['trace', 'callstack', 'memmap', 'audio', 'ppi', 'pit'].includes(k) ? ' mobile-hidden' : ''}`} onClick={() => onToggle(k)}>
               <span style={{ display: 'inline-block', width: 16 }}>{panels[k] ? '✓' : ''}</span>
               {l}
               {(k === 'ppi' || k === 'pit') && <span style={{ opacity: 0.5, fontSize: '0.85em', marginLeft: 6 }}>(Hardware view)</span>}
