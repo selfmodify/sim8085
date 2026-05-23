@@ -840,7 +840,7 @@ export default function App() {
                 onBrewCoffee={onBrewCoffee} />
               <div className="view-tabs">
                 <button className={`view-tab${activeView === 'simulator' ? ' active' : ''}`} onClick={() => handleSetView('simulator')} title="Code editor, memory, and debugger">Simulator</button>
-                <button className={`view-tab${activeView === 'breadboard' ? ' active' : ''}`} onClick={() => handleSetView('breadboard')} title="Interactive hardware peripherals">Hardware</button>
+                <button className={`view-tab${activeView === 'breadboard' ? ' active' : ''} mobile-hidden`} onClick={() => handleSetView('breadboard')} title="Interactive hardware peripherals">Hardware</button>
                 <button className={`view-tab${activeView === 'challenges' ? ' active' : ''}`} onClick={() => handleSetView('challenges')} title="Programming challenges">Challenges</button>
                 <div style={{ width: 2, height: 20, background: 'var(--border2)', margin: '0 12px', borderRadius: '1px' }} className="mobile-hidden" />
                 <button className="btn mobile-hidden" onClick={() => window.dispatchEvent(new Event('sim-dock-all'))} title="Dock all popped-out windows (F12)">⧉ Dock All</button>

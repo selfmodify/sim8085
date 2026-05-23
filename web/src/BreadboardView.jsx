@@ -62,7 +62,7 @@ function DroopingWire({ startX, startY, endX, endY, color, animate, onGrab }) {
 }
 
 export function BreadboardView({ engine, panels, togglePanel, ppiPos, setPpiPos, pitPos, setPitPos, ledPos, setLedPos, onPopOut, isPoppedOut }) {
-  const [infoCollapsed, toggleInfoCollapsed] = useCollapsible('breadboard_info', false);
+  const [infoCollapsed, toggleInfoCollapsed] = useCollapsible('breadboard_info', true);
   const [textSize, setTextSize] = useState(0);
   const [wires, setWires] = useState(() => {
     try {
@@ -182,7 +182,7 @@ export function BreadboardView({ engine, panels, togglePanel, ppiPos, setPpiPos,
             <button className={`reg-base-btn${textSize === 0 ? ' active' : ''}`} onClick={() => setTextSize(0)} title="Small Text">A</button>
             <button className={`reg-base-btn${textSize === 1 ? ' active' : ''}`} style={{ fontSize: '11px' }} onClick={() => setTextSize(1)} title="Medium Text">A</button>
             <button className={`reg-base-btn${textSize === 2 ? ' active' : ''}`} style={{ fontSize: '12px' }} onClick={() => setTextSize(2)} title="Large Text">A</button>
-            <span className="panel-chevron" onClick={toggleInfoCollapsed} style={{ cursor: 'pointer', paddingLeft: '4px' }}>{infoCollapsed ? '▶' : '▼'}</span>
+            <span className="panel-chevron" onClick={toggleInfoCollapsed} style={{ cursor: 'pointer', paddingLeft: '4px' }}>{infoCollapsed ? '▾' : '▴'}</span>
           </div>
         </div>
         {!infoCollapsed && (
