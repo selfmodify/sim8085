@@ -20,6 +20,7 @@ import { DriveLoadModal } from './DriveLoadModal.jsx'
 import { GithubSetupModal } from './GithubSetupModal.jsx'
 import { UIDialog } from './UIDialog.jsx'
 import { ChallengesView, CHALLENGES } from './ChallengesView.jsx'
+import { InstructionsView } from './InstructionsView.jsx'
 import { useSimulatorEngine } from './useSimulatorEngine.js'
 import { useGoogleDrive } from './useGoogleDrive.js'
 import { PopoutWindow } from './PopoutWindow.jsx'
@@ -190,7 +191,7 @@ export default function App() {
     touchEndRef.current = null
   }
 
-  const [activeView,     setActiveView]     = useState('simulator') // 'simulator' | 'challenges'
+  const [activeView,     setActiveView]     = useState('simulator') // 'simulator' | 'challenges' | 'breadboard' | 'instructions'
   const [theme, setTheme] = useState(() => localStorage.getItem('sim8085_theme') || 'dracula')
   const [breadboardPoppedOut, setBreadboardPoppedOut] = useState(() => localStorage.getItem('sim8085_breadboard_popped_out') === 'true')
 
@@ -845,6 +846,7 @@ export default function App() {
                 <button className={`view-tab${activeView === 'simulator' ? ' active' : ''}`} onClick={() => handleSetView('simulator')} title="Code editor, memory, and debugger">Simulator</button>
                 <button className={`view-tab${activeView === 'breadboard' ? ' active' : ''} mobile-hidden`} onClick={() => handleSetView('breadboard')} title="Interactive hardware peripherals">Hardware</button>
                 <button className={`view-tab${activeView === 'challenges' ? ' active' : ''}`} onClick={() => handleSetView('challenges')} title="Programming challenges">Challenges</button>
+                <button className={`view-tab${activeView === 'instructions' ? ' active' : ''}`} onClick={() => handleSetView('instructions')} title="Instruction Set Reference">Reference</button>
                 <div style={{ width: 2, height: 20, background: 'var(--border2)', margin: '0 12px', borderRadius: '1px' }} className="mobile-hidden" />
                 <button className="btn mobile-hidden" onClick={() => window.dispatchEvent(new Event('sim-dock-all'))} title="Dock all popped-out windows (F12)">⧉ Dock All</button>
               </div>
@@ -949,6 +951,10 @@ export default function App() {
 
       {activeView === 'challenges' && (
         <ChallengesView onSelect={loadChallenge} onSolution={loadSolution} completedIds={completedChallenges} />
+      )}
+
+      {activeView === 'instructions' && (
+        <InstructionsView />
       )}
 
       <div className="statusbar">
