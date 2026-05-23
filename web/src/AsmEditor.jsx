@@ -55,6 +55,44 @@ const watchHighlightPlugin = ViewPlugin.fromClass(class {
   }
 }, { decorations: v => v.decorations })
 
+const undocMark = Decoration.mark({ class: 'cm-undoc-inst' })
+const UNDOCUMENTED_MNEMONICS = new Set(['ARHL', 'DSUB', 'JK', 'LDHI', 'LDSI', 'LHLX', 'RDEL', 'RSTV', 'SHLX'])
+
+const undocHighlightPlugin = ViewPlugin.fromClass(class {
+  constructor(view) {
+    this.decorations = this.buildDeco(view)
+  }
+  update(update) {
+    if (update.docChanged || update.viewportChanged) {
+      this.decorations = this.buildDeco(update.view)
+    }
+  }
+  buildDeco(view) {
+    const b = new RangeSetBuilder()
+    for (const { from, to } of view.visibleRanges) {
+      const text = view.state.doc.sliceString(from, to)
+      const re = /\b[A-Za-z0-9_]+\b/g
+      let m
+      while ((m = re.exec(text))) {
+        if (!UNDOCUMENTED_MNEMONICS.has(m[0].toUpperCase())) continue
+        const lineStart = text.lastIndexOf('\n', m.index) + 1
+        if (text.slice(lineStart, m.index).includes(';')) continue
+        
+        // Skip if followed by colon (label definition)
+        let isLabel = false
+        for (let i = m.index + m[0].length; i < text.length; i++) {
+          if (text[i] === ':') { isLabel = true; break }
+          if (!/[ \t]/.test(text[i])) break
+        }
+        if (isLabel) continue
+
+        b.add(from + m.index, from + m.index + m[0].length, undocMark)
+      }
+    }
+    return b.finish()
+  }
+}, { decorations: v => v.decorations })
+
 class ErrorGutterMarker extends GutterMarker {
   toDOM() {
     const el = document.createElement('span')
@@ -404,6 +442,7 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
           flashLineField,
           hexHoverTooltip,
           watchHighlightPlugin,
+          undocHighlightPlugin,
           EditorView.theme({
             '&': { height:'100%', fontFamily:'"JetBrains Mono","Fira Code",monospace', fontSize:'15px', color:'var(--text)', backgroundColor:'transparent' },
             '.cm-scroller': { overflow:'auto' },
@@ -423,6 +462,7 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
             '.cm-addr-text': { color: 'var(--text3)', fontSize: '11px', fontFamily: 'var(--mono)' },
             '.cm-addr-bp': { color: 'var(--red)', fontWeight: 700 },
             '.cm-watched-word': { backgroundColor: 'var(--tint-amber)', borderBottom: '1px solid var(--amber)', borderRadius: '2px' },
+            '.cm-undoc-inst, .cm-undoc-inst *': { color: 'var(--amber) !important' },
             '.cm-search': { background:'var(--bg2)', borderTop:'1px solid var(--border)', padding:'4px 8px', gap:'6px' },
             '.cm-search input': { background:'var(--bg)', border:'1px solid var(--border)', color:'var(--text)', borderRadius:'3px', padding:'2px 6px' },
             '.cm-button': { background:'var(--bg3)', border:'1px solid var(--border)', color:'var(--text)', borderRadius:'3px', padding:'2px 8px', cursor:'pointer' },
