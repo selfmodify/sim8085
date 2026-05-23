@@ -41,7 +41,13 @@ export function ExampleMenu({ onLoad }) {
         Examples <span className="exmenu-chevron">{open ? '▴' : '▾'}</span>
       </button>
       {open && (
-        <div ref={dropRef} className="exmenu-dropdown example-menu-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}>
+        <>
+          <div className="mobile-backdrop" onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveCat(null); }} style={{ zIndex: 9998 }} />
+          <div ref={dropRef} className="exmenu-dropdown example-menu-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}>
+          <div className="mobile-menu-hd" onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveCat(null); }}>
+            <span>Examples</span>
+            <span className="close-icon">✕</span>
+          </div>
           {Object.entries(EXAMPLES).map(([cat, programs], i) => (
             <div key={cat}>
               {['Basic', 'Memory', 'I/O'].includes(cat) && <hr className="exmenu-sep" />}
@@ -67,6 +73,7 @@ export function ExampleMenu({ onLoad }) {
             </div>
           ))}
         </div>
+        </>
       )}
     </>
   )

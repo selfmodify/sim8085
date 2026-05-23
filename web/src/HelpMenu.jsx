@@ -24,7 +24,13 @@ export function HelpMenu({ onShowWelcome, onShowShortcuts, onManageGithub }) {
         ❓ Help {open ? '▴' : '▾'}
       </button>
       {open && (
-        <div className="exmenu-dropdown" style={{ right: 0, left: 'auto', top: 'calc(100% + 5px)', minWidth: '200px' }} onClick={() => setOpen(false)}>
+        <>
+          <div className="mobile-backdrop" onClick={(e) => { e.stopPropagation(); setOpen(false); }} />
+          <div className="exmenu-dropdown" style={{ right: 0, left: 'auto', top: 'calc(100% + 5px)', minWidth: '200px' }} onClick={() => setOpen(false)}>
+          <div className="mobile-menu-hd" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+            <span>❓ Help</span>
+            <span className="close-icon">✕</span>
+          </div>
           <button className="exmenu-sub-item" onClick={onShowWelcome}>📖 Welcome guide</button>
           <button className="exmenu-sub-item" onClick={onShowShortcuts}>⌨ Keyboard shortcuts</button>
           <hr className="exmenu-sep" />
@@ -36,6 +42,7 @@ export function HelpMenu({ onShowWelcome, onShowShortcuts, onManageGithub }) {
           <button className="exmenu-sub-item" onClick={() => window.open('./privacy.html', '_blank')}>🔒 Privacy Policy</button>
           <button className="exmenu-sub-item" onClick={() => window.open('./terms.html', '_blank')}>📜 Terms of Service</button>
         </div>
+        </>
       )}
     </div>
   );

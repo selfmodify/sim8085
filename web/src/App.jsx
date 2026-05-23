@@ -70,7 +70,9 @@ function VersionMenu({ onShowDialog }) {
         App Ver: {dateStr} {open ? '▴' : '▾'}
       </button>
       {open && (
-        <div className="exmenu-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 5px)', right: 0, left: 'auto', top: 'auto', minWidth: '220px', padding: '12px 14px', cursor: 'default', zIndex: 1000 }} onClick={e => e.stopPropagation()}>
+        <>
+          <div className="mobile-backdrop" onClick={(e) => { e.stopPropagation(); setOpen(false); }} style={{ zIndex: 999 }} />
+          <div className="exmenu-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 5px)', right: 0, left: 'auto', top: 'auto', minWidth: '220px', padding: '12px 14px', cursor: 'default', zIndex: 1000 }} onClick={e => e.stopPropagation()}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: 1, marginBottom: 4 }}>BUILD DATE</div>
           <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text)', marginBottom: 12 }}>
             {dateStr}
@@ -116,6 +118,7 @@ function VersionMenu({ onShowDialog }) {
             ⚠️ Reset Preferences
           </button>
         </div>
+        </>
       )}
     </div>
   );

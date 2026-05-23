@@ -241,10 +241,13 @@ export function PanelHelp({ panel, wide }) {
     <div className="panel-help-wrap" ref={wrapRef}>
       <button className="panel-help-btn" onClick={toggle} title="Panel help">?</button>
       {show && (
-        <div className={`panel-help-popup${wide ? ' panel-help-popup-wide' : ''}`}
-          style={{ top: popupPos.top, bottom: popupPos.bottom, left: popupPos.left }}>
-          {text}
-        </div>
+        <>
+          <div className="mobile-backdrop" onClick={(e) => { e.stopPropagation(); setPopupPos(null); }} style={{ zIndex: 9998 }} />
+          <div className={`panel-help-popup${wide ? ' panel-help-popup-wide' : ''}`}
+            style={{ top: popupPos.top, bottom: popupPos.bottom, left: popupPos.left }}>
+            {text}
+          </div>
+        </>
       )}
     </div>
   )

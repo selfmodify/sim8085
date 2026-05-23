@@ -39,7 +39,13 @@ export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, on
         <span className="brand-chevron">☰</span><span className="brand-name"> 8085</span>
       </button>
       {open &&
-        <div className="bmenu-dropdown" style={{ overflow: 'visible' }} onMouseLeave={() => setActiveSub(null)}>
+        <>
+          <div className="mobile-backdrop" onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveSub(null); }} />
+          <div className="bmenu-dropdown" style={{ overflow: 'visible' }} onMouseLeave={() => setActiveSub(null)}>
+          <div className="mobile-menu-hd" onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveSub(null); }}>
+            <span>☰ Menu</span>
+            <span className="close-icon">✕</span>
+          </div>
           <div className={`bmenu-item exmenu-cat ${activeSub === 'import' ? 'exmenu-cat-active' : ''}`} onMouseEnter={() => setActiveSub('import')} onClick={() => setActiveSub(activeSub === 'import' ? null : 'import')}>
             <span>⇡  Import</span>
             <span className="exmenu-arrow">▶</span>
@@ -188,6 +194,7 @@ export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, on
             <div>Web port: 2026</div>
           </div>
         </div>
+        </>
       }
     </div>
   )

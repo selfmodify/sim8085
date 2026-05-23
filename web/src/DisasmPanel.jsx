@@ -325,8 +325,10 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
       )}
 
       {ctxMenu && (
-        <div className="ctx-menu" style={{ left: ctxMenu.x, top: ctxMenu.y }}
-          onMouseDown={e => e.stopPropagation()}>
+        <>
+          <div className="mobile-backdrop" onClick={(e) => { e.stopPropagation(); setCtxMenu(null); }} style={{ zIndex: 999 }} />
+          <div className="ctx-menu" style={{ left: ctxMenu.x, top: ctxMenu.y }}
+            onMouseDown={e => e.stopPropagation()}>
           {addrLineMap?.has(ctxMenu.addr) && (
             <button className="ctx-menu-item" onClick={() => { onGotoLine?.(ctxMenu.addr); setCtxMenu(null) }}>
               ✏️ Go to source
@@ -347,6 +349,7 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
             </button>
           )}
         </div>
+        </>
       )}
     </>
   )

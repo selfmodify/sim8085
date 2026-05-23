@@ -38,7 +38,13 @@ export function PanelsMenu({ panels, onToggle }) {
         🪟 Panels <span className="exmenu-chevron">{open ? '▴' : '▾'}</span>
       </button>
       {open && (
-        <div ref={dropRef} className="bmenu-dropdown panels-menu-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, maxHeight: '70vh', overflowY: 'auto' }}>
+        <>
+          <div className="mobile-backdrop" onClick={(e) => { e.stopPropagation(); setOpen(false); }} style={{ zIndex: 9998 }} />
+          <div ref={dropRef} className="bmenu-dropdown panels-menu-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div className="mobile-menu-hd" onClick={(e) => { e.stopPropagation(); setOpen(false); }}>
+            <span>🪟 Panels</span>
+            <span className="close-icon">✕</span>
+          </div>
           {[
             ['regs','Registers'],['pairs','Reg Pairs'],['flags','Flags'],
             ['ints','Interrupts'],['io','I/O Ports'],['memmap','Mem Map'],
@@ -52,6 +58,7 @@ export function PanelsMenu({ panels, onToggle }) {
             </button>
           ))}
         </div>
+        </>
       )}
     </>
   )

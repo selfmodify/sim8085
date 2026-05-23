@@ -549,8 +549,10 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
     <div style={{ position: 'relative', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={elRef} className="editor-inner" />
       {editorCtx && (
-        <div className="ctx-menu" style={{ left: editorCtx.x, top: editorCtx.y }}
-          onMouseDown={e => e.stopPropagation()}>
+        <>
+          <div className="mobile-backdrop" onClick={(e) => { e.stopPropagation(); setEditorCtx(null); }} style={{ zIndex: 999 }} />
+          <div className="ctx-menu" style={{ left: editorCtx.x, top: editorCtx.y }}
+            onMouseDown={e => e.stopPropagation()}>
           <button className="ctx-menu-item" onClick={() => { onAddressClickRef.current?.(editorCtx.addr); setEditorCtx(null) }}>
             📋 Jump to disassembly
           </button>
@@ -561,6 +563,7 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
             💾 Jump to memory location
           </button>
         </div>
+        </>
       )}
     </div>
   )

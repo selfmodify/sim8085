@@ -2550,6 +2550,12 @@ button.build-chip:hover {
 /* ── Mobile tab bar (hidden on desktop) ────────────────────────────── */
 .mobile-tabs { display: none }
 
+/* Mobile menu backdrop (hidden by default on desktop, shown on mobile) */
+.mobile-backdrop { display: none; }
+
+/* Mobile menu explicit header */
+.mobile-menu-hd { display: none; }
+
 /* ── Responsive / mobile layout ────────────────────────────────────── */
 @media (max-width: 700px) {
   /* Topbar: single row — details move into the ☰ brand menu; tabs inline to the right */
@@ -2740,6 +2746,39 @@ button.build-chip:hover {
   .exmenu-cat {
     flex-wrap: wrap;
   }
+
+  @keyframes backdrop-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    background: rgba(0, 0, 0, 0.4);
+    animation: backdrop-fade 0.15s ease-out;
+  }
+
+  .mobile-menu-hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border2);
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .exmenu-dropdown .mobile-menu-hd { margin-top: -4px; }
+  .mobile-menu-hd:active { background: var(--border); }
+  .mobile-menu-hd .close-icon { color: var(--text2); font-size: 14px; }
+
   .exmenu-sub {
     position: relative;
     left: 0; top: 0;
