@@ -223,8 +223,8 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                   if (!panels[key]) return null;
                   const dp = getDragProps(key, centerPanelOrder, setCenterPanelOrder, 'sim8085_center_panels')
                   if (key === 'stack') return <ErrorBoundary key={key}><StackPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-                  if (key === 'callstack') return <ErrorBoundary key={key}><CallStackPanel callStack={engine.callStack} onJump={engine.setMemStart} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-                  if (key === 'trace') return <ErrorBoundary key={key}><TracePanel trace={engine.trace} onClear={() => engine.setTrace([])} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
+                  if (key === 'callstack') return <ErrorBoundary key={key}><CallStackPanel callStack={engine.callStack} symbols={engine.symbols} onJump={engine.setMemStart} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
+                  if (key === 'trace') return <ErrorBoundary key={key}><TracePanel trace={engine.trace} symbols={engine.symbols} onClear={() => engine.setTrace([])} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
                   return null
                 })}
               </div>
@@ -237,7 +237,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
           </div>
           <div className="mem-watch-divider" onMouseDown={onMemWatchDividerDown} />
           <div className="mem-watch-watch" ref={memWatchWatchRef}>
-            <WatchPanel watches={engine.watches} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
+            <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
             <ConsolePanel output={engine.consoleOutput} port={engine.consolePort} onSetPort={engine.changeConsolePort} onClear={() => { sim.simClearConsoleOutput(); engine.setConsoleOutput('') }} theme={theme} popoutCrtProps={popoutCrtProps} />
           </div>
         </div>

@@ -2086,7 +2086,7 @@ button.build-chip:hover {
   background: var(--tint-accent);
   animation: reg-flash .45s ease-out;
 }
-.watch-label { color: var(--accent2); width: 48px; flex-shrink: 0 }
+.watch-label { color: var(--accent2); min-width: 48px; flex-shrink: 0; white-space: nowrap; }
 .watch-val   { color: var(--text); width: 40px; flex-shrink: 0 }
 .watch-dec   { color: var(--text3); flex: 1 }
 .watch-rm    { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 11px; padding: 1px 4px; border-radius: 2px; margin-left: auto }

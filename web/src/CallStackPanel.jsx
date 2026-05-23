@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4 } from './utils.js';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-export function CallStackPanel({ callStack, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+export function CallStackPanel({ callStack, symbols, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('callstack', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_callstack_popped_out') === 'true')
 
@@ -12,19 +12,33 @@ export function CallStackPanel({ callStack, onJump, dragHandleProps, dropTargetP
     localStorage.setItem('sim8085_callstack_popped_out', String(poppedOut))
   }, [poppedOut])
 
+  const addrToLabel = useMemo(() => {
+    const m = new Map()
+    for (const [name, addr] of Object.entries(symbols || {})) m.set(addr, name)
+    return m
+  }, [symbols])
+
   const content = (
     <div className="panel-anim-body" style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
           {callStack.length === 0
             ? <div className="callstack-empty">— empty (step to populate) —</div>
             : <div className="callstack-list" style={poppedOut ? { maxHeight: 'none' } : undefined}>
-                {[...callStack].reverse().map((frame, i) => (
-                  <div key={`${frame.targetAddr}-${frame.callAddr}-${i}`} className={`callstack-row${i === 0 ? ' callstack-top' : ''}`}>
-                    <span className="callstack-target" title="Target address" onClick={() => onJump(frame.targetAddr)}>{hex4(frame.targetAddr)}H</span>
-                    <span className="callstack-arrow">←</span>
-                    <span className="callstack-site" title="Call site" onClick={() => onJump(frame.callAddr)}>{hex4(frame.callAddr)}H</span>
-                    <span className="callstack-ret" title="Return address">ret:{hex4(frame.retAddr)}H</span>
-                  </div>
-                ))}
+                {[...callStack].reverse().map((frame, i) => {
+                  const targetLbl = addrToLabel.get(frame.targetAddr);
+                  const callLbl = addrToLabel.get(frame.callAddr);
+                  return (
+                    <div key={`${frame.targetAddr}-${frame.callAddr}-${i}`} className={`callstack-row${i === 0 ? ' callstack-top' : ''}`}>
+                      <span className="callstack-target" title="Target address" onClick={() => onJump(frame.targetAddr)}>
+                        {hex4(frame.targetAddr)}H{targetLbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({targetLbl})</span>}
+                      </span>
+                      <span className="callstack-arrow">←</span>
+                      <span className="callstack-site" title="Call site" onClick={() => onJump(frame.callAddr)}>
+                        {hex4(frame.callAddr)}H{callLbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({callLbl})</span>}
+                      </span>
+                      <span className="callstack-ret" title="Return address">ret:{hex4(frame.retAddr)}H</span>
+                    </div>
+                  )
+                })}
               </div>
           }
         </div>

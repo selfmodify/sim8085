@@ -252,11 +252,20 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
                   if (m) {
                     const [, addr, s1, hex, rest] = m;
                     const prefix = <><span style={{ color: 'var(--text3)' }}>{addr}</span>{s1}<span style={{ opacity: 0.6 }}>{hex}</span></>;
-                    if (cur) {
-                      const mCur = rest.match(/^([a-zA-Z0-9_]+)(\s+)(.+)$/);
-                      if (mCur) {
-                        return <>{prefix}{mCur[1]}{mCur[2]}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{mCur[3]}</span></>;
-                      }
+                    
+                    const mPart = rest.match(/^([a-zA-Z0-9_]+)(\s+)(.+)$/);
+                    if (mPart) {
+                      const [, mnem, space, operand] = mPart;
+                      const opNodes = operand.split(/([0-9A-Fa-f]{4}H)/).map((part, i) => {
+                        if (i % 2 === 1) {
+                          const val = parseInt(part.slice(0, -1), 16);
+                          const lbl = addrToLabel.get(val);
+                          if (lbl) return <span key={i}>{part} <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}>({lbl})</span></span>;
+                        }
+                        return <span key={i}>{part}</span>;
+                      });
+                      if (cur) return <>{prefix}{mnem}{space}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{opNodes}</span></>;
+                      return <>{prefix}{mnem}{space}{opNodes}</>;
                     }
                     return <>{prefix}{rest}</>;
                   }
@@ -268,7 +277,6 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
               </span>
               {cond && bp && <span className="disasm-cond">{cond}</span>}
               <span style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-                {row.len > 0 && <span className="disasm-cycles" style={{ marginLeft: 0, ...(cur ? { color: 'var(--accent)', fontWeight: 700 } : {}) }} title="Instruction byte size">{row.len}B</span>}
                 {row.cycles > 0 && <span className="disasm-cycles" style={{ marginLeft: 0, ...(cur ? { color: 'var(--accent)', fontWeight: 700 } : {}) }} title="Clock cycles (T-states)">{row.cycles}T</span>}
               </span>
               <span className="disasm-hitcnt" title={hasHit ? "Execution count" : undefined}>

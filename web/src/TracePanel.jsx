@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4, fmtTraceVal, TRACE_REG16 } from './utils.js';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-export function TracePanel({ trace, onClear, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+export function TracePanel({ trace, symbols, onClear, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('trace', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_trace_popped_out') === 'true')
   const [bodyEl, setBodyEl] = useState(null)
@@ -17,14 +17,41 @@ export function TracePanel({ trace, onClear, dragHandleProps, dropTargetProps, i
     localStorage.setItem('sim8085_trace_popped_out', String(poppedOut))
   }, [poppedOut])
 
+  const addrToLabel = useMemo(() => {
+    const m = new Map()
+    for (const [name, addr] of Object.entries(symbols || {})) m.set(addr, name)
+    return m
+  }, [symbols])
+
   const content = (
       <div className="panel-anim-body trace-body" ref={setBodyEl}>
         {trace.length === 0
           ? <div className="trace-empty">Step through code to record execution</div>
-          : trace.map((e, i) => (
+          : trace.map((e, i) => {
+            const lbl = addrToLabel.get(e.addr);
+            const stripped = e.text.replace(/^[0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+/, '').trim();
+            const mPart = stripped.match(/^([a-zA-Z0-9_]+)(\s+)(.+)$/);
+            let opNodes = stripped;
+            
+            if (mPart) {
+              const [, mnem, space, operand] = mPart;
+              opNodes = <>{mnem}{space}{operand.split(/([0-9A-Fa-f]{4}H)/).map((part, idx) => {
+                if (idx % 2 === 1) {
+                  const val = parseInt(part.slice(0, -1), 16);
+                  const l = addrToLabel.get(val);
+                  if (l) return <span key={idx}>{part} <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}>({l})</span></span>;
+                }
+                return <span key={idx}>{part}</span>;
+              })}</>;
+            }
+
+            return (
             <div key={`${e.addr}-${i}`} className="trace-row">
-              <span className="trace-addr">{hex4(e.addr)}</span>
-              <span className="trace-text">{e.text.replace(/^[0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+/, '').trim()}</span>
+              <span className="trace-addr" title={lbl}>{hex4(e.addr)}</span>
+              <span className="trace-text">
+                {lbl && <span style={{ color: 'var(--amber)', marginRight: '6px' }}>{lbl}:</span>}
+                {opNodes}
+              </span>
               {e.changedKeys.length > 0 &&
                 <span className="trace-delta">
                   {e.changedKeys.map(k => {
@@ -39,7 +66,8 @@ export function TracePanel({ trace, onClear, dragHandleProps, dropTargetProps, i
                 </span>
               }
             </div>
-          ))
+            )
+          })
         }
       </div>
   )

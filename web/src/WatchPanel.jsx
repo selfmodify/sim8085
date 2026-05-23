@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import * as sim from './simProxy.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4, fmtWord, fmtByte, BASE_CYCLE } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-export function WatchPanel({ watches, regs, prevRegs, changedAddrs, onAdd, onRemove, dataBps, onToggleBreak, theme, popoutCrtProps }) {
+export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onAdd, onRemove, dataBps, onToggleBreak, theme, popoutCrtProps }) {
   const { regBase, onRegBase } = useSimulator()
   const panelRef = useRef(null)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_watch_popped_out') === 'true')
@@ -16,6 +16,12 @@ export function WatchPanel({ watches, regs, prevRegs, changedAddrs, onAdd, onRem
   useEffect(() => {
     localStorage.setItem('sim8085_watch_popped_out', String(poppedOut))
   }, [poppedOut])
+
+  const addrToLabel = useMemo(() => {
+    const m = new Map()
+    for (const [name, addr] of Object.entries(symbols || {})) m.set(addr, name)
+    return m
+  }, [symbols])
 
   function getValue(w) {
     if (w.type === 'reg') {
@@ -76,6 +82,7 @@ export function WatchPanel({ watches, regs, prevRegs, changedAddrs, onAdd, onRem
               const v = getValue(w)
               const label = w.type === 'reg' ? w.key.toUpperCase() : hex4(w.addr) + 'H'
               const isBrk = w.type === 'mem' && dataBps?.has(w.addr)
+              const sym = w.type === 'mem' ? addrToLabel.get(w.addr) : null
 
               let changed = false
               if (w.type === 'reg' && prevRegs) {
@@ -92,7 +99,10 @@ export function WatchPanel({ watches, regs, prevRegs, changedAddrs, onAdd, onRem
 
               return (
                 <div key={w.type === 'reg' ? `reg-${w.key}` : `mem-${w.addr}`} className={`watch-row${changed ? ' changed' : ''}`}>
-                  <span className="watch-label">{label}</span>
+                  <span className="watch-label" title={sym ? `${label} (${sym})` : label}>
+                    {label}
+                    {sym && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({sym})</span>}
+                  </span>
                   <span className="watch-val">{is16(w) ? fmtWord(v, regBase) : fmtByte(v, regBase)}</span>
                   {(regBase||'hex') === 'hex' && <span className="watch-dec">{v}</span>}
                   {w.type === 'mem' && (
