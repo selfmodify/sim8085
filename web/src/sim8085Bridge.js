@@ -706,7 +706,10 @@ function assemble(source) {
       if (!t) return 0;
       const n = parseNum(t, lineNo);
       if (typeof n === 'number') return n & 0xFF;
-      // label → patch with 0 for now
+          if (typeof n === 'object' && n.val) {
+            patches.push({addr: ptr, label: n.val, lineNo, size: 1});
+            return 0;
+          }
       return 0;
     }
     function getImm16() {
@@ -735,12 +738,12 @@ function assemble(source) {
       // MOV
       case 'MOV': { const r1=getReg(); expect('comma'); const r2=getReg(); emit(0x40|(r1<<3)|r2); break; }
       // MVI
-      case 'MVI': { const r=getReg(); expect('comma'); const v=getImm8(); emit(0x06|(r<<3)); emit(v); break; }
+      case 'MVI': { const r=getReg(); expect('comma'); emit(0x06|(r<<3)); emit(getImm8()); break; }
       // LXI
       case 'LXI': {
-        const r=getReg(); expect('comma'); const v=getImm16();
+        const r=getReg(); expect('comma');
         const op = {8:0x31,0:0x01,2:0x11,4:0x21}[r] ?? 0x01;
-        emit(op); emit16(v); break;
+        emit(op); emit16(getImm16()); break;
       }
       case 'LDA': { emit(0x3A); emit16(getAddr()); break; }
       case 'STA': { emit(0x32); emit16(getAddr()); break; }
@@ -836,9 +839,11 @@ function assemble(source) {
         else if (FLAGS[sn] !== undefined) { emit(FLAGS[sn]); emit(getImm8() & 1); }
         else if (PAIRS[sn] !== undefined) { emit(PAIRS[sn]); emit16(getImm16()); }
         else if (sn === 'MEM') {
+          emit(0x30);
           const addr = getImm16();
+          emit16(addr);
           expect('comma');
-          emit(0x30); emit16(addr); emit(getImm8());
+          emit(getImm8());
         } else {
           errors.push(`Line ${lineNo+1}: unknown ASSERT subject '${sn}'`);
           emit(0x00); // placeholder to avoid misalignment

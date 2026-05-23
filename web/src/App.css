@@ -1313,9 +1313,10 @@ button.build-chip:hover {
 .pair-addr {
   flex: 2; min-width: 0; overflow: hidden;
   color: var(--accent); font-weight: 600; cursor: pointer;
+  white-space: nowrap; text-overflow: ellipsis;
 }
 .pair-addr:hover { color: var(--accent2); text-decoration: underline }
-.pair-content { flex: 1; min-width: 0; overflow: hidden; color: var(--text2); cursor: pointer }
+.pair-content { flex: 1; min-width: 0; overflow: hidden; color: var(--text2); cursor: pointer; white-space: nowrap; text-overflow: ellipsis; }
 .pair-content:hover { color: var(--text); text-decoration: underline }
 /* Binary mode: tighten font so 8/16-char values fit */
 .pair-row.bin { font-size: 11px }

@@ -243,9 +243,6 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
               >
                 {bp ? (cond ? '◆' : '●') : '·'}
               </span>
-              <span className="disasm-heat"
-                title={hasHit ? `${hit.toLocaleString()} hits` : undefined}
-                style={{opacity: hasHit ? Math.max(0.15, hit / currentMax) : 0}} />
               <span className="disasm-text">
                 {(() => {
                   const m = row.text.match(/^([0-9A-Fa-f]{4})(\s+)((?:[0-9A-Fa-f]{2}\s+)+)(.*)$/);
@@ -276,13 +273,18 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
                 })()}
               </span>
               {cond && bp && <span className="disasm-cond">{cond}</span>}
-              <span style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-                {row.cycles > 0 && <span className="disasm-cycles" style={{ marginLeft: 0, ...(cur ? { color: 'var(--accent)', fontWeight: 700 } : {}) }} title="Clock cycles (T-states)">{row.cycles}T</span>}
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="disasm-hitcnt" title={hasHit ? "Execution count" : undefined} style={{ margin: 0, minWidth: '24px', textAlign: 'right' }}>
+                  {hasHit ? fmtCount(hit) : ''}
+                </span>
+                <span className="disasm-heat"
+                  title={hasHit ? `${hit.toLocaleString()} hits` : undefined}
+                  style={{ opacity: hasHit ? Math.max(0.15, hit / currentMax) : 0, margin: 0 }} />
+                {row.cycles > 0 ? (
+                  <span className="disasm-cycles" style={{ margin: 0, minWidth: '24px', textAlign: 'right', ...(cur ? { color: 'var(--accent)', fontWeight: 700 } : {}) }} title="Clock cycles (T-states)">{row.cycles}T</span>
+                ) : <span style={{ minWidth: '24px' }} />}
+                <span className="disasm-pc-arrow" style={{ margin: 0, width: '12px', visibility: cur ? 'visible' : 'hidden' }}>◀</span>
               </span>
-              <span className="disasm-hitcnt" title={hasHit ? "Execution count" : undefined}>
-                {hasHit ? fmtCount(hit) : ''}
-              </span>
-              {cur && <span className="disasm-pc-arrow">◀</span>}
             </div>
             </div>
           )

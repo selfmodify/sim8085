@@ -13,6 +13,7 @@ const setErrorLineEff = StateEffect.define()
 const setActiveLineEff = StateEffect.define()
 const setAddressesEff = StateEffect.define()
 const setWatchedWordsEff = StateEffect.define()
+const setSymbolsEff = StateEffect.define()
 const flashLineEff = StateEffect.define()
 
 const watchMark = Decoration.mark({ class: 'cm-watched-word' })
@@ -210,6 +211,16 @@ const flashLineField = StateField.define({
   provide: f => EditorView.decorations.from(f),
 })
 
+const symbolsState = StateField.define({
+  create: () => new Map(),
+  update(value, tr) {
+    for (const e of tr.effects) {
+      if (e.is(setSymbolsEff)) return e.value
+    }
+    return value
+  }
+})
+
 function getInstWord(state, pos) {
   const line = state.doc.lineAt(pos)
   const text = line.text
@@ -236,6 +247,9 @@ const hexHoverTooltip = hoverTooltip((view, pos, side) => {
   const val = parseInt(word.slice(0, -1), 16)
   if (isNaN(val)) return null
 
+  const symbolsMap = view.state.field(symbolsState, false)
+  const sym = symbolsMap ? symbolsMap.get(val) : null
+
   return {
     pos: line.from + s,
     end: line.from + e,
@@ -244,7 +258,13 @@ const hexHoverTooltip = hoverTooltip((view, pos, side) => {
       const dom = document.createElement("div")
       const bits = val > 0xFF ? 16 : 8
       const binStr = val.toString(2).padStart(bits, '0').match(/.{4}/g).join(' ')
+      const lblHtml = sym ? `
+        <div style="display: flex; gap: 12px;">
+          <span style="color: var(--text3)">LBL:</span>
+          <span style="color: var(--amber); font-weight: 600;">${sym}</span>
+        </div>` : ''
       dom.innerHTML = `<div style="padding: 4px 6px; font-family: var(--mono); font-size: 12px; line-height: 1.6;">
+        ${lblHtml}
         <div style="display: flex; gap: 12px;">
           <span style="color: var(--text3)">DEC:</span>
           <span style="color: var(--accent); font-weight: 600;">${val}</span>
@@ -286,7 +306,7 @@ const asmCompletionSource = (context) => {
   }
 }
 
-export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionDetail, errorLine, activeLine, gotoRef, editorActionsRef, onRunTo, onJumpMem, buildId, lineAddrRef, theme, watchedWords, bps, onToggleBp, onAddressClick, onFormat, onHistoryChange }) {
+export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionDetail, errorLine, activeLine, gotoRef, editorActionsRef, onRunTo, onJumpMem, buildId, lineAddrRef, theme, watchedWords, bps, onToggleBp, onAddressClick, onFormat, onHistoryChange, symbols }) {
   const elRef      = useRef(null)
   const viewRef    = useRef(null)
   const syncing    = useRef(false)
@@ -332,6 +352,13 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
 
   useEffect(() => {
     if (!viewRef.current) return
+    const m = new Map()
+    for (const [name, addr] of Object.entries(symbols || {})) m.set(addr, name)
+    viewRef.current.dispatch({ effects: setSymbolsEff.of(m) })
+  }, [symbols])
+
+  useEffect(() => {
+    if (!viewRef.current) return
     viewRef.current.dispatch({ effects: setErrorLineEff.of(errorLine ?? null) })
   }, [errorLine])
 
@@ -373,6 +400,7 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
           activeLineField,
           activeLineGutterState,
           activeLineGutterExt,
+          symbolsState,
           flashLineField,
           hexHoverTooltip,
           watchHighlightPlugin,

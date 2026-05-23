@@ -915,6 +915,34 @@ sub_rnz:
 
     hlt`,
 
+    'Label Resolution': `; ── ASSEMBLER LABEL RESOLUTION TESTS ───────────────────────────
+; Tests that forward and backward label references correctly patch
+; operand addresses without corrupting the instruction opcodes.
+    org     100H
+    kickoff 100H
+
+start_label:
+; Forward reference LXI
+    lxi h, target_data
+    assert HL, 0205H
+
+; Forward reference MVI (loads low byte of label address)
+    mvi a, target_data
+    assert A, 05H
+
+; Backward reference LXI
+    lxi d, start_label
+    assert DE, 0100H
+
+; Assert MEM with forward label
+    assert MEM, target_data, 42H
+
+    hlt
+
+    org 205H
+target_data:
+    db 42H`,
+
   },
 
   'Basic': {

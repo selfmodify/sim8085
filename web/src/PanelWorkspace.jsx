@@ -171,7 +171,8 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
       errorLine={engine.errorLine} activeLine={engine.addrLineMap?.get(engine.regs?.pc)} onRunTo={engine.runToAddr} onJumpMem={(addr) => { engine.setMemStart(addr & 0xFFF0); setMemFlashReq({ addr, ts: Date.now() }) }} buildId={engine.buildId} lineAddrRef={engine.lineAddrRef} theme={theme} watchedWords={watchedWords}
       bps={engine.bps} onToggleBp={engine.toggleBp}
       onAddressClick={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })}
-      onFormat={formatCode} />
+        onFormat={formatCode}
+        symbols={engine.symbols} />
   );
 
   return (
@@ -249,12 +250,12 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
         {rightPanelOrder.map(key => {
           if (!panels[key]) return null;
           const dp = getDragProps(key, rightPanelOrder, setRightPanelOrder, 'sim8085_right_panels')
-          if (key === 'regs')   return <ErrorBoundary key={key}><RegPanel regs={engine.regs} prev={engine.prevRegs} onJump={engine.setMemStart} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-          if (key === 'pairs')  return <ErrorBoundary key={key}><PairPanel regs={engine.regs} prev={engine.prevRegs} onJump={engine.setMemStart} onMemoryEdited={() => engine.setBuildId(id => id + 1)} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
+          if (key === 'regs')   return <ErrorBoundary key={key}><RegPanel regs={engine.regs} prev={engine.prevRegs} symbols={engine.symbols} onJump={engine.setMemStart} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
+          if (key === 'pairs')  return <ErrorBoundary key={key}><PairPanel regs={engine.regs} prev={engine.prevRegs} symbols={engine.symbols} onJump={engine.setMemStart} onMemoryEdited={() => engine.setBuildId(id => id + 1)} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
           if (key === 'flags')  return <ErrorBoundary key={key}><FlagPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
           if (key === 'ints')   return <ErrorBoundary key={key}><InterruptPanel intState={engine.intState} onAssert={engine.assertInterrupt} onDeassert={engine.deassertInterrupt} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
           if (key === 'io')     return <ErrorBoundary key={key}><IOPortPanel outputPorts={engine.outputPorts} inputPresets={engine.inputPresets} onSetInput={engine.setInputPort} onRemoveInput={engine.removeInputPort} keyQueue={engine.keyQueue} onEnqueueKeys={engine.enqueueKeys} onClearKeyQueue={engine.clearKeyQueue} sid={engine.sid} sod={engine.sod} onSetSID={v => { sim.simSetSID(v); engine.setSid(v); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-          if (key === 'memmap') return <ErrorBoundary key={key}><MemMapPanel regs={engine.regs} programRegion={engine.programRegion} presetAddrs={engine.presetAddrs} onJump={engine.setMemStart} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
+          if (key === 'memmap') return <ErrorBoundary key={key}><MemMapPanel regs={engine.regs} programRegion={engine.programRegion} presetAddrs={engine.presetAddrs} symbols={engine.symbols} onJump={engine.setMemStart} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
           if (key === 'audio')  return <ErrorBoundary key={key}><AudioPanel outputPorts={engine.outputPorts} running={engine.running} onShowDialog={setAppDialog} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
           return null
         })}

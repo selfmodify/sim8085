@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import * as sim from './simProxy.js';
 import { useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
@@ -12,7 +12,7 @@ const PAIR_DEFS = [
   { name: 'HL', hi: 'h', lo: 'l' },
 ]
 
-export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, onJump, onMemoryEdited, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, symbols, onJump, onMemoryEdited, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('pairs', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_pairs_popped_out') === 'true')
@@ -23,6 +23,12 @@ export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, 
   useEffect(() => {
     localStorage.setItem('sim8085_pairs_popped_out', String(poppedOut))
   }, [poppedOut])
+
+  const addrToLabel = useMemo(() => {
+    const m = new Map()
+    for (const [name, addr] of Object.entries(symbols || {})) m.set(addr, name)
+    return m
+  }, [symbols])
 
   function startEdit(key, field, initial) {
     setEditing({ key, field })
@@ -60,6 +66,7 @@ export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, 
         const prevVal = p[hi] !== undefined ? (p[hi] << 8) | p[lo] : undefined
         const mem     = sim.simGetMemory(val, 1)[0] ?? 0
         const changed = prevVal !== undefined && val !== prevVal
+        const lbl     = addrToLabel.get(val)
         const editAddr    = editing?.key === name && editing?.field === 'addr'
         const editContent = editing?.key === name && editing?.field === 'content'
         return (
@@ -73,8 +80,9 @@ export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, 
                   onKeyDown={e => { if (e.key==='Enter') commitEdit(); if (e.key==='Escape') setEditing(null) }} />
               : <span className="pair-addr"
                   onClick={() => { onJump(val & 0xFFF0); startEdit(name, 'addr', hex4(val)) }}
-                  title={`${hex4(val)}H — click to edit pair address, jump memory`}>
+                  title={lbl ? `${hex4(val)}H (${lbl}) — click to edit pair address, jump memory` : `${hex4(val)}H — click to edit pair address, jump memory`}>
                   {fmtWord(val, regBase)}
+                  {lbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({lbl})</span>}
                 </span>
             }
             {editContent
