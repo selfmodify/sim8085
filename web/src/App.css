@@ -2553,7 +2553,7 @@ button.build-chip:hover {
 /* ── Responsive / mobile layout ────────────────────────────────────── */
 @media (max-width: 700px) {
   /* Topbar: single row — details move into the ☰ brand menu; tabs inline to the right */
-  .topbar { height: auto; min-height: 48px; padding: 0 10px 0 10px; flex-wrap: nowrap; gap: 0; align-items: stretch; }
+  .topbar { height: auto; min-height: 48px; padding: 0 10px 0 10px; flex-wrap: nowrap; gap: 12px; align-items: stretch; }
   .engine-chip, .build-chip, .topbar-drive, .view-tabs { display: none !important }
   .brand-name { display: none }
   /* Toolbar: single scrollable row instead of wrapping to two rows */
@@ -2688,7 +2688,7 @@ button.build-chip:hover {
   .console-port-label { font-size: 10px; }
 
   /* Stack the memory and watch sections vertically */
-  .mem-watch-row, .disasm-trace-row { flex-direction: column; height: auto !important; overflow: visible; }
+  .mem-watch-row, .disasm-trace-row { flex: 0 0 auto !important; flex-direction: column; height: auto !important; overflow: visible; }
   .mem-watch-divider { display: none; }
   .mem-watch-mem, .mem-watch-watch, .disasm-trace-stack { 
     flex: 0 0 auto !important; width: 100% !important; min-height: 0; overflow: visible;
@@ -2697,10 +2697,21 @@ button.build-chip:hover {
   /* Simplify the status bar */
   .topbar-filename, .statusbar-label { display: none; }
   .sbar-counter.sc-steps { min-width: auto; text-align: left; }
+  
+  /* Hide the CPU cycle counter (T-states) to save horizontal space on small screens */
+  .sc-cycles, .statusbar-counters .sbar-sep { display: none !important; }
+
+  /* Hide cursor-following instruction help tooltips which get stuck on touch screens */
+  .help-popup { display: none !important; }
 
   /* Accordion submenus for mobile touch screens */
   .bmenu-dropdown, .exmenu-dropdown {
-    max-width: 90vw; 
+    position: fixed !important;
+    top: 54px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
     max-height: calc(100vh - 64px);
     max-height: calc(100dvh - 64px); 
     overflow-y: auto !important; 
@@ -2708,6 +2719,15 @@ button.build-chip:hover {
     background: var(--bg2);
     padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
+
+  /* Ensure panel help popups don't get cut off on narrow screens */
+  .panel-help-popup {
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
   .bmenu-mobile-hide { display: none }
   .bmenu-mobile-only { display: block }
   .exmenu-cat {

@@ -170,7 +170,7 @@ export function BreadboardView({ engine, panels, togglePanel, ppiPos, setPpiPos,
              setLedPos({ x: Math.max(0, Math.round((winWidth / 2 - 150) / 20) * 20), y: 360 });
              setWires(DEFAULT_WIRES);
           }}>⟲ Reset Layout & Wiring</button>
-          {!isPoppedOut && <button className="btn btn-xs" onClick={onPopOut} title="Open hardware view in a secondary monitor window">↗ Pop Out</button>}
+          {!isPoppedOut && <button className="btn btn-xs mobile-hidden" onClick={onPopOut} title="Open hardware view in a secondary monitor window">↗ Pop Out</button>}
         </div>
       </div>
 

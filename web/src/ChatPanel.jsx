@@ -210,7 +210,7 @@ export function ChatPanel({ regs, src, symbols, breakpoints, callStack, onClose,
           <button className="reg-base-btn" onClick={() => setSetupOpen(o => !o)} title="API key settings">⚙</button>
           <PanelHelp panel="AI ASSISTANT" />
           {!isPoppedOut && onPopout && (
-            <button className="reg-base-btn" onClick={onPopout} title="Open in separate window">⧉</button>
+            <button className="reg-base-btn mobile-hidden" onClick={onPopout} title="Open in separate window">⧉</button>
           )}
           {onClose && (
             <button className="chat-float-close" onClick={onClose} title="Close">✕</button>

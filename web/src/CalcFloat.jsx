@@ -57,7 +57,7 @@ export function CalcFloat({ onClose, onPopout, isPoppedOut }) {
         <span><span className="panel-icon">🖩</span>CALCULATOR</span>
         <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: 'auto' }}>
           {!isPoppedOut && onPopout && (
-            <button className="reg-base-btn" onClick={onPopout} title="Open in separate window">⧉</button>
+            <button className="reg-base-btn mobile-hidden" onClick={onPopout} title="Open in separate window">⧉</button>
           )}
           {onClose && (
             <button className="calc-float-close" onClick={onClose} title="Close">✕</button>

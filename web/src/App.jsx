@@ -67,7 +67,7 @@ function VersionMenu({ onShowDialog }) {
   return (
     <div className="bmenu-wrap" ref={wrapRef} style={{ display: 'flex', alignItems: 'center' }}>
       <button className="build-chip" onClick={() => setOpen(o => !o)} title="Simulator web app release version" style={{ marginLeft: '6px', background: open ? 'var(--bg3)' : 'transparent', color: open ? 'var(--text)' : 'var(--text2)' }}>
-        App Ver: {branch ? `${branch}@` : ''}{hash || shortDate} {open ? '▴' : '▾'}
+        App Ver: {dateStr} {open ? '▴' : '▾'}
       </button>
       {open && (
         <div className="exmenu-dropdown" style={{ position: 'absolute', bottom: 'calc(100% + 5px)', right: 0, left: 'auto', top: 'auto', minWidth: '220px', padding: '12px 14px', cursor: 'default', zIndex: 1000 }} onClick={e => e.stopPropagation()}>
@@ -814,8 +814,6 @@ export default function App() {
           <div className="topbar">
             <div className="brand">
               <BrandMenu
-                onShowWelcome={() => { localStorage.removeItem('sim8085_welcomed'); setShowWelcome(true) }}
-                onShowShortcuts={() => setShowShortcuts(true)}
                 onNew={newFile}
                 onImport={() => fileInputRef.current.click()}
                 onLoadFromDrive={loadFromDrive}
@@ -838,7 +836,6 @@ export default function App() {
                 crtContrast={crtContrast} onCrtContrast={v => { setCrtContrast(v); localStorage.setItem(`sim8085_crt_c_${theme}`, v) }}
                 crtGlitch={crtGlitch} onCrtGlitch={() => { const modes = ['off','flicker','static','vsync','hsync','chroma','chaos']; const next = modes[(modes.indexOf(crtGlitch) + 1) % modes.length]; setCrtGlitch(next); localStorage.setItem('sim8085_crt_glitch', next) }}
                 crtVignette={crtVignette} onCrtVignette={v => { setCrtVignette(v); localStorage.setItem('sim8085_crt_vignette', String(v)) }}
-                onManageGithub={() => setShowGithubSetup(true)}
                 panels={panels} onTogglePanel={togglePanel}
                 onBrewCoffee={onBrewCoffee} />
               <div className="view-tabs">

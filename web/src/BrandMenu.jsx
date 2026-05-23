@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { RETRO_THEMES } from './utils.js';
 
-export function BrandMenu({ onShowWelcome, onShowShortcuts, onNew, onImport, onLoadFromDrive, onLoadFromGist, onExport, onExportHex, onExportBin, onSaveToDrive, onSaveAsToDrive, onSaveToGist, onShare, onCalc, onChat, memSize, onMemSize, theme, onTheme, onSetTheme, crtBrightness, onCrtBrightness, crtContrast, onCrtContrast, crtGlitch, onCrtGlitch, crtVignette, onCrtVignette, onManageGithub, panels, onTogglePanel, driveToken, onConnectDrive, onDriveDisconnect, onBrewCoffee }) {
+export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, onExport, onExportHex, onExportBin, onSaveToDrive, onSaveAsToDrive, onSaveToGist, onShare, onCalc, onChat, memSize, onMemSize, theme, onTheme, onSetTheme, crtBrightness, onCrtBrightness, crtContrast, onCrtContrast, crtGlitch, onCrtGlitch, crtVignette, onCrtVignette, panels, onTogglePanel, driveToken, onConnectDrive, onDriveDisconnect, onBrewCoffee }) {
   const [open, setOpen] = useState(false);
   const [activeSub, setActiveSub] = useState(null);
   const wrapRef = useRef(null)
@@ -97,25 +97,6 @@ export function BrandMenu({ onShowWelcome, onShowShortcuts, onNew, onImport, onL
               <div className="exmenu-sub" onClick={e => e.stopPropagation()}>
                 <button className="exmenu-sub-item" onClick={() => { onCalc(); setOpen(false); setActiveSub(null); }}>🖩 Calculator</button>
                 <button className="exmenu-sub-item" onClick={() => { onChat(); setOpen(false); setActiveSub(null); }}>🤖 AI Assistant</button>
-              </div>
-            )}
-          </div>
-
-          <div className={`bmenu-item exmenu-cat bmenu-mobile-only ${activeSub === 'help' ? 'exmenu-cat-active' : ''}`} onMouseEnter={() => setActiveSub('help')} onClick={() => setActiveSub(activeSub === 'help' ? null : 'help')}>
-            <span>❓  Help &amp; Community</span>
-            <span className="exmenu-arrow">▶</span>
-            {activeSub === 'help' && (
-              <div className="exmenu-sub" onClick={e => e.stopPropagation()}>
-                <button className="exmenu-sub-item" onClick={() => { onShowWelcome(); setOpen(false); setActiveSub(null); }}>📖 Welcome guide</button>
-                <button className="exmenu-sub-item" onClick={() => { onShowShortcuts(); setOpen(false); setActiveSub(null); }}>⌨ Keyboard shortcuts</button>
-                <hr className="exmenu-sep" />
-                <button className="exmenu-sub-item" onClick={() => { window.open('https://github.com/selfmodify/sim8085', '_blank'); setOpen(false); setActiveSub(null); }}>⭐ View on GitHub</button>
-                <button className="exmenu-sub-item" onClick={() => { window.open('https://github.com/selfmodify/sim8085/issues/new', '_blank'); setOpen(false); setActiveSub(null); }}>🐛 Report a Bug</button>
-                <button className="exmenu-sub-item" onClick={() => { window.open('https://github.com/selfmodify/sim8085/discussions', '_blank'); setOpen(false); setActiveSub(null); }}>💬 Ask a Question</button>
-                <button className="exmenu-sub-item" onClick={() => { onManageGithub(); setOpen(false); setActiveSub(null); }}>🔑 Manage GitHub API Token</button>
-                <hr className="exmenu-sep" />
-                <button className="exmenu-sub-item" onClick={() => { window.open('./privacy.html', '_blank'); setOpen(false); setActiveSub(null); }}>🔒 Privacy Policy</button>
-                <button className="exmenu-sub-item" onClick={() => { window.open('./terms.html', '_blank'); setOpen(false); setActiveSub(null); }}>📜 Terms of Service</button>
               </div>
             )}
           </div>
