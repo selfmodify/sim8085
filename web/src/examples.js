@@ -943,6 +943,151 @@ start_label:
 target_data:
     db 42H`,
 
+    'Directives & Pseudo-ops': `; ── DIRECTIVES & PSEUDO-OPS TESTS ──────────────────────────
+; Tests EQU, DB (with strings), DW, DS, SETBYTE, and SETWORD.
+    org     100H
+    kickoff 100H
+
+MY_CONST  EQU 55H
+MY_PTR    EQU 0600H
+
+; 1. Test EQU resolution
+    mvi a, MY_CONST
+    assert A, 55H
+    lxi h, MY_PTR
+    assert HL, 0600H
+
+; 2. Test SETBYTE and SETWORD (injects data without advancing PC)
+    setbyte 400H, 0AAH
+    setword 401H, 0BEEFH
+    assert MEM, 400H, 0AAH
+    assert MEM, 401H, 0EFH  ; Little endian low byte
+    assert MEM, 402H, 0BEH  ; Little endian high byte
+
+; 3. Test DB with strings and DS offset
+    lxi h, string_data
+    mov a, m
+    assert A, 41H           ; 'A' = 41H
+    inx h
+    mov a, m
+    assert A, 42H           ; 'B' = 42H
+
+; 4. Test DW with labels
+    lhld pointer_data
+    assert HL, 0500H
+
+    hlt
+
+    org 200H
+string_data:
+    db "AB"                 ; Emits 41H, 42H
+    ds 2                    ; Reserves 2 bytes (202H, 203H)
+pointer_data:
+    dw 0500H                ; Emits 00H, 05H at 204H, 205H`,
+
+    'Math Expressions': `; ── MATH EXPRESSIONS TESTS ───────────────────────────────────────
+; Tests the assembler's evaluation of math operators, parentheses, and $.
+    org     100H
+    kickoff 100H
+
+MASK_1 EQU 0F0H
+MASK_2 EQU 0AH
+
+; 1. Bitwise logic and basic arithmetic
+    mvi a, (MASK_1 | MASK_2) + 1
+    assert A, 0FBH
+
+; 2. Shifts and XOR
+    mvi b, (1 << 4) ^ 0FFH
+    assert B, 0EFH
+
+; 3. Multiplication, Division, and Parentheses
+    lxi h, (10 + 5) * 4 / 3
+    assert HL, 0014H
+
+; 4. Bitwise NOT
+    mvi c, ~0FH
+    assert C, 0F0H
+
+; 5. Current PC reference ($)
+    jmp $ + 5
+    hlt             ; $ + 3 (skipped)
+    hlt             ; $ + 4 (skipped)
+    mvi d, 42H      ; $ + 5 (execution resumes here)
+    assert D, 42H
+
+; 6. Label offsets
+    lxi de, my_data + 2
+    assert DE, 0202H
+
+    hlt
+
+    org 200H
+my_data:
+    db 11H, 22H, 33H, 44H`,
+
+    'Undocumented': `; ── UNDOCUMENTED INSTRUCTIONS TESTS ─────────────────────────────
+; Tests the 9 undocumented Intel 8085 instructions.
+    org     100H
+    kickoff 100H
+
+; 1. DSUB: HL = HL - BC
+    lxi h, 0505H
+    lxi b, 0202H
+    dsub
+    assert HL, 0303H
+    assert CY, 0
+
+; 2. ARHL: Shift right HL, MSB duplicated, LSB to CY
+    stc
+    lxi h, 8003H        ; 1000 0000 0000 0011
+    arhl                ; → 1100 0000 0000 0001, CY=1
+    assert HL, 0C001H
+    assert CY, 1
+
+; 3. RDEL: Rotate DE left through carry
+    stc                 ; CY=1
+    lxi d, 8000H        ; 1000 0000 0000 0000
+    rdel                ; → 0000 0000 0000 0001, CY=1
+    assert DE, 0001H
+    assert CY, 1
+
+; 4. LDHI / LDSI: DE = HL/SP + imm8
+    lxi h, 1000H
+    ldhi 05H
+    assert DE, 1005H
+
+    lxi sp, 2000H
+    ldsi 10H
+    assert DE, 2010H
+
+; 5. SHLX / LHLX: Store/Load HL via address in DE
+    lxi d, 0300H
+    lxi h, 0BEEFH
+    shlx
+    lxi h, 0000H
+    lhlx
+    assert HL, 0BEEFH
+
+; Force undocumented flags for RSTV (bit 1) and JK (bit 5)
+    lxi h, 0022H        ; L = 22H = 0010 0010 (bits 5 and 1)
+    push h
+    pop psw
+
+; 6. JK: Jump on K flag (bit 5)
+    jk jk_target
+    hlt                 ; Should not reach
+
+jk_target:
+; 7. RSTV: Restart on Overflow V flag (bit 1)
+    rstv
+    hlt                 ; Should not reach
+
+    org 0040H
+rstv_target:
+    mvi a, 01H
+    assert A, 01H
+    hlt`,
   },
 
   'Basic': {

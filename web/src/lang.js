@@ -4,10 +4,10 @@ import { completeFromList, snippetCompletion } from '@codemirror/autocomplete'
 import { linter } from '@codemirror/lint'
 
 const ASM8085_MNEMONICS = new Set([
-  'ACI','ADC','ADD','ADI','ANA','ANI','CALL','CC','CM','CMA','CMC','CMP','CNC','CNZ','CP','CPE','CPI','CPO','CZ',
-  'DAA','DAD','DCR','DCX','DI','EI','HLT','IN','INR','INX','JC','JM','JMP','JNC','JNZ','JP','JPE','JPO','JZ',
-  'LDA','LDAX','LHLD','LXI','MOV','MVI','NOP','ORA','ORI','OUT','PCHL','POP','PUSH','RAL','RAR','RC','RET','RIM','RLC',
-  'RM','RNC','RNZ','RP','RPE','RPO','RRC','RST','RZ','SBB','SBI','SHLD','SIM','SPHL','STA','STAX','STC','SUB','SUI',
+  'ACI','ADC','ADD','ADI','ANA','ANI','ARHL','CALL','CC','CM','CMA','CMC','CMP','CNC','CNZ','CP','CPE','CPI','CPO','CZ',
+  'DAA','DAD','DCR','DCX','DI','DSUB','EI','HLT','IN','INR','INX','JC','JK','JM','JMP','JNC','JNZ','JP','JPE','JPO','JZ',
+  'LDA','LDAX','LDHI','LDSI','LHLD','LHLX','LXI','MOV','MVI','NOP','ORA','ORI','OUT','PCHL','POP','PUSH','RAL','RAR','RC','RDEL','RET','RIM','RLC',
+  'RM','RNC','RNZ','RP','RPE','RPO','RRC','RST','RSTV','RZ','SBB','SBI','SHLD','SHLX','SIM','SPHL','STA','STAX','STC','SUB','SUI',
   'XCHG','XRA','XRI','XTHL',
 ])
 const ASM8085_REGS      = new Set(['A','B','C','D','E','H','L','M','SP','PSW'])
@@ -17,8 +17,8 @@ const ASM8085_PSEUDO    = new Set(['KICKOFF','ASSERT','SETBYTE','SETWORD'])
 const ASM8085_UNSUPPORTED = new Set(['IF','ENDIF','MACRO','ENDM'])
 
 const ASM8085_NO_OPERAND = new Set([
-  'CMA','CMC','DAA','DI','EI','HLT','NOP','PCHL','RAL','RAR','RC','RET','RIM','RLC',
-  'RM','RNC','RNZ','RP','RPE','RPO','RRC','RZ','SIM','SPHL','STC','XCHG','XTHL',
+  'ARHL','CMA','CMC','DAA','DI','DSUB','EI','HLT','LHLX','NOP','PCHL','RAL','RAR','RC','RDEL','RET','RIM','RLC',
+  'RM','RNC','RNZ','RP','RPE','RPO','RRC','RSTV','RZ','SHLX','SIM','SPHL','STC','XCHG','XTHL',
   'END'
 ])
 

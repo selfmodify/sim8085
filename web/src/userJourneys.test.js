@@ -402,3 +402,15 @@ describe('Journey: simRun executes multiple steps at once', () => {
     expect(simGetRegisters().pc).toBe(0x104);
   });
 });
+
+// ── Journey 16: Undocumented instructions ───────────────────────────────────
+describe('Journey: undocumented instructions', () => {
+  it('executes DSUB correctly', () => {
+    simAssemble('ORG 100H\nLXI H, 0500H\nLXI B, 0200H\nDSUB\nHLT');
+    simRun(100);
+    const r = simGetRegisters();
+    expect(r.h).toBe(0x03);
+    expect(r.l).toBe(0x00);
+    expect(r.flags & 0x01).toBe(0);
+  });
+});

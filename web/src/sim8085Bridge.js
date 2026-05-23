@@ -153,6 +153,11 @@ function stepOne() {
 
   switch(op) {
     case 0x00: inc=1; break; // NOP
+    case 0x08: { const r = getHL() - getBC(); regs.flags = (regs.flags & ~1) | (r < 0 ? 1 : 0); setHL(r & 0xFFFF); break; } // DSUB
+    case 0x10: { const cy = regs.l & 1; setHL((getHL() >> 1) | ((regs.h & 0x80) << 8)); regs.flags = (regs.flags & ~1) | cy; break; } // ARHL
+    case 0x18: { const cy = getCarry(); const r = (getDE() << 1) | cy; regs.flags = (regs.flags & ~1) | ((r >> 16) & 1); setDE(r & 0xFFFF); break; } // RDEL
+    case 0x28: { setDE((getHL() + memR(pc+1)) & 0xFFFF); inc = 2; break; } // LDHI
+    case 0x38: { setDE((regs.sp + memR(pc+1)) & 0xFFFF); inc = 2; break; } // LDSI
     case 0x76: regs.pc = (pc + 1) & 0xFFFF; status |= HALTED; return false; // HLT — halt-wait; resumes on interrupt
 
     // ── MOV r,r ──────────────────────────────────────────────────────
@@ -441,6 +446,10 @@ function stepOne() {
     case 0xEF: push16(pc+1); regs.pc=0x28; return true;
     case 0xF7: push16(pc+1); regs.pc=0x30; return true;
     case 0xFF: push16(pc+1); regs.pc=0x38; return true;
+    case 0xCB: if ((regs.flags >> 1) & 1) { push16(pc+1); regs.pc = 0x0040; return true; } break; // RSTV
+    case 0xD9: memW(getDE(), regs.l); memW((getDE()+1)&0xFFFF, regs.h); break; // SHLX
+    case 0xED: regs.l = memR(getDE()); regs.h = memR((getDE()+1)&0xFFFF); break; // LHLX
+    case 0xFD: if ((regs.flags >> 5) & 1) { regs.pc = memR16(pc+1); return true; } inc = 3; break; // JK
 
     // ── EI/DI/RIM/SIM/IN/OUT ─────────────────────────────────────────
     case 0xFB: iffNext = true; break;                         // EI
@@ -540,8 +549,14 @@ function assemble(source) {
         if (line[i] === q) i++;
         tokens.push({type:'str', val:s}); continue;
       }
+      const opMatch = line.slice(i).match(/^(<<|>>|[+\-*/()|&^~])/);
+      if (opMatch) {
+        tokens.push({type:'op', val: opMatch[0]});
+        i += opMatch[0].length;
+        continue;
+      }
       let j = i;
-      while (j < line.length && !/[\s,;:]/.test(line[j])) j++;
+      while (j < line.length && !/[\s,;:+\-*/()|&^~<>]/.test(line[j])) j++;
       const tok = line.slice(i,j);
       i = j;
       // Determine if number: starts with digit OR ends with H/#
@@ -576,16 +591,21 @@ function assemble(source) {
   function emit(b) { ram[ptr++] = b & 0xFF; }
   function emit16(w) { emit(w & 0xFF); emit((w>>8) & 0xFF); }
 
-  function parseNum(tok, lineNo) {
-    if (!tok) return null;
-    if (tok.type === 'num') return tok.val;
-    if (tok.type === 'id') {
-      // Try as hex
-      const n = parseInt(tok.val, 16);
-      if (!isNaN(n) && /^[0-9A-F]+$/.test(tok.val)) return n;
-      return tok; // it's a label reference
+  function safeEval(exprTokens, labelMap) {
+    let str = '';
+    for (const t of exprTokens) {
+      if (t.type === 'id') {
+        if (t.val === '$') str += ptr; // $ represents current program counter
+        else if (labelMap[t.val] !== undefined) str += labelMap[t.val];
+        else return null;
+      } else if (t.type === 'num' || t.type === 'op') {
+        str += t.val;
+      } else {
+        return null;
+      }
     }
-    return null;
+    if (!str) return null;
+    try { return new Function('return (' + str + ')')() | 0; } catch (e) { return null; }
   }
 
   // Pass 1 + 2 combined (labels resolved via patches)
@@ -600,6 +620,14 @@ function assemble(source) {
     const next = () => toks[ti++];
     const expect = (type) => { const t=next(); if(t?.type!==type) errors.push(`Line ${lineNo+1}: expected ${type}`); return t; };
 
+    function getExpr() {
+      const expr = [];
+      while (ti < toks.length && toks[ti].type !== 'comma') {
+        expr.push(toks[ti++]);
+      }
+      return expr;
+    }
+
     // Label?
     if (toks[ti]?.type==='id' && toks[ti+1]?.type==='colon') {
       labels[toks[ti].val] = ptr;
@@ -610,13 +638,10 @@ function assemble(source) {
     // EQU: NAME EQU value  (no colon — identifier followed immediately by EQU)
     if (toks[ti]?.type==='id' && toks[ti+1]?.type==='id' && toks[ti+1].val==='EQU') {
       const name = toks[ti].val; ti += 2;
-      const valTok = next();
-      const n = parseNum(valTok, lineNo);
-      if (typeof n === 'object' && n.val && labels[n.val] !== undefined) {
-        labels[name] = labels[n.val];
-      } else {
-        labels[name] = typeof n === 'number' ? n : 0;
-      }
+      const expr = getExpr();
+      const val = safeEval(expr, labels);
+      if (val === null) errors.push(`Line ${lineNo+1}: EQU expressions cannot use forward labels`);
+      else labels[name] = val;
       continue;
     }
 
@@ -625,71 +650,61 @@ function assemble(source) {
 
     // Directives
     if (mnem==='ORG'||mnem==='KICKOFF') {
-      const n = parseNum(next(), lineNo);
-      const addr = (typeof n==='number') ? n : 0;
+      const expr = getExpr();
+      const val = safeEval(expr, labels);
+      const addr = val !== null ? val : 0;
       if (mnem==='ORG') ptr = addr;
       else { entryIP = addr; regs.pc = addr; }
       continue;
     }
     if (mnem==='SETBYTE') {
-      const adrTok = next(); expect('comma'); const valTok = next();
-      const a = typeof parseNum(adrTok)!=='number' ? parseInt(adrTok.val,16) : parseNum(adrTok);
-      const v = parseNum(valTok, lineNo);
-      if (typeof v==='number') { ram[a & 0xFFFF] = v & 0xFF; presetAddrs.add(a & 0xFFFF); }
+      const addrExpr = getExpr(); expect('comma'); const valExpr = getExpr();
+      const a = safeEval(addrExpr, labels);
+      const v = safeEval(valExpr, labels);
+      if (a !== null && v !== null) { ram[a & 0xFFFF] = v & 0xFF; presetAddrs.add(a & 0xFFFF); }
       continue;
     }
     if (mnem==='SETWORD') {
-      const adrTok = next(); expect('comma'); const valTok = next();
-      const a = typeof parseNum(adrTok)!=='number' ? parseInt(adrTok.val,16) : parseNum(adrTok);
-      const v = parseNum(valTok, lineNo);
-      if (typeof v==='number') { ram[a]=v&0xFF; ram[a+1]=(v>>8)&0xFF; presetAddrs.add(a&0xFFFF); presetAddrs.add((a+1)&0xFFFF); }
+      const addrExpr = getExpr(); expect('comma'); const valExpr = getExpr();
+      const a = safeEval(addrExpr, labels);
+      const v = safeEval(valExpr, labels);
+      if (a !== null && v !== null) { ram[a & 0xFFFF] = v & 0xFF; ram[(a+1) & 0xFFFF] = (v >> 8) & 0xFF; presetAddrs.add(a & 0xFFFF); presetAddrs.add((a+1) & 0xFFFF); }
       continue;
     }
     if (mnem==='DB') {
       // DB val [, val ...]  — val may be number, hex, char literal '?', or "string"
-      const emitDbVal = (tok) => {
-        if (!tok) { errors.push(`Line ${lineNo+1}: DB missing value`); return; }
-        if (tok.type === 'str') { for (const ch of tok.val) { ram[ptr++] = ch.charCodeAt(0) & 0xFF; } }
-        else { 
-          const n = parseNum(tok, lineNo); 
-          if (typeof n === 'number') {
-            ram[ptr++] = n & 0xFF;
-          } else if (typeof n === 'object' && n.val) {
-            patches.push({ addr: ptr, label: n.val, lineNo, size: 1 });
-            ram[ptr++] = 0;
-          } else {
-            ram[ptr++] = 0;
-          }
+      const emitDbVal = () => {
+        if (peek()?.type === 'str') { 
+          for (const ch of next().val) { ram[ptr++] = ch.charCodeAt(0) & 0xFF; } 
+        } else { 
+          const expr = getExpr();
+          if (!expr.length) { errors.push(`Line ${lineNo+1}: DB missing value`); return; }
+          const val = safeEval(expr, labels);
+          if (val !== null) { ram[ptr++] = val & 0xFF; }
+          else { patches.push({addr: ptr, expr, lineNo, size: 1}); ram[ptr++] = 0; }
         }
       };
-      emitDbVal(next());
-      while (toks[ti]?.type === 'comma') { ti++; emitDbVal(next()); }
+      emitDbVal();
+      while (toks[ti]?.type === 'comma') { ti++; emitDbVal(); }
       continue;
     }
     if (mnem==='DW') {
-      const emitDwVal = (tok) => {
-        if (!tok) { errors.push(`Line ${lineNo+1}: DW missing value`); return; }
-        const n = parseNum(tok, lineNo);
-        if (typeof n === 'number') {
-          ram[ptr++] = n & 0xFF;
-          ram[ptr++] = (n >> 8) & 0xFF;
-        } else if (typeof n === 'object' && n.val) {
-          patches.push({ addr: ptr, label: n.val, lineNo, size: 2 });
-          ram[ptr++] = 0;
-          ram[ptr++] = 0;
-        } else {
-          ram[ptr++] = 0;
-          ram[ptr++] = 0;
-        }
+      const emitDwVal = () => {
+        const expr = getExpr();
+        if (!expr.length) { errors.push(`Line ${lineNo+1}: DW missing value`); return; }
+        const val = safeEval(expr, labels);
+        if (val !== null) { ram[ptr++] = val & 0xFF; ram[ptr++] = (val >> 8) & 0xFF; }
+        else { patches.push({addr: ptr, expr, lineNo, size: 2}); ram[ptr++] = 0; ram[ptr++] = 0; }
       };
-      emitDwVal(next());
-      while (toks[ti]?.type === 'comma') { ti++; emitDwVal(next()); }
+      emitDwVal();
+      while (toks[ti]?.type === 'comma') { ti++; emitDwVal(); }
       continue;
     }
     if (mnem==='DS') {
       // DS count — reserve count bytes (fill with 0)
-      const n = parseNum(next(), lineNo);
-      const count = typeof n==='number' ? n : 0;
+      const expr = getExpr();
+      const val = safeEval(expr, labels);
+      const count = val !== null ? val : 0;
       for (let i = 0; i < count; i++) ram[ptr++] = 0;
       continue;
     }
@@ -702,36 +717,26 @@ function assemble(source) {
       return REGS[t.val] ?? -1;
     }
     function getImm8() {
-      const t = next();
-      if (!t) return 0;
-      const n = parseNum(t, lineNo);
-      if (typeof n === 'number') return n & 0xFF;
-          if (typeof n === 'object' && n.val) {
-            patches.push({addr: ptr, label: n.val, lineNo, size: 1});
-            return 0;
-          }
+      const expr = getExpr();
+      if (!expr.length) { errors.push(`Line ${lineNo+1}: expected expression`); return 0; }
+      const val = safeEval(expr, labels);
+      if (val !== null) return val & 0xFF;
+      patches.push({addr: ptr, expr, lineNo, size: 1});
       return 0;
     }
     function getImm16() {
-      const t = next();
-      if (!t) return 0;
-      const n = parseNum(t, lineNo);
-      if (typeof n === 'number') return n & 0xFFFF;
-      if (typeof n === 'object' && n.val) {
-        patches.push({addr: ptr, label: n.val, lineNo});
-        return 0;
-      }
+      const expr = getExpr();
+      if (!expr.length) { errors.push(`Line ${lineNo+1}: expected expression`); return 0; }
+      const val = safeEval(expr, labels);
+      if (val !== null) return val & 0xFFFF;
+      patches.push({addr: ptr, expr, lineNo, size: 2});
       return 0;
     }
     function getAddr() { return getImm16(); }
 
     function emitJmp(op) {
-      const t = next();
-      const n = parseNum(t, lineNo);
       emit(op);
-      if (typeof n === 'number') { emit16(n); }
-      else if (t?.type==='id') { patches.push({addr:ptr, label:t.val, lineNo}); emit16(0); }
-      else emit16(0);
+      emit16(getImm16());
     }
 
     switch(mnem) {
@@ -778,6 +783,15 @@ function assemble(source) {
       case 'INX': { const r=getReg(); emit([0x03,0,0x13,0,0x23,0,0,0,0x33][r]??0x03); break; }
       case 'DCX': { const r=getReg(); emit([0x0B,0,0x1B,0,0x2B,0,0,0,0x3B][r]??0x0B); break; }
       case 'DAD': { const r=getReg(); emit([0x09,0,0x19,0,0x29,0,0,0,0x39][r]??0x09); break; }
+      case 'DSUB': emit(0x08); break;
+      case 'ARHL': emit(0x10); break;
+      case 'RDEL': emit(0x18); break;
+      case 'LDHI': emit(0x28); emit(getImm8()); break;
+      case 'LDSI': emit(0x38); emit(getImm8()); break;
+      case 'SHLX': emit(0xD9); break;
+      case 'LHLX': emit(0xED); break;
+      case 'RSTV': emit(0xCB); break;
+      case 'JK':   emitJmp(0xFD); break;
       case 'DAA': emit(0x27); break;
       case 'CMA': emit(0x2F); break;
       case 'CMC': emit(0x3F); break;
@@ -857,13 +871,13 @@ function assemble(source) {
 
   // Apply label patches
   for (const p of patches) {
-    const addr = labels[p.label];
-    if (addr === undefined) {
-      errors.push(`Line ${p.lineNo+1}: undefined label '${p.label}'`);
+    const val = safeEval(p.expr, labels);
+    if (val === null) {
+      errors.push(`Line ${p.lineNo+1}: invalid expression or undefined label`);
     } else {
-      ram[p.addr] = addr & 0xFF;
+      ram[p.addr] = val & 0xFF;
       if (p.size !== 1) {
-        ram[p.addr+1] = (addr >> 8) & 0xFF;
+        ram[p.addr+1] = (val >> 8) & 0xFF;
       }
     }
   }
@@ -1165,17 +1179,17 @@ export function simDisassemble(addr) {
   } else {
     const HI = {
       0xC0:'RNZ',0xC1:'POP B',0xC2:'JNZ ',0xC3:'JMP ',0xC4:'CNZ ',0xC5:'PUSH B',
-      0xC6:'ADI ',0xC7:'RST 0',0xC8:'RZ',0xC9:'RET',0xCA:'JZ ',0xCC:'CZ ',
+      0xC6:'ADI ',0xC7:'RST 0',0xC8:'RZ',0xC9:'RET',0xCA:'JZ ',0xCB:'RSTV',0xCC:'CZ ',
       0xCD:'CALL ',0xCE:'ACI ',0xCF:'RST 1',
       0xD0:'RNC',0xD1:'POP D',0xD2:'JNC ',0xD3:'OUT ',0xD4:'CNC ',0xD5:'PUSH D',
-      0xD6:'SUI ',0xD7:'RST 2',0xD8:'RC',0xD9:'???',0xDA:'JC ',0xDB:'IN ',
+      0xD6:'SUI ',0xD7:'RST 2',0xD8:'RC',0xD9:'SHLX',0xDA:'JC ',0xDB:'IN ',
       0xDC:'CC ',0xDE:'SBI ',0xDF:'RST 3',
       0xE0:'RPO',0xE1:'POP H',0xE2:'JPO ',0xE3:'XTHL',0xE4:'CPO ',0xE5:'PUSH H',
       0xE6:'ANI ',0xE7:'RST 4',0xE8:'RPE',0xE9:'PCHL',0xEA:'JPE ',0xEB:'XCHG',
-      0xEC:'CPE ',0xEE:'XRI ',0xEF:'RST 5',
+      0xEC:'CPE ',0xED:'LHLX',0xEE:'XRI ',0xEF:'RST 5',
       0xF0:'RP',0xF1:'POP PSW',0xF2:'JP ',0xF3:'DI',0xF4:'CP ',0xF5:'PUSH PSW',
       0xF6:'ORI ',0xF7:'RST 6',0xF8:'RM',0xF9:'SPHL',0xFA:'JM ',0xFB:'EI',
-      0xFC:'CM ',0xFE:'CPI ',0xFF:'RST 7',
+      0xFC:'CM ',0xFD:'JK ',0xFE:'CPI ',0xFF:'RST 7',
     };
     name = HI[op] ?? `???`;
   }

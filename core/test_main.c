@@ -416,6 +416,27 @@ static void test_logic_quirks(void) {
 }
 
 /* -----------------------------------------------------------------------
+ * Test 11: Undocumented instructions
+ * --------------------------------------------------------------------- */
+static void test_undocumented(void) {
+    printf("\n[Undocumented instructions]\n");
+
+    sim_init();
+    assemble_and_check(
+        "org 100\n"
+        "kickoff 100\n"
+        "lxi h,0505H\n"
+        "lxi b,0202H\n"
+        "dsub\n"
+        "hlt\n",
+        "DSUB"
+    );
+    sim_run(100);
+    Sim8085Registers r = sim_get_registers();
+    TEST("DSUB 0505H - 0202H"); ASSERT_EQ(r.h, 0x03, "H register");
+}
+
+/* -----------------------------------------------------------------------
  * main
  * --------------------------------------------------------------------- */
 int main(void) {
@@ -433,6 +454,7 @@ int main(void) {
     test_breakpoints();
     test_disassembler();
     test_stack_wrap();
+    test_undocumented();
 
     printf("\n=============================================================\n");
     printf("  Results: %d/%d passed", tests_passed, tests_run);

@@ -51,13 +51,13 @@ static uint8_t g_sod = 0;   /* Serial Output Data (written by SIM bits 6-7) */
 /* T-states per opcode (8085, typical/taken path) */
 static const uint8_t g_tstates[256] = {
  /* 00-07 */ 4,10, 7, 6, 4, 4, 7, 4,
- /* 08-0F */ 4,10, 7, 6, 4, 4, 7, 4,
- /* 10-17 */ 4,10, 7, 6, 4, 4, 7, 4,
- /* 18-1F */ 4,10, 7, 6, 4, 4, 7, 4,
+ /* 08-0F */ 10,10, 7, 6, 4, 4, 7, 4,
+ /* 10-17 */ 7,10, 7, 6, 4, 4, 7, 4,
+ /* 18-1F */ 10,10, 7, 6, 4, 4, 7, 4,
  /* 20-27 */ 4,10,16, 6, 4, 4, 7, 4,
- /* 28-2F */ 4,10,16, 6, 4, 4, 7, 4,
+ /* 28-2F */ 10,10,16, 6, 4, 4, 7, 4,
  /* 30-37 */ 4,10,13, 6,10,10,10, 4,
- /* 38-3F */ 4,10,13, 6, 4, 4, 7, 4,
+ /* 38-3F */ 10,10,13, 6, 4, 4, 7, 4,
  /* 40-7F (MOV r,r=4; MOV r,M/M,r=7; HLT=5) */
     4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4,
@@ -77,13 +77,13 @@ static const uint8_t g_tstates[256] = {
     4, 4, 4, 4, 4, 4, 7, 4,
     4, 4, 4, 4, 4, 4, 7, 4,
  /* C0-C7 */ 12,10,10,10,18,12,7,12,
- /* C8-CF */ 12,10,10,10,18,18,7,12,
+ /* C8-CF */ 12,10,10,12,18,18,7,12,
  /* D0-D7 */ 12,10,10,10,18,12,7,12,
  /* D8-DF */ 12,10,10,10,18,18,7,12,
  /* E0-E7 */ 12,10,10,16,18,12,7,12,
- /* E8-EF */ 12, 6,10, 4,18,18,7,12,
+ /* E8-EF */ 12, 6,10, 4,18,10,7,12,
  /* F0-F7 */ 12,10,10, 4,18,12,7,12,
- /* F8-FF */ 12, 6,10, 4,18,18,7,12,
+ /* F8-FF */ 12, 6,10, 4,18,10,7,12,
 };
 
 /* LED callback - set by the web layer */
@@ -719,6 +719,17 @@ static int _Sim(void) {
 /* Invalid opcode */
 static int _Invalid(void) { SET_STATUS(INVALID_OP|SEVERE_ERROR); return 1; }
 
+/* Undocumented instructions */
+static int _Dsub(void) { dword r = (dword)GetHL() - (dword)GetBC(); SetCarry(r > 0xFFFF ? 1 : 0); SetH((r>>8)&0xFF); SetL(r&0xFF); return 1; }
+static int _Arhl(void) { int cy = GetL() & 1; SetHL((GetHL() >> 1) | ((GetH() & 0x80) << 8)); SetCarry(cy); return 1; }
+static int _Rdel(void) { int cy = GetCarry(); dword r = ((dword)GetDE() << 1) | cy; SetCarry((r >> 16) & 1); SetD((r>>8)&0xFF); SetE(r&0xFF); return 1; }
+static int _Ldhi(void) { SetDE((GetHL() + GetMemByte(GetIP()+1)) & 0xFFFF); return 2; }
+static int _Ldsi(void) { SetDE((GetSP() + GetMemByte(GetIP()+1)) & 0xFFFF); return 2; }
+static int _Rstv(void) { if ((GetFlag() >> 1) & 1) { StackPush(GetIP()+1); SetIP(0x40); return 0; } return 1; }
+static int _Shlx(void) { SetMemByte(GetDE(), GetL()); SetMemByte(GetDE()+1, GetH()); return 1; }
+static int _Lhlx(void) { SetL(GetMemByte(GetDE())); SetH(GetMemByte(GetDE()+1)); return 1; }
+static int _Jk(void)   { if ((GetFlag() >> 5) & 1) { SetIP(GetMemWord(GetIP()+1)); return 0; } return 3; }
+
 /* -----------------------------------------------------------------------
  * System calls (CALL 5 interface - Intel SDK)
  * --------------------------------------------------------------------- */
@@ -859,7 +870,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* 05 */ {_DcrB,   "dcr  b",    str1, DCR_LEN},
 /* 06 */ {_MviB,   "mvi  b,",   str2, MVI_LEN},
 /* 07 */ {_Rlc,    "rlc",       str1, RLC_LEN},
-/* 08 */ {_Invalid,"invalid",   str1, 1},
+/* 08 */ {_Dsub,   "dsub",      str1, 1},
 /* 09 */ {_DadB,   "dad  b",    str1, DAD_LEN},
 /* 0A */ {_LdaxB,  "ldax b",    str1, LDAX_LEN},
 /* 0B */ {_DcxB,   "dcx  b",    str1, DCX_LEN},
@@ -867,7 +878,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* 0D */ {_DcrC,   "dcr  c",    str1, DCR_LEN},
 /* 0E */ {_MviC,   "mvi  c,",   str2, MVI_LEN},
 /* 0F */ {_Rrc,    "rrc",       str1, RRC_LEN},
-/* 10 */ {_Invalid,"invalid",   str1, 1},
+/* 10 */ {_Arhl,   "arhl",      str1, 1},
 /* 11 */ {_LxiD,   "lxi  d,",   str3, LXI_LEN},
 /* 12 */ {_StaxD,  "stax d",    str1, STAX_LEN},
 /* 13 */ {_InxD,   "inx  d",    str1, INX_LEN},
@@ -875,7 +886,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* 15 */ {_DcrD,   "dcr  d",    str1, DCR_LEN},
 /* 16 */ {_MviD,   "mvi  d,",   str2, MVI_LEN},
 /* 17 */ {_Ral,    "ral",       str1, RAL_LEN},
-/* 18 */ {_Invalid,"invalid",   str1, 1},
+/* 18 */ {_Rdel,   "rdel",      str1, 1},
 /* 19 */ {_DadD,   "dad  d",    str1, DAD_LEN},
 /* 1A */ {_LdaxD,  "ldax d",    str1, LDAX_LEN},
 /* 1B */ {_DcxD,   "dcx  d",    str1, DCX_LEN},
@@ -891,7 +902,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* 25 */ {_DcrH,   "dcr  h",    str1, DCR_LEN},
 /* 26 */ {_MviH,   "mvi  h,",   str2, MVI_LEN},
 /* 27 */ {_Daa,    "daa",       str1, DAA_LEN},
-/* 28 */ {_Invalid,"invalid",   str1, 1},
+/* 28 */ {_Ldhi,   "ldhi ",     str2, 2},
 /* 29 */ {_DadH,   "dad  h",    str1, DAD_LEN},
 /* 2A */ {_LHLd,   "lhld ",     str3, LHLD_LEN},
 /* 2B */ {_DcxH,   "dcx  h",    str1, DCX_LEN},
@@ -907,7 +918,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* 35 */ {_DcrM,   "dcr  m",    str1, DCR_LEN},
 /* 36 */ {_MviM,   "mvi  m,",   str2, MVI_LEN},
 /* 37 */ {_Stc,    "stc",       str1, STC_LEN},
-/* 38 */ {_Invalid,"invalid",   str1, 1},
+/* 38 */ {_Ldsi,   "ldsi ",     str2, 2},
 /* 39 */ {_DadSP,  "dad  sp",   str1, DAD_LEN},
 /* 3A */ {_LdA,    "lda  ",     str3, LDA_LEN},
 /* 3B */ {_DcxSP,  "dcx  sp",   str1, DCX_LEN},
@@ -1054,7 +1065,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* C8 */ {_Rz,     "rz",        str1, RET_LEN},
 /* C9 */ {_Ret,    "ret",       str1, RET_LEN},
 /* CA */ {_Jz,     "jz   ",     str3, JMP_LEN},
-/* CB */ {_Invalid,"invalid",   str1, 1},
+/* CB */ {_Rstv,   "rstv",      str1, 1},
 /* CC */ {_Cz,     "cz   ",     str3, CALL_LEN},
 /* CD */ {_Call,   "call ",     str3, CALL_LEN},
 /* CE */ {_Aci,    "aci  ",     str2, ACI_LEN},
@@ -1068,7 +1079,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* D6 */ {_Sui,    "sui  ",     str2, SUI_LEN},
 /* D7 */ {_Rst2,   "rst  2",    str1, RST_LEN},
 /* D8 */ {_Rc,     "rc",        str1, RET_LEN},
-/* D9 */ {_Invalid,"invalid",   str1, 1},
+/* D9 */ {_Shlx,   "shlx",      str1, 1},
 /* DA */ {_Jc,     "jc   ",     str3, JMP_LEN},
 /* DB */ {_In,     "in   ",     str2, IN_LEN},
 /* DC */ {_Cc,     "cc   ",     str3, CALL_LEN},
@@ -1088,7 +1099,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* EA */ {_Jpe,    "jpe  ",     str3, JMP_LEN},
 /* EB */ {_Xchg,   "xchg",      str1, XCHG_LEN},
 /* EC */ {_Cpe,    "cpe  ",     str3, CALL_LEN},
-/* ED */ {_Invalid,"invalid",   str1, 1},
+/* ED */ {_Lhlx,   "lhlx",      str1, 1},
 /* EE */ {_Xri,    "xri  ",     str2, XRI_LEN},
 /* EF */ {_Rst5,   "rst  5",    str1, RST_LEN},
 /* F0 */ {_Rp,     "rp",        str1, RET_LEN},
@@ -1104,7 +1115,7 @@ machine_op_struct mot[MAX_INSTRUCTIONS] = {
 /* FA */ {_Jm,     "jm   ",     str3, JMP_LEN},
 /* FB */ {_Ei,     "ei",        str1, EI_LEN},
 /* FC */ {_Cm,     "cm   ",     str3, CALL_LEN},
-/* FD */ {_Invalid,"invalid",   str1, 1},
+/* FD */ {_Jk,     "jk   ",     str3, 3},
 /* FE */ {_Cpi,    "cpi  ",     str2, CPI_LEN},
 /* FF */ {_Rst7,   "rst  7",    str1, RST_LEN},
 };
