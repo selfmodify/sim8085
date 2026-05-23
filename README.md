@@ -97,7 +97,7 @@ by Vijay Kumar (1995) to a modern web platform.
 
 ## Features
 
-- **Full 8085 instruction set** — all 256 opcodes, correct flag behavior, HLT halt-wait with interrupt resume
+- **Full 8085 instruction set** — all 256 opcodes (including the 9 undocumented instructions), correct flag behavior, HLT halt-wait with interrupt resume
 - **Two-pass assembler** — labels, directives (`ORG`, `KICKOFF`, `SETBYTE`, `SETWORD`), hex literals
 - **Interactive debugger** — step, run, breakpoints (click any instruction in disassembly)
 - **Live register panel** — changed registers highlighted in green after every step

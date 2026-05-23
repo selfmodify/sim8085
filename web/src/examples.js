@@ -2,6 +2,7 @@ export const EXAMPLES = {
 
   'Tests': {
 
+    '--- Data Transfer': null,
     'Data Transfer': `; ── DATA TRANSFER TESTS ──────────────────────────────────────────
 ; Tests: MVI, MOV, MOV M, LDA/STA, LHLD/SHLD, LDAX/STAX, XCHG, LXI
 ; Run → should reach HLT cleanly. Any ASSERT failure stops with error.
@@ -74,7 +75,8 @@ export const EXAMPLES = {
 
     hlt`,
 
-    'ADD & ADC': `; ── ADD & ADC TESTS ──────────────────────────────────────────────
+    '--- Arithmetic': null,
+    'Add & ADC': `; ── ADD & ADC TESTS ──────────────────────────────────────────────
 ; Covers: ADD r, ADD M, ADI, ADC r, ACI, ADD A (self)
 ; Corner cases: carry out, zero result, sign bit, carry propagation
     org     100H
@@ -176,7 +178,7 @@ export const EXAMPLES = {
 
     hlt`,
 
-    'SUB & SBB': `; ── SUB & SBB TESTS ──────────────────────────────────────────────
+    'Sub & SBB': `; ── SUB & SBB TESTS ──────────────────────────────────────────────
 ; Covers: SUB r, SUB A, SUI, SBB r, SBI
 ; Corner cases: borrow (CY=1), zero result, sign, SBB propagation
     org     100H
@@ -255,7 +257,7 @@ export const EXAMPLES = {
 
     hlt`,
 
-    'INC & DEC': `; ── INR / DCR / INX / DCX TESTS ──────────────────────────────────
+    'Inc & Dec': `; ── INR / DCR / INX / DCX TESTS ──────────────────────────────────
 ; KEY RULE: INR/DCR do NOT affect CY.  INX/DCX affect NO flags at all.
     org     100H
     kickoff 100H
@@ -327,7 +329,133 @@ export const EXAMPLES = {
 
     hlt`,
 
-    'AND / OR / XOR': `; ── ANA / ORA / XRA / CMA TESTS ──────────────────────────────────
+    '16-bit Arithmetic': `; ── DAD / INX / DCX / SPHL TESTS ─────────────────────────────────
+; DAD: 16-bit HL = HL + pair.  Only CY is affected.
+; INX / DCX: 16-bit inc/dec.  NO flags are changed at all.
+    org     100H
+    kickoff 100H
+
+; DAD B: HL = HL + BC, no carry
+    lxi h, 1000H
+    lxi b, 0200H
+    dad b
+    assert HL, 1200H
+    assert CY, 0
+
+; DAD B: carry out (overflow 16 bits)
+    lxi h, 0FF00H
+    lxi b, 0200H
+    dad b
+    assert HL, 0100H
+    assert CY, 1
+
+; DAD D
+    lxi h, 2000H
+    lxi d, 3000H
+    dad d
+    assert HL, 5000H
+    assert CY, 0
+
+; DAD H: HL = HL + HL (double HL)
+    lxi h, 1000H
+    dad h
+    assert HL, 2000H
+    assert CY, 0
+
+; DAD SP
+    lxi h, 1000H
+    lxi sp, 2000H
+    dad sp
+    assert HL, 3000H
+
+; INX: wraps FFFFH → 0000H, does NOT affect CY
+    stc              ; CY=1 before INX
+    lxi b, 0FFFFH
+    inx b
+    assert BC, 0000H
+    assert CY, 1     ; CY must be unchanged by INX
+
+; INX: regular increment
+    lxi d, 1234H
+    inx d
+    assert DE, 1235H
+
+; DCX: wraps 0000H → FFFFH
+    lxi h, 0000H
+    dcx h
+    assert HL, 0FFFFH
+
+; DCX: regular decrement
+    lxi b, 0500H
+    dcx b
+    assert BC, 04FFH
+
+; SPHL: SP = HL
+    lxi h, 2000H
+    sphl
+    assert SP, 2000H
+
+    hlt`,
+
+    'DAA (BCD)': `; ── DAA — DECIMAL ADJUST ACCUMULATOR TESTS ───────────────────────
+; After binary addition, DAA corrects A to a valid packed-BCD byte.
+; Two decimal digits per byte: upper nibble = tens, lower = units.
+    org     100H
+    kickoff 100H
+
+; 09 + 01 = BCD 10 (adjust lower nibble: 0AH → 10H)
+    mvi a, 09H
+    adi 01H          ; A = 0AH (invalid BCD)
+    daa              ; → 10H  (BCD 10)
+    assert A, 10H
+    assert CY, 0
+
+; 09 + 09 = BCD 18
+    mvi a, 09H
+    adi 09H          ; A = 12H, AC=1 (9+9=18, lower nibble carries)
+    daa              ; → 18H  (BCD 18)
+    assert A, 18H
+    assert CY, 0
+
+; 08 + 08 = BCD 16 (AC set because 8+8=16, lower nibble carry)
+    mvi a, 08H
+    adi 08H          ; A = 10H, AC=1
+    daa              ; → 16H  (BCD 16)
+    assert A, 16H
+    assert CY, 0
+
+; 47 + 35 = BCD 82
+    mvi a, 47H
+    adi 35H          ; A = 7CH
+    daa              ; → 82H  (BCD 82)
+    assert A, 82H
+    assert CY, 0
+
+; 99 + 01 = BCD 00 with carry (BCD overflow: 99+1=100)
+    mvi a, 99H
+    adi 01H          ; A = 9AH, no binary carry
+    daa              ; → 00H, CY=1  (BCD 100)
+    assert A, 00H
+    assert CY, 1
+
+; 99 + 99 = BCD 98 with carry (199 in BCD)
+    mvi a, 99H
+    adi 99H          ; A = 32H, binary CY=1
+    daa              ; → 98H, CY=1
+    assert A, 98H
+    assert CY, 1
+
+; 50 + 50 = BCD 00 with carry (100 in BCD)
+    mvi a, 50H
+    adi 50H          ; A = A0H
+    daa              ; → 00H, CY=1
+    assert A, 00H
+    assert CY, 1
+
+    hlt`,
+
+    '--- Logic & Bitwise': null,
+    'And / Or / XOR': `; ── ANA / ORA / XRA / CMA TESTS ──────────────────────────────────
 ; KEY FLAG RULES: all logical ops → CY=0 always.
 ; ANA also sets AC=0.  ORA/XRA set AC=0.
     org     100H
@@ -553,6 +681,7 @@ export const EXAMPLES = {
 
     hlt`,
 
+    '--- Branching': null,
     'Jumps': `; ── CONDITIONAL JUMP TESTS ────────────────────────────────────────
 ; Each test uses ORA A or ADI to set flags, then checks the branch.
 ; If a jump fails to take (or takes when it should not), HLT is hit early.
@@ -625,7 +754,7 @@ t10: assert Z, 1
 
     hlt`,
 
-    'CALL & RET': `; ── CALL / RET / CONDITIONAL CALL & RETURN TESTS ─────────────────
+    'Call & Ret': `; ── CALL / RET / CONDITIONAL CALL & RETURN TESTS ─────────────────
 ; CALL pushes PC+3, jumps to subroutine. RET pops and resumes.
     org     100H
     kickoff 100H
@@ -701,7 +830,8 @@ sub_rnz:
     inr b            ; NOT reached
     ret`,
 
-    'PUSH & POP': `; ── PUSH / POP TESTS ──────────────────────────────────────────────
+    '--- Stack & Control': null,
+    'Push & Pop': `; ── PUSH / POP TESTS ──────────────────────────────────────────────
 ; PUSH decrements SP by 2 then writes; POP reads then increments SP by 2.
 ; Data is stored little-endian: low byte at lower address.
     org     100H
@@ -766,7 +896,7 @@ sub_rnz:
 
     hlt`,
 
-    'RIM & SIM': `; ── RIM & SIM TESTS ──────────────────────────────────────────────
+    'Rim & Sim': `; ── RIM & SIM TESTS ──────────────────────────────────────────────
 ; Tests IFF and interrupt mask reflection in RIM
     org     100H
     kickoff 100H
@@ -790,131 +920,7 @@ sub_rnz:
 
     hlt`,
 
-    '16-bit Arithmetic': `; ── DAD / INX / DCX / SPHL TESTS ─────────────────────────────────
-; DAD: 16-bit HL = HL + pair.  Only CY is affected.
-; INX / DCX: 16-bit inc/dec.  NO flags are changed at all.
-    org     100H
-    kickoff 100H
-
-; DAD B: HL = HL + BC, no carry
-    lxi h, 1000H
-    lxi b, 0200H
-    dad b
-    assert HL, 1200H
-    assert CY, 0
-
-; DAD B: carry out (overflow 16 bits)
-    lxi h, 0FF00H
-    lxi b, 0200H
-    dad b
-    assert HL, 0100H
-    assert CY, 1
-
-; DAD D
-    lxi h, 2000H
-    lxi d, 3000H
-    dad d
-    assert HL, 5000H
-    assert CY, 0
-
-; DAD H: HL = HL + HL (double HL)
-    lxi h, 1000H
-    dad h
-    assert HL, 2000H
-    assert CY, 0
-
-; DAD SP
-    lxi h, 1000H
-    lxi sp, 2000H
-    dad sp
-    assert HL, 3000H
-
-; INX: wraps FFFFH → 0000H, does NOT affect CY
-    stc              ; CY=1 before INX
-    lxi b, 0FFFFH
-    inx b
-    assert BC, 0000H
-    assert CY, 1     ; CY must be unchanged by INX
-
-; INX: regular increment
-    lxi d, 1234H
-    inx d
-    assert DE, 1235H
-
-; DCX: wraps 0000H → FFFFH
-    lxi h, 0000H
-    dcx h
-    assert HL, 0FFFFH
-
-; DCX: regular decrement
-    lxi b, 0500H
-    dcx b
-    assert BC, 04FFH
-
-; SPHL: SP = HL
-    lxi h, 2000H
-    sphl
-    assert SP, 2000H
-
-    hlt`,
-
-    'DAA (BCD)': `; ── DAA — DECIMAL ADJUST ACCUMULATOR TESTS ───────────────────────
-; After binary addition, DAA corrects A to a valid packed-BCD byte.
-; Two decimal digits per byte: upper nibble = tens, lower = units.
-    org     100H
-    kickoff 100H
-
-; 09 + 01 = BCD 10 (adjust lower nibble: 0AH → 10H)
-    mvi a, 09H
-    adi 01H          ; A = 0AH (invalid BCD)
-    daa              ; → 10H  (BCD 10)
-    assert A, 10H
-    assert CY, 0
-
-; 09 + 09 = BCD 18
-    mvi a, 09H
-    adi 09H          ; A = 12H, AC=1 (9+9=18, lower nibble carries)
-    daa              ; → 18H  (BCD 18)
-    assert A, 18H
-    assert CY, 0
-
-; 08 + 08 = BCD 16 (AC set because 8+8=16, lower nibble carry)
-    mvi a, 08H
-    adi 08H          ; A = 10H, AC=1
-    daa              ; → 16H  (BCD 16)
-    assert A, 16H
-    assert CY, 0
-
-; 47 + 35 = BCD 82
-    mvi a, 47H
-    adi 35H          ; A = 7CH
-    daa              ; → 82H  (BCD 82)
-    assert A, 82H
-    assert CY, 0
-
-; 99 + 01 = BCD 00 with carry (BCD overflow: 99+1=100)
-    mvi a, 99H
-    adi 01H          ; A = 9AH, no binary carry
-    daa              ; → 00H, CY=1  (BCD 100)
-    assert A, 00H
-    assert CY, 1
-
-; 99 + 99 = BCD 98 with carry (199 in BCD)
-    mvi a, 99H
-    adi 99H          ; A = 32H, binary CY=1
-    daa              ; → 98H, CY=1
-    assert A, 98H
-    assert CY, 1
-
-; 50 + 50 = BCD 00 with carry (100 in BCD)
-    mvi a, 50H
-    adi 50H          ; A = A0H
-    daa              ; → 00H, CY=1
-    assert A, 00H
-    assert CY, 1
-
-    hlt`,
-
+    '--- Assembler Features': null,
     'Label Resolution': `; ── ASSEMBLER LABEL RESOLUTION TESTS ───────────────────────────
 ; Tests that forward and backward label references correctly patch
 ; operand addresses without corrupting the instruction opcodes.
@@ -1026,6 +1032,7 @@ MASK_2 EQU 0AH
 my_data:
     db 11H, 22H, 33H, 44H`,
 
+    '--- Advanced': null,
     'Undocumented': `; ── UNDOCUMENTED INSTRUCTIONS TESTS ─────────────────────────────
 ; Tests the 9 undocumented Intel 8085 instructions.
     org     100H
@@ -1087,6 +1094,38 @@ jk_target:
 rstv_target:
     mvi a, 01H
     assert A, 01H
+    hlt`,
+
+    'Self-Modifying Code': `; ── SELF-MODIFYING CODE TEST ──────────────────────────────────────
+; Demonstrates the CPU executing instructions from RAM that were
+; modified by the program itself at runtime.
+    org     100H
+    kickoff 100H
+
+; 1. Execute the unmodified instruction (NOP)
+    mvi a, 10H
+target1:
+    nop             ; Opcode 00H
+    assert A, 10H   ; A is unchanged
+
+; 2. Modify the instruction at 'target2' from NOP (00H) to ADD B (80H)
+    mvi a, 80H      ; Opcode for ADD B
+    sta target2     ; Overwrite the NOP instruction
+    
+; 3. Execute the modified instruction
+    mvi a, 10H
+    mvi b, 05H
+target2:
+    nop             ; This becomes ADD B (10H + 05H = 15H)
+    assert A, 15H   ; Verify the modified instruction executed
+
+; 4. Modify an immediate operand (MVI C, xx)
+    mvi a, 42H      ; The new immediate value
+    sta target3 + 1 ; Overwrite the operand byte of MVI C
+target3:
+    mvi c, 00H      ; Will become MVI C, 42H
+    assert C, 42H
+
     hlt`,
   },
 
@@ -1335,7 +1374,7 @@ counter:
   },
 
   'Logic': {
-    'AND / OR / XOR': `; Demonstrate bitwise AND, OR, and XOR.
+    'And / Or / XOR': `; Demonstrate bitwise AND, OR, and XOR.
 ; Operands: F0H (11110000) and AAH (10101010)
 ; AND → A0H   OR → FAH   XOR → 5AH
     org 100H
@@ -2151,7 +2190,7 @@ da: dcx d
   },
 
   'Interrupts': {
-    'TRAP (NMI)': `; TRAP — non-maskable interrupt (vector 0024H).
+    'Trap (NMI)': `; TRAP — non-maskable interrupt (vector 0024H).
 ; Fires regardless of EI/DI or SIM masks.
 ; Click FIRE next to TRAP in the Interrupts panel.
 ; Port 01H: main-loop counter.  Port 02H: TRAP event count.
