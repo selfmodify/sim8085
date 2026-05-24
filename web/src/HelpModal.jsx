@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { INST_HELP } from './instHelp.js';
+import { highlightAsm } from './InstructionsView.jsx';
 
 export function HelpModal({ instruction, onClose }) {
   const inst = INST_HELP[instruction]
@@ -24,7 +25,7 @@ export function HelpModal({ instruction, onClose }) {
             <span><span className="help-lbl">Cycles</span>{inst.cycles}</span>
           </div>
           <p className="help-desc">{inst.desc}</p>
-          <pre className="help-ex">{inst.ex}</pre>
+          <pre className="help-ex">{highlightAsm(inst.ex)}</pre>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { INST_HELP } from './instHelp.js';
+import { highlightAsm } from './InstructionsView.jsx';
 
 /**
  * Displays instruction details in a floating, highly dense tooltip.
@@ -24,7 +25,7 @@ export function InstHelpPopup({ mnemonic, x, y, onClose }) {
           <span>FLAGS: {info.flags}</span> · <span>BYTES: {info.bytes}</span> · <span>CYCLES: {info.cycles}</span>
         </div>
         <p className="help-desc">{info.desc}</p>
-        <pre className="help-ex">{info.ex}</pre>
+        <pre className="help-ex">{highlightAsm(info.ex)}</pre>
       </div>
     </div>
   );

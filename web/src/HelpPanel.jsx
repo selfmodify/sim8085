@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { INST_HELP } from './instHelp.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
+import { highlightAsm } from './InstructionsView.jsx';
 
 export function HelpPanel({ instruction, theme, popoutCrtProps }) {
   const panelRef = useRef(null)
@@ -47,7 +48,7 @@ export function HelpPanel({ instruction, theme, popoutCrtProps }) {
             <span><span className="help-lbl">Cycles</span>{inst.cycles}</span>
           </div>
           <p className="help-desc">{inst.desc}</p>
-          <pre className="help-ex">{inst.ex}</pre>
+        <pre className="help-ex">{highlightAsm(inst.ex)}</pre>
         </div>
       ) : (
         <div className="help-empty">Ctrl+click an instruction for details</div>
