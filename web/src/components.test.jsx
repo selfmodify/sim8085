@@ -547,7 +547,7 @@ describe('DisasmPanel', () => {
   it('calls onClearAllBps when ✕ All clicked', () => {
     const onClearAllBps = vi.fn();
     render(<DisasmPanel {...baseDisasmProps} breakpoints={new Map([[0x100, null]])} onClearAllBps={onClearAllBps} />);
-    fireEvent.click(screen.getByTitle('Clear all breakpoints'));
+    fireEvent.click(screen.getByText('✕ All'));
     expect(onClearAllBps).toHaveBeenCalledOnce();
   });
 
@@ -718,5 +718,36 @@ describe('AsmEditor', () => {
     fireEvent.mouseDown(addrText, { bubbles: true });
 
     expect(onAddressClick).toHaveBeenCalledWith(256);
+  });
+});
+
+// ── InstructionsView ─────────────────────────────────────────────────────────
+import { InstructionsView } from './InstructionsView.jsx';
+
+describe('InstructionsView', () => {
+  it('renders the instruction reference header', () => {
+    render(<InstructionsView />);
+    expect(screen.getByText('INSTRUCTION REFERENCE')).toBeInTheDocument();
+  });
+
+  it('renders logical groups by default', () => {
+    render(<InstructionsView />);
+    expect(screen.getByText('DATA TRANSFER')).toBeInTheDocument();
+  });
+
+  it('filters instructions by search query', () => {
+    render(<InstructionsView />);
+    const input = screen.getByPlaceholderText('Search instructions...');
+    fireEvent.change(input, { target: { value: 'LDAX' } });
+    
+    expect(screen.getAllByText('LDAX').length).toBeGreaterThan(0);
+    // Check that an unrelated instruction is hidden
+    expect(screen.queryByText('PCHL')).toBeNull();
+  });
+
+  it('shows Expand All button when toggled to List layout', () => {
+    render(<InstructionsView />);
+    fireEvent.click(screen.getByTitle('List Layout (Alt+4)'));
+    expect(screen.getByText('Expand All')).toBeInTheDocument();
   });
 });

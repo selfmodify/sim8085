@@ -167,6 +167,17 @@ export function InstructionsView() {
   useEffect(() => {
     localStorage.setItem('sim8085_inst_layout', layout);
   }, [layout]);
+
+  useEffect(() => {
+    const onKey = e => {
+      if (e.altKey && e.key === '1') { e.preventDefault(); setActiveTab('logical'); }
+      if (e.altKey && e.key === '2') { e.preventDefault(); setActiveTab('sorted'); }
+      if (e.altKey && e.key === '3') { e.preventDefault(); setLayout('card'); }
+      if (e.altKey && e.key === '4') { e.preventDefault(); setLayout('list'); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
   
   // Flatten, deduplicate, group by starting letter, and sort all mnemonics alphabetically
   const groupedAlphabetical = useMemo(() => {
@@ -237,36 +248,47 @@ export function InstructionsView() {
         }
         .inst-top-btn { position: fixed; bottom: 32px; right: 32px; z-index: 100; width: 44px; height: 44px; border-radius: 50%; padding: 0; justify-content: center; font-size: 18px; box-shadow: var(--shadow-pop); opacity: 0; pointer-events: none; margin-bottom: -10px; transition: opacity 0.2s, margin-bottom 0.2s, background 0.12s, transform 0.06s; }
         .inst-top-btn.show { opacity: 1; pointer-events: auto; margin-bottom: 0; }
+        .inst-sticky-hd { position: sticky; top: -1px; z-index: 10; background: var(--bg); padding-top: 12px; margin-top: -12px; }
       `}</style>
       <div className="challenges-container">
         <div className="challenges-header">
           <h1>INSTRUCTION REFERENCE</h1>
           <p>Complete Intel 8085 instruction set and assembler directives.</p>
-          <div className="view-tabs" style={{ marginLeft: 0, marginTop: '24px', flexWrap: 'wrap', gap: '12px' }}>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button className={`view-tab${activeTab === 'logical' ? ' active' : ''}`} onClick={() => setActiveTab('logical')}>Logical Groups</button>
-              <button className={`view-tab${activeTab === 'sorted' ? ' active' : ''}`} onClick={() => setActiveTab('sorted')}>Alphabetical</button>
-            </div>
-            
-            <input 
-              type="text" 
-              className="chat-input" 
-              placeholder="Search instructions..." 
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{ width: '240px', marginLeft: 'auto', padding: '6px 10px', fontSize: '13px' }}
-            />
-
-            {layout === 'list' && (
-              <div style={{ display: 'flex', gap: '6px', marginRight: '6px', borderRight: '1px solid var(--border)', paddingRight: '12px' }}>
-                <button className="view-tab" onClick={() => setExpandToggle({ state: true, id: Date.now() })}>Expand All</button>
-                <button className="view-tab" onClick={() => setExpandToggle({ state: false, id: Date.now() })}>Collapse All</button>
+          <div className="view-tabs" style={{ marginLeft: 0, marginTop: '24px', flexWrap: 'wrap', gap: '12px', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button className={`view-tab${activeTab === 'logical' ? ' active' : ''}`} title="Logical Groups (Alt+1)" onClick={() => setActiveTab('logical')}>Logical Groups</button>
+                <button className={`view-tab${activeTab === 'sorted' ? ' active' : ''}`} title="Alphabetical (Alt+2)" onClick={() => setActiveTab('sorted')}>Alphabetical</button>
               </div>
-            )}
+              
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input 
+                  type="text" 
+                  className="chat-input" 
+                  placeholder="Search instructions..." 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ width: '220px', padding: '6px 28px 6px 10px', fontSize: '13px' }}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} title="Clear search" style={{ position: 'absolute', right: '4px', background: 'transparent', border: 'none', color: 'var(--text3)', cursor: 'pointer', padding: '4px', fontSize: '14px', lineHeight: 1 }}>✕</button>
+                )}
+              </div>
+            </div>
 
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button className={`view-tab${layout === 'card' ? ' active' : ''}`} onClick={() => setLayout('card')}>▤ Cards</button>
-              <button className={`view-tab${layout === 'list' ? ' active' : ''}`} onClick={() => setLayout('list')}>☰ List</button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+              {layout === 'list' && (
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button className="view-tab" onClick={() => setExpandToggle({ state: true, id: Date.now() })}>Expand All</button>
+                  <button className="view-tab" onClick={() => setExpandToggle({ state: false, id: Date.now() })}>Collapse All</button>
+                  <div style={{ width: '1px', height: '20px', background: 'var(--border)', margin: '0 2px' }} />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button className={`view-tab${layout === 'card' ? ' active' : ''}`} title="Cards Layout (Alt+3)" onClick={() => setLayout('card')}>▤ Cards</button>
+                <button className={`view-tab${layout === 'list' ? ' active' : ''}`} title="List Layout (Alt+4)" onClick={() => setLayout('list')}>☰ List</button>
+              </div>
             </div>
           </div>
         </div>
@@ -278,7 +300,7 @@ export function InstructionsView() {
         {activeTab === 'logical' && filteredCategories.map(category => (
           <div key={category.name} style={{ marginBottom: '32px' }}>
             <div 
-              className="t-panel-hd" 
+              className="t-panel-hd inst-sticky-hd" 
               style={{ marginBottom: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', fontSize: '14px', color: 'var(--text)' }}
             >
               {category.name.toUpperCase()}
@@ -302,7 +324,7 @@ export function InstructionsView() {
         {activeTab === 'sorted' && filteredAlphabetical.map(group => (
           <div key={group.letter} style={{ marginBottom: '32px' }}>
             <div 
-              className="t-panel-hd" 
+              className="t-panel-hd inst-sticky-hd" 
               style={{ marginBottom: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', fontSize: '14px', color: 'var(--text)' }}
             >
               {group.letter}

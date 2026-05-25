@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { PanelHelp } from './PanelHelp.jsx';
+import { highlightAsm } from './InstructionsView.jsx';
 
 // ── Lightweight markdown renderer (assistant messages only) ───────────────────
 function renderInline(text, key = 0) {
@@ -22,7 +23,7 @@ function renderMarkdown(text) {
   for (const seg of segs) {
     if (seg.startsWith('```')) {
       const body = seg.replace(/^```[\w]*\n?/, '').replace(/\n?```$/, '')
-      out.push(<pre key={k++} className="chat-md-pre"><code>{body}</code></pre>)
+      out.push(<pre key={k++} className="chat-md-pre"><code>{highlightAsm(body)}</code></pre>)
       continue
     }
     for (const block of seg.split(/\n{2,}/)) {

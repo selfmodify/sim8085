@@ -169,6 +169,12 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
           if (e.key === 'Escape') setAddrInput('')
         }}
         title="Jump to hex address (Enter)" />
+      <button className="reg-base-btn"
+        onClick={onClearAllBps}
+        disabled={bpList.length === 0}
+        title="Clear all breakpoints">
+        ✕ BPs
+      </button>
       <button className={`reg-base-btn${followPC ? ' active' : ''}`}
         onClick={() => setFollowPC(f => !f)}
         title={followPC ? 'Following PC — click to unlock' : 'Not following PC — click to lock'}>
