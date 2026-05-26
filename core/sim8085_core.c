@@ -1831,6 +1831,33 @@ int ParseLex(void) {
 int GetStringFromCode(unsigned a, char *s) {
     if (a >= MAIN_MEMORY) { strcpy(s, "???"); return 1; }
     uchar op = KIT->cpu.ram[a];
+
+    /* ASSERT override (opcode 0xDD) */
+    if (op == 0xDD) {
+        uchar sub = KIT->cpu.ram[a+1];
+        const char *REG8_N[] = {"B","C","D","E","H","L","M","A"};
+        const char *FLAG_N[] = {"CY","Z","S","P","AC"};
+        const char *PAIR_N[] = {"BC","DE","HL","SP","PC"};
+        char mnemText[64] = "ASSERT ???";
+        int len = 2;
+        if (sub <= 0x07) {
+            uchar val = KIT->cpu.ram[a+2];
+            sprintf(mnemText, "ASSERT %s, %02XH", REG8_N[sub], val); len = 3;
+        } else if (sub >= 0x10 && sub <= 0x14) {
+            uchar val = KIT->cpu.ram[a+2];
+            sprintf(mnemText, "ASSERT %s, %u", FLAG_N[sub-0x10], val & 1); len = 3;
+        } else if (sub >= 0x20 && sub <= 0x24) {
+            word val = (word)(KIT->cpu.ram[a+2] | ((word)KIT->cpu.ram[a+3] << 8));
+            sprintf(mnemText, "ASSERT %s, %04XH", PAIR_N[sub-0x20], val); len = 4;
+        } else if (sub == 0x30) {
+            word a16 = (word)(KIT->cpu.ram[a+2] | ((word)KIT->cpu.ram[a+3] << 8));
+            uchar val = KIT->cpu.ram[a+4];
+            sprintf(mnemText, "ASSERT MEM, %04XH, %02XH", a16, val); len = 5;
+        }
+        sprintf(s, "%04X  DD %02X         %s", a, sub, mnemText);
+        return len;
+    }
+
     int len = mot[op].length;
     switch (len) {
         case 1:

@@ -199,7 +199,7 @@ The 8255 Programmable Peripheral Interface (PPI) is the standard chip used for t
 
 The wires you see running from the 8255 panel to the LED display panel in the Hardware view are a visual representation of this physical hardware architecture. They illustrate that the 8255 PPI acts as the necessary bridge between the 8085 CPU and the raw LED hardware.
 
-Similarly, the wires connecting the 8253 PIT to the 8255 represent the timer/counter outputs being fed back into the general-purpose I/O ports, which is another common educational wiring exercise!`,
+• Similarly, the wires connecting the 8253 PIT to the 8255 represent the timer/counter outputs being fed back into the general-purpose I/O ports, which is another common educational wiring exercise!`,
 }
 
 export function PanelHelp({ panel, wide }) {

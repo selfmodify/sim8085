@@ -218,10 +218,42 @@ export function simGetAllLeds() {
 // ── Disassembly ───────────────────────────────────────────────────────────
 export function simDisassemble(addr) {
   if (!M) return { text: '', len: 1, addr, mnem: '', cycles: 0 };
+  const op = M._sim_read_byte(addr);
+
+  // ASSERT override (opcode 0xDD)
+  if (op === 0xDD) {
+    const sub = M._sim_read_byte(addr + 1) ?? 0;
+    const REG8_N = ['B', 'C', 'D', 'E', 'H', 'L', 'M', 'A'];
+    const FLAG_N = ['CY', 'Z', 'S', 'P', 'AC'];
+    const PAIR_N = ['BC', 'DE', 'HL', 'SP', 'PC'];
+    const h = (n, w = 2) => n.toString(16).toUpperCase().padStart(w, '0');
+    let mnemText = 'ASSERT ???', len = 2;
+    if (sub <= 0x07) {
+      const val = M._sim_read_byte(addr + 2) ?? 0;
+      mnemText = `ASSERT ${REG8_N[sub]}, ${h(val)}H`; len = 3;
+    } else if (sub >= 0x10 && sub <= 0x14) {
+      const val = M._sim_read_byte(addr + 2) ?? 0;
+      mnemText = `ASSERT ${FLAG_N[sub - 0x10]}, ${val & 1}`; len = 3;
+    } else if (sub >= 0x20 && sub <= 0x24) {
+      const val = (M._sim_read_byte(addr + 2) ?? 0) | ((M._sim_read_byte(addr + 3) ?? 0) << 8);
+      mnemText = `ASSERT ${PAIR_N[sub - 0x20]}, ${h(val, 4)}H`; len = 4;
+    } else if (sub === 0x30) {
+      const a16 = (M._sim_read_byte(addr + 2) ?? 0) | ((M._sim_read_byte(addr + 3) ?? 0) << 8);
+      const val = M._sim_read_byte(addr + 4) ?? 0;
+      mnemText = `ASSERT MEM, ${h(a16, 4)}H, ${h(val)}H`; len = 5;
+    }
+    return {
+      text: `${h(addr, 4)}  DD ${h(sub)}         ${mnemText}`,
+      len,
+      addr,
+      mnem: 'ASSERT',
+      cycles: 0,
+    };
+  }
+
   M._wasm_disassemble(addr);
   const text = cstr(M._wasm_disasm_text());
   const len  = M._wasm_disasm_len();
-  const op   = M._sim_read_byte(addr);
   return {
     text,
     len:    Math.max(1, len),
