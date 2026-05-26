@@ -23,6 +23,31 @@ export function TracePanel({ trace, symbols, onClear, dragHandleProps, dropTarge
     return m
   }, [symbols])
 
+  function exportTrace() {
+    if (trace.length === 0) return;
+    const lines = ['Address,Instruction,Changes'];
+    for (const e of trace) {
+      const addr = hex4(e.addr) + 'H';
+      const stripped = e.text.replace(/^[0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+/, '').trim();
+      const text = stripped.replace(/"/g, '""');
+      const changes = e.changedKeys.map(k => {
+        const FLAG_SHORT = { flagS:'S', flagZ:'Z', flagAC:'AC', flagP:'P', flagCY:'CY' };
+        const isFlag = !!FLAG_SHORT[k];
+        const is16 = TRACE_REG16.has(k);
+        const name = FLAG_SHORT[k] ?? k.toUpperCase();
+        const val  = isFlag ? e.regs[k] : fmtTraceVal(k, e.regs[k]);
+        return `${name}=${val}`;
+      }).join(' ');
+      lines.push(`${addr},"${text}","${changes}"`);
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'sim8085_trace.csv';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
   const content = (
       <div className="panel-anim-body trace-body" ref={setBodyEl}>
         {trace.length === 0
@@ -80,6 +105,7 @@ export function TracePanel({ trace, symbols, onClear, dragHandleProps, dropTarge
             <div className="panel-hd" {...dragHandleProps}>
               <span><span className="panel-icon">📜</span>TRACE</span>
               <div className="panel-hd-right">
+                <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={exportTrace} disabled={trace.length === 0} title="Export trace to CSV">⬇ CSV</button>
                 <PanelHelp panel="TRACE" />
               </div>
             </div>
@@ -95,6 +121,7 @@ export function TracePanel({ trace, symbols, onClear, dragHandleProps, dropTarge
               <span><span className="panel-icon">📜</span>TRACE</span>
               <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
+                <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={exportTrace} disabled={trace.length === 0} title="Export trace to CSV">⬇ CSV</button>
                 <button className="reg-base-btn" onClick={onClear} title="Clear trace">✕</button>
                 <PanelHelp panel="TRACE" />
               </div>
@@ -110,6 +137,7 @@ export function TracePanel({ trace, symbols, onClear, dragHandleProps, dropTarge
             <div className="panel-hd">
               <span><span className="panel-icon">📜</span>TRACE</span>
               <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+                <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={exportTrace} disabled={trace.length === 0} title="Export trace to CSV">⬇ CSV</button>
                 <button className="reg-base-btn" onClick={onClear} title="Clear trace">✕</button>
                 <PanelHelp panel="TRACE" />
               </div>

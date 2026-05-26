@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { PanelHelp } from './PanelHelp.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
+import { KNOWN_PORTS } from './IOPortPanel.jsx';
 
 export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme, popoutCrtProps }) {
   const [bodyEl, setBodyEl] = useState(null)
@@ -8,6 +9,8 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_console_popped_out') === 'true')
   const [portBuf, setPortBuf] = useState(() => (port ?? 0).toString(16).toUpperCase().padStart(2,'0'))
   const [height, setHeight] = useState(() => localStorage.getItem('sim8085_console_height') || '')
+  const [showAuto, setShowAuto] = useState(false)
+  const [autoIndex, setAutoIndex] = useState(-1)
 
   useEffect(() => { setPortBuf((port ?? 0).toString(16).toUpperCase().padStart(2,'0')) }, [port])
 
@@ -47,6 +50,50 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
   const safeOutput = output || ''
   const lines = safeOutput.split('\n')
 
+  const autoMatches = portBuf 
+    ? KNOWN_PORTS.filter(p => p.port.startsWith(portBuf) || p.desc.toLowerCase().includes(portBuf.toLowerCase())) 
+    : KNOWN_PORTS;
+
+  const headerInput = (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <span className="console-port-label">OUT</span>
+      <input className="console-port-input" value={portBuf} maxLength={3}
+        onFocus={() => setShowAuto(true)}
+        onBlur={() => { commitPort(); setShowAuto(false); setAutoIndex(-1) }}
+        onChange={e => { setPortBuf(e.target.value.toUpperCase()); setShowAuto(true); setAutoIndex(-1) }}
+        onKeyDown={e => { 
+          if (showAuto && autoMatches.length > 0) {
+            if (e.key === 'ArrowDown') { e.preventDefault(); setAutoIndex(i => (i + 1) % autoMatches.length) }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); setAutoIndex(i => (i - 1 + autoMatches.length) % autoMatches.length) }
+            else if (e.key === 'Enter' && autoIndex >= 0) {
+              e.preventDefault();
+              const p = autoMatches[autoIndex].port;
+              setPortBuf(p);
+              onSetPort(parseInt(p, 16));
+              setShowAuto(false); setAutoIndex(-1);
+              e.target.blur();
+              return;
+            }
+          }
+          if (e.key === 'Enter') { commitPort(); e.target.blur() }
+          if (e.key === 'Escape') { setShowAuto(false); setAutoIndex(-1) }
+        }}
+        title="Port number (hex) — bytes written here appear as ASCII text" />
+      <span className="console-port-label">H</span>
+      {showAuto && autoMatches.length > 0 && (
+        <div className="ctx-menu" style={{ position: 'absolute', top: '100%', right: 0, minWidth: 160, marginTop: 4, zIndex: 100, maxHeight: 180 }}>
+          {autoMatches.map((m, i) => (
+            <div key={m.port} ref={el => { if (el && autoIndex === i) el.scrollIntoView({ block: 'nearest' }) }} className="ctx-menu-item" style={{ display: 'flex', gap: '8px', padding: '4px 8px', background: autoIndex === i ? 'var(--bg3)' : undefined, color: autoIndex === i ? 'var(--text)' : undefined }}
+              onMouseDown={e => { e.preventDefault(); setPortBuf(m.port); onSetPort(parseInt(m.port, 16)); setShowAuto(false); setAutoIndex(-1); }}>
+              <span style={{ color: 'var(--amber)', width: 16 }}>{m.port}</span>
+              <span style={{ color: 'var(--text3)', whiteSpace: 'nowrap' }}>{m.desc}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
   const content = (
       <div className="console-body" ref={setBodyEl} style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
         {safeOutput === ''
@@ -82,13 +129,7 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
               <span><span className="panel-icon">🖥</span>CONSOLE</span>
               <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
-                <span className="console-port-label">OUT</span>
-                <input className="console-port-input" value={portBuf} maxLength={2}
-                  onChange={e => setPortBuf(e.target.value.toUpperCase())}
-                  onBlur={commitPort}
-                  onKeyDown={e => { if (e.key === 'Enter') { commitPort(); e.target.blur() } }}
-                  title="Port number (hex) — bytes written here appear as ASCII text" />
-                <span className="console-port-label">H</span>
+                {headerInput}
                 <button className="reg-base-btn" onClick={onClear} title="Clear console output">✕</button>
                 <PanelHelp panel="CONSOLE" />
               </div>
@@ -103,13 +144,7 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
             <div className="panel-hd">
               <span><span className="panel-icon">🖥</span>CONSOLE</span>
               <div className="panel-hd-right" style={{ marginLeft: 'auto' }}>
-                <span className="console-port-label">OUT</span>
-                <input className="console-port-input" value={portBuf} maxLength={2}
-                  onChange={e => setPortBuf(e.target.value.toUpperCase())}
-                  onBlur={commitPort}
-                  onKeyDown={e => { if (e.key === 'Enter') { commitPort(); e.target.blur() } }}
-                  title="Port number (hex) — bytes written here appear as ASCII text" />
-                <span className="console-port-label">H</span>
+                {headerInput}
                 <button className="reg-base-btn" onClick={onClear} title="Clear console output">✕</button>
                 <PanelHelp panel="CONSOLE" />
               </div>

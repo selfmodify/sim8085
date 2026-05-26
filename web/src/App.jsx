@@ -252,7 +252,7 @@ export default function App() {
 
   const {
     driveFiles, setDriveFiles, driveToken, driveLoading, driveSaveStatus,
-    connectDrive, handleDriveDisconnect, saveToDrive, saveAsToDrive,
+    connectDrive, handleDriveDisconnect, saveToDrive, saveAsToDrive, savePrefs, loadPrefs,
     loadFromDrive, fetchDriveFile, deleteDriveFile
   } = useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, setActiveChallenge, setAppDialog })
 
@@ -337,6 +337,21 @@ export default function App() {
     initApp()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (driveToken) {
+      const doLoadPrefs = async () => {
+        const prefs = await loadPrefs();
+        if (prefs?.completedChallenges) {
+          setCompletedChallenges(s => {
+            const merged = new Set([...s, ...prefs.completedChallenges]);
+            try { localStorage.setItem('sim8085_completed', JSON.stringify([...merged])) } catch {}
+            return merged;
+          });
+        }
+      };
+      doLoadPrefs();
+    }
+  }, [driveToken, loadPrefs]);
   const hotkeysRef = useRef(null)
   useEffect(() => { hotkeysRef.current = { handleBuild, handleReset, doStep: engine.doStep, doStepOver: engine.doStepOver, doStepOut: engine.doStepOut, handleRun: engine.handleRun, running: engine.running, appState: engine.appState, saveToDrive, driveToken, setMsg: engine.setMsg } })
   useEffect(() => {
@@ -376,6 +391,9 @@ export default function App() {
         setCompletedChallenges(s => {
           const next = new Set(s); next.add(activeChallenge.id)
           try { localStorage.setItem('sim8085_completed', JSON.stringify([...next])) } catch {}
+          if (driveToken) {
+            savePrefs({ completedChallenges: [...next] });
+          }
           return next
         })
       } else {
@@ -383,7 +401,7 @@ export default function App() {
         engine.setMsg(`❌ Challenge Failed: Output is incorrect. Keep trying!`)
       }
     }
-  }, [engine.haltTrigger, activeChallenge, challengeResult])
+  }, [engine.haltTrigger, activeChallenge, challengeResult, driveToken, savePrefs])
 
   function lsSet(key, val) { try { localStorage.setItem(key, val) } catch (e) { if (import.meta.env.DEV) console.warn('localStorage write failed:', e) } }
   useEffect(() => { lsSet('sim8085_bps', JSON.stringify([...engine.bps.entries()])) }, [engine.bps])

@@ -49,14 +49,14 @@ describe('FlagPanel', () => {
   const baseRegs = { flagS: 0, flagZ: 0, flagAC: 0, flagP: 0, flagCY: 0 };
 
   it('renders all five flag labels', () => {
-    render(<FlagPanel regs={baseRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
+    withCtx(<FlagPanel regs={baseRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
     ['S', 'Z', 'AC', 'P', 'CY'].forEach(label => {
       expect(screen.getByText(label)).toBeInTheDocument();
     });
   });
 
   it('shows flag value 0 when all flags clear', () => {
-    render(<FlagPanel regs={baseRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
+    withCtx(<FlagPanel regs={baseRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
     // Panel starts expanded (defaultCollapsed=false, no localStorage entry)
     expect(document.querySelector('.flags-row')).not.toBeNull();
     const vals = document.querySelectorAll('.flag-val');
@@ -66,7 +66,7 @@ describe('FlagPanel', () => {
 
   it('shows flag-on class for set flags', () => {
     const setRegs = { ...baseRegs, flagZ: 1, flagCY: 1 };
-    render(<FlagPanel regs={setRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
+    withCtx(<FlagPanel regs={setRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
     // Panel starts expanded (defaultCollapsed=false) — no click needed
     const flagDivs = document.querySelectorAll('.flag');
     const onFlags = [...flagDivs].filter(d => d.classList.contains('flag-on'));
@@ -74,7 +74,7 @@ describe('FlagPanel', () => {
   });
 
   it('collapses and expands on header click', () => {
-    render(<FlagPanel regs={baseRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
+    withCtx(<FlagPanel regs={baseRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
     // Panel starts expanded (defaultCollapsed=false)
     expect(document.querySelector('.flags-row')).not.toBeNull();
     // Click to collapse
@@ -83,6 +83,13 @@ describe('FlagPanel', () => {
     // Click to expand again
     fireEvent.click(screen.getByText('FLAGS'));
     expect(document.querySelector('.flags-row')).not.toBeNull();
+  });
+
+  it('calls onShowDialog when flag is clicked to warn user', () => {
+    const onShowDialog = vi.fn();
+    withCtx(<FlagPanel regs={baseRegs} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />, { onShowDialog });
+    fireEvent.click(document.querySelectorAll('.flag')[0]);
+    expect(onShowDialog).toHaveBeenCalled();
   });
 });
 
@@ -251,8 +258,7 @@ describe('WatchPanel', () => {
     const watches = [{ type: 'mem', addr: 0x0300 }];
     withCtx(<WatchPanel watches={watches} regs={baseRegs8} onAdd={vi.fn()} onRemove={vi.fn()} dataBps={new Set()} onToggleBreak={vi.fn()} />);
     expect(screen.getByText('0300H')).toBeInTheDocument();
-    // Memory is shown as 16-bit word: fmtWord(0x55, 'hex') = '0055'
-    expect(screen.getByText('0055')).toBeInTheDocument();
+    expect(screen.getByText('55')).toBeInTheDocument();
   });
 
   it('calls onRemove with correct index when ✕ is clicked', () => {

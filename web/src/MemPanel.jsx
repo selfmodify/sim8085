@@ -5,6 +5,29 @@ import { hex2, hex4 } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
+const PAIR_KEYS = { bc: ['b','c'], de: ['d','e'], hl: ['h','l'] };
+const REG_NAMES = new Set(['a','b','c','d','e','h','l','pc','sp','flags','bc','de','hl']);
+
+function parseAddrExpr(s, regs) {
+  if (!s) return NaN;
+  s = s.toLowerCase().replace(/\s+/g, '');
+  const mathMatch = s.match(/^([a-z0-9]+)([+-])([0-9a-f]+h?)$/);
+  let baseStr = s;
+  let offset = 0;
+  if (mathMatch) {
+    baseStr = mathMatch[1];
+    offset = parseInt(mathMatch[3].replace(/h$/, ''), 16);
+    if (mathMatch[2] === '-') offset = -offset;
+  }
+  let addr;
+  if (PAIR_KEYS[baseStr]) addr = (regs[PAIR_KEYS[baseStr][0]] << 8) | regs[PAIR_KEYS[baseStr][1]];
+  else if (REG_NAMES.has(baseStr)) addr = regs[baseStr];
+  else if (/^[0-9a-f]+h?$/.test(baseStr)) addr = parseInt(baseStr.replace(/h$/, ''), 16);
+  else return NaN;
+  
+  return (addr + offset) & 0xFFFF;
+}
+
 export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, programRegion, presetAddrs, onMemoryEdited, memVisibleRangeRef, flashReq, theme, popoutCrtProps }) {
   const { onShowDialog } = useSimulator()
   const memCacheRef = useRef(null) // { buildId, data: Uint8Array } — avoid re-fetching 64KB on each search
@@ -39,19 +62,17 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   }, [poppedOut])
 
   const searchMatchSet  = useMemo(() => new Set(searchMatches), [searchMatches])
-  const previewSet = useMemo(() => {
+  const previewRange = useMemo(() => {
     let fromStr, toStr
     if (showFill) { fromStr = fillFrom; toStr = fillTo }
     else if (showExport) { fromStr = exportFrom; toStr = exportTo }
-    else return new Set()
-    const from = parseInt(fromStr, 16), to = parseInt(toStr, 16)
-    if (isNaN(from) || isNaN(to)) return new Set()
+    else return null
+    const from = parseAddrExpr(fromStr, regs), to = parseAddrExpr(toStr, regs)
+    if (isNaN(from) || isNaN(to)) return null
     const start = Math.min(from, to) & 0xFFFF
     const end   = Math.min(Math.max(from, to) & 0xFFFF, 0xFFFF)
-    const s = new Set()
-    for (let a = start; a <= end; a++) s.add(a)
-    return s
-  }, [showFill, fillFrom, fillTo, showExport, exportFrom, exportTo])
+    return { start, end }
+  }, [showFill, fillFrom, fillTo, showExport, exportFrom, exportTo, regs])
 
   useEffect(() => { if (!addrFocused.current) setAddrBuf(hex4(memStart)) }, [memStart])
 
@@ -183,8 +204,8 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   }
 
   function runFill() {
-    const from = parseInt(fillFrom, 16)
-    const to   = parseInt(fillTo, 16)
+    const from = parseAddrExpr(fillFrom, regs)
+    const to   = parseAddrExpr(fillTo, regs)
     const val  = parseInt(fillVal, 16)
     if (isNaN(from) || isNaN(to) || isNaN(val)) return
     const start = Math.min(from, to) & 0xFFFF
@@ -195,8 +216,8 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   }
 
   function runExport() {
-    const from = parseInt(exportFrom, 16)
-    const to   = parseInt(exportTo, 16)
+    const from = parseAddrExpr(exportFrom, regs)
+    const to   = parseAddrExpr(exportTo, regs)
     if (isNaN(from) || isNaN(to)) return
     const start = Math.min(from, to) & 0xFFFF
     const end   = Math.min(Math.max(from, to) & 0xFFFF, 0xFFFF)
@@ -239,13 +260,13 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
         <input
           className="mem-cur-addr"
           value={addrBuf}
-          maxLength={4}
           spellCheck={false}
+          style={{ width: addrBuf.length > 4 ? `${addrBuf.length + 1}ch` : 44 }}
           onChange={e => setAddrBuf(e.target.value.toUpperCase())}
           onFocus={e => { addrFocused.current = true; e.target.select() }}
           onBlur={() => { addrFocused.current = false; setAddrBuf(hex4(memStart)) }}
           onKeyDown={e => {
-            if (e.key === 'Enter') { const v = parseInt(addrBuf, 16); if (!isNaN(v)) manualJump(v & 0xFFF0); e.target.blur() }
+            if (e.key === 'Enter') { const v = parseAddrExpr(addrBuf, regs); if (!isNaN(v)) manualJump(v & 0xFFF0); e.target.blur() }
             if (e.key === 'Escape') { setAddrBuf(hex4(memStart)); e.target.blur() }
           }}
         />
@@ -294,11 +315,11 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
       {showFill && (
         <div className="mem-toolbar mem-toolbar-fill">
           <span className="mem-toolbar-lbl">FILL</span>
-          <input className="mem-toolbar-input" placeholder="0000" maxLength={4} style={{width:46}}
+          <input className="mem-toolbar-input" placeholder="0000, HL…" style={{width:76}}
             autoFocus
             value={fillFrom} onChange={e => setFillFrom(e.target.value.toUpperCase())} title="Start address" />
           <span className="mem-toolbar-lbl">–</span>
-          <input className="mem-toolbar-input" placeholder="00FF" maxLength={4} style={{width:46}}
+          <input className="mem-toolbar-input" placeholder="00FF, SP-2…" style={{width:76}}
             value={fillTo} onChange={e => setFillTo(e.target.value.toUpperCase())} title="End address" />
           <span className="mem-toolbar-lbl">with value</span>
           <input className="mem-toolbar-input" placeholder="00" maxLength={2} style={{width:30}}
@@ -309,11 +330,11 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
       {showExport && (
         <div className="mem-toolbar mem-toolbar-fill">
           <span className="mem-toolbar-lbl">EXPORT</span>
-          <input className="mem-toolbar-input" placeholder="0000" maxLength={4} style={{width:46}}
+          <input className="mem-toolbar-input" placeholder="0000, HL…" style={{width:76}}
             autoFocus
             value={exportFrom} onChange={e => setExportFrom(e.target.value.toUpperCase())} title="Start address" />
           <span className="mem-toolbar-lbl">–</span>
-          <input className="mem-toolbar-input" placeholder="00FF" maxLength={4} style={{width:46}}
+          <input className="mem-toolbar-input" placeholder="00FF, SP-2…" style={{width:76}}
             value={exportTo} onChange={e => setExportTo(e.target.value.toUpperCase())} title="End address" />
           <button className="mem-btn" onClick={runExport}>Download .bin</button>
         </div>
@@ -345,7 +366,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
                     const isPreset   = !isPC && !isSP && !isCode && presetAddrs?.has(addr)
                     const isMatchCur = searchMatches.length > 0 && addr === searchMatches[searchIdx]
                     const isMatch    = !isMatchCur && searchMatchSet.has(addr)
-                    const isFillPrev = !isPC && !isSP && !isMatchCur && !isMatch && previewSet.has(addr)
+                    const isFillPrev = !isPC && !isSP && !isMatchCur && !isMatch && previewRange && addr >= previewRange.start && addr <= previewRange.end
                     const isFlash    = addr === flashAddr
                     ascii += (val >= 0x20 && val <= 0x7E) ? String.fromCharCode(val) : '.'
                     if (editing === addr)

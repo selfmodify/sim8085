@@ -90,6 +90,7 @@ export function useSimulatorEngine(srcRef) {
   const prevRamRef = useRef(null)
   const bpsRef = useRef(new Map())
   const prevMemRef = useRef(null)
+  const bpHitsRef = useRef(new Map())
   const lastBuiltSrcRef = useRef(srcRef.current)
   const timerRef = useRef(null)
   const warpActiveRef = useRef(false)
@@ -163,6 +164,7 @@ export function useSimulatorEngine(srcRef) {
       setHitcnts(null); setMaxHit(0)
       setChangedAddrs(new Set())
       setOutputPorts([])
+      bpHitsRef.current.clear()
       setKeyQueue([])
       setConsoleOutput('')
       prevMemRef.current = null
@@ -477,10 +479,27 @@ export function useSimulatorEngine(srcRef) {
             } else if (d.type === 'stopped') {
               warpWorkerActiveRef.current = false
               sim.simRestoreSnapshot({ regs: d.regs, ram: d.ram })
+
+              const atBp = d.reason === 'breakpoint';
+              if (atBp) {
+                const addr = d.regs.pc;
+                const currentHits = (bpHitsRef.current.get(addr) || 0) + 1;
+                bpHitsRef.current.set(addr, currentHits);
+                let cond = bpsRef.current.get(addr);
+                if (cond != null) {
+                  cond = cond.replace(/\bHIT\b/gi, String(currentHits));
+                  if (!evalCondition(cond, d.regs)) {
+                    sim.simStep();
+                    startRun();
+                    return;
+                  }
+                }
+              }
+
               if (d.reason === 'stopped') {
                 refresh(); refreshOutputPorts()
               } else {
-                finalizeTick(d.atBp, { watchHit: d.watchHit, isHalted: d.isHalted, errorMsg: d.errorMsg })
+                finalizeTick(atBp, { watchHit: d.watchHit, isHalted: d.isHalted, errorMsg: d.errorMsg })
               }
               setCycles(d.cycles)
               setLeds(d.leds)
@@ -589,13 +608,21 @@ export function useSimulatorEngine(srcRef) {
       const r = sim.simGetRegisters()
       const atBp = bpsRef.current.has(r.pc)
       if (!sim.simIsRunning() || atBp || watchHit2 >= 0) {
-        const cond = bpsRef.current.get(r.pc)
-        if (atBp && watchHit2 < 0 && cond != null && !evalCondition(cond, r)) {
-          sim.simStep(); return
+        if (atBp && watchHit2 < 0) {
+          const addr = r.pc;
+          const currentHits = (bpHitsRef.current.get(addr) || 0) + 1;
+          bpHitsRef.current.set(addr, currentHits);
+          let cond = bpsRef.current.get(r.pc);
+          if (cond != null) {
+            cond = cond.replace(/\bHIT\b/gi, String(currentHits));
+            if (!evalCondition(cond, r)) {
+              sim.simStep(); return
+            }
+          }
         }
         if (tp.pendingSteps > 0) { setSteps(s => s + tp.pendingSteps); tp.pendingSteps = 0 }
         refresh(); refreshOutputPorts()
-        finalizeTick(atBp)
+        finalizeTick(atBp, { watchHit: watchHit2 })
       }
     }, SPEEDS[speedRef.current].delay || 16)
   }

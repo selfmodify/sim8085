@@ -4,12 +4,26 @@ import { PanelHelp } from './PanelHelp.jsx';
 import { hex2 } from './utils.js';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
+export const KNOWN_PORTS = [
+  { port: '00', desc: 'PPI Port A' },
+  { port: '01', desc: 'PPI Port B / Console' },
+  { port: '02', desc: 'PPI Port C' },
+  { port: '03', desc: 'PPI Control' },
+  { port: '10', desc: 'PIT Counter 0' },
+  { port: '11', desc: 'PIT Counter 1' },
+  { port: '12', desc: 'PIT Counter 2' },
+  { port: '13', desc: 'PIT Control' },
+  { port: '40', desc: 'Audio Output' }
+];
+
 export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInput, keyQueue, onEnqueueKeys, onClearKeyQueue, sid, sod, onSetSID, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('ioports', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_ioports_popped_out') === 'true')
   const [portBuf, setPortBuf] = useState('')
   const [valBuf,  setValBuf]  = useState('')
   const [kbdBuf,  setKbdBuf]  = useState('')
+  const [showAuto, setShowAuto] = useState(false)
+  const [autoIndex, setAutoIndex] = useState(-1)
 
   useEffect(() => {
     localStorage.setItem('sim8085_ioports_popped_out', String(poppedOut))
@@ -20,7 +34,7 @@ export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInp
     const val  = parseInt(valBuf.replace(/h$/i,''), 16)
     if (isNaN(port) || port < 0 || port > 255) return
     onSetInput(port & 0xFF, isNaN(val) ? 0 : val & 0xFF)
-    setPortBuf(''); setValBuf('')
+    setPortBuf(''); setValBuf(''); setShowAuto(false); setAutoIndex(-1)
   }
 
   function submitKbd() {
@@ -28,6 +42,10 @@ export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInp
     onEnqueueKeys(kbdBuf)
     setKbdBuf('')
   }
+
+  const autoMatches = portBuf 
+    ? KNOWN_PORTS.filter(p => p.port.startsWith(portBuf) || p.desc.toLowerCase().includes(portBuf.toLowerCase())) 
+    : KNOWN_PORTS;
 
   const content = (
     <div className="panel-anim-body" style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
@@ -45,10 +63,38 @@ export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInp
       }
 
       <div className="ioport-section-hd" style={{marginTop:'6px'}}>INPUT  <span className="ioport-hint">returned by IN</span></div>
-      <div className="ioport-add-row">
-        <input className="ioport-input" placeholder="port (hex)" value={portBuf}
-          onChange={e => setPortBuf(e.target.value.toUpperCase())}
-          onKeyDown={e => e.key==='Enter' && addPreset()} maxLength={3} />
+      <div className="ioport-add-row" style={{ overflow: 'visible' }}>
+        <div style={{ position: 'relative' }}>
+          <input className="ioport-input" placeholder="port (hex)" value={portBuf}
+            onFocus={() => setShowAuto(true)}
+            onBlur={() => { setShowAuto(false); setAutoIndex(-1) }}
+            onChange={e => { setPortBuf(e.target.value.toUpperCase()); setShowAuto(true); setAutoIndex(-1) }}
+            onKeyDown={e => { 
+              if (showAuto && autoMatches.length > 0) {
+                if (e.key === 'ArrowDown') { e.preventDefault(); setAutoIndex(i => (i + 1) % autoMatches.length) }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); setAutoIndex(i => (i - 1 + autoMatches.length) % autoMatches.length) }
+                else if (e.key === 'Enter' && autoIndex >= 0) {
+                  e.preventDefault();
+                  setPortBuf(autoMatches[autoIndex].port);
+                  setShowAuto(false); setAutoIndex(-1);
+                  return;
+                }
+              }
+              if (e.key==='Enter') addPreset(); 
+              if (e.key==='Escape') { setShowAuto(false); setAutoIndex(-1) } 
+            }} maxLength={3} />
+          {showAuto && autoMatches.length > 0 && (
+            <div className="ctx-menu" style={{ position: 'absolute', top: '100%', left: 0, minWidth: 160, marginTop: 4, zIndex: 100, maxHeight: 180 }}>
+              {autoMatches.map((m, i) => (
+                <div key={m.port} ref={el => { if (el && autoIndex === i) el.scrollIntoView({ block: 'nearest' }) }} className="ctx-menu-item" style={{ display: 'flex', gap: '8px', padding: '4px 8px', background: autoIndex === i ? 'var(--bg3)' : undefined, color: autoIndex === i ? 'var(--text)' : undefined }}
+                  onMouseDown={e => { e.preventDefault(); setPortBuf(m.port); setShowAuto(false); setAutoIndex(-1) }}>
+                  <span style={{ color: 'var(--amber)', width: 16 }}>{m.port}</span>
+                  <span style={{ color: 'var(--text3)', whiteSpace: 'nowrap' }}>{m.desc}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
         <input className="ioport-input" placeholder="value" value={valBuf}
           onChange={e => setValBuf(e.target.value.toUpperCase())}
           onKeyDown={e => e.key==='Enter' && addPreset()} maxLength={3} />

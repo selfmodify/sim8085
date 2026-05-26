@@ -54,14 +54,14 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
     performSave(driveToken)
   }
 
-  async function performSave(token, explicitName) {
+  async function performSave(token, { explicitName, content, mimeType = 'text/plain', filename }) {
     engine.setMsg('Saving to Google Drive…')
     setDriveSaveStatus('saving')
     try {
       let folderId = null
       const query = encodeURIComponent("mimeType='application/vnd.google-apps.folder' and name='sim8085' and trashed=false")
       const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}`, { headers: { Authorization: 'Bearer ' + token } })
-      if (searchRes.status === 401) { setDriveToken(null); engine.setMsg('✗ Drive session expired. Please connect again.'); setDriveSaveStatus(null); return }
+      if (searchRes.status === 401) { setDriveToken(null); throw new Error('Session expired. Please connect again.'); }
       const searchData = await searchRes.json()
       if (searchData.files && searchData.files.length > 0) folderId = searchData.files[0].id
       else {
@@ -69,36 +69,39 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
           method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: 'sim8085', mimeType: 'application/vnd.google-apps.folder' })
         })
+        if (!createRes.ok) throw new Error('Failed to create folder');
         folderId = (await createRes.json()).id
       }
 
-      const nameToUse = explicitName || fileName || 'program'
-      const name = nameToUse.replace(/\.(asm|85|s|txt)$/i,'') + '.asm'
+      const name = filename || (explicitName || fileName || 'program').replace(/\.(asm|85|s|txt)$/i,'') + '.asm'
       
       let existingFileId = null
       if (folderId) {
         const fileQuery = encodeURIComponent(`name='${name.replace(/'/g, "\\'")}' and '${folderId}' in parents and trashed=false`)
         const fileSearchData = await (await fetch(`https://www.googleapis.com/drive/v3/files?q=${fileQuery}`, { headers: { Authorization: 'Bearer ' + token } })).json()
+        if (fileSearchData.error?.code === 401) { setDriveToken(null); throw new Error('Session expired. Please connect again.'); }
         if (fileSearchData.files && fileSearchData.files.length > 0) existingFileId = fileSearchData.files[0].id
       }
 
-      const metadata = { name, mimeType: 'text/plain' }
+      const metadata = { name, mimeType }
       if (!existingFileId && folderId) metadata.parents = [folderId]
 
       const form = new FormData()
       form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
-      form.append('file', new Blob([srcRef.current], { type: 'text/plain' }))
+      form.append('file', new Blob([content ?? srcRef.current], { type: mimeType }))
 
       const url = existingFileId ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
       const res = await fetch(url, { method: existingFileId ? 'PATCH' : 'POST', headers: { Authorization: 'Bearer ' + token }, body: form })
-      if (res.status === 401) { setDriveToken(null); engine.setMsg('✗ Drive session expired.'); setDriveSaveStatus(null); return }
+      if (res.status === 401) { setDriveToken(null); throw new Error('Session expired.'); }
       if (res.ok) {
-        engine.setMsg('✓ Saved locally and to Google Drive')
-        if (explicitName) { setFileName(name); localStorage.setItem('sim8085_filename', name) }
-        setDriveSaveStatus('success')
-        setTimeout(() => setDriveSaveStatus(null), 2000)
-      } else { engine.setMsg('✗ Error saving to Google Drive.'); setDriveSaveStatus(null) }
-    } catch(e) { engine.setMsg('✗ Network error saving to Google Drive.'); setDriveSaveStatus(null) }
+        if (!filename) { // only show status for user-initiated saves
+          engine.setMsg('✓ Saved locally and to Google Drive')
+          if (explicitName) { setFileName(name); localStorage.setItem('sim8085_filename', name) }
+          setDriveSaveStatus('success')
+          setTimeout(() => setDriveSaveStatus(null), 2000)
+        }
+      } else { throw new Error('Error saving to Google Drive.') }
+    } catch(e) { engine.setMsg(`✗ ${e.message}`); setDriveSaveStatus(null) }
   }
 
   function saveAsToDrive() {
@@ -106,9 +109,8 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
       type: 'prompt', title: 'Save As (Google Drive)', message: 'Enter new file name:', defaultValue: fileName || 'program.asm', confirmText: 'Save',
       onConfirm: (newName) => {
         if (!newName) return
-        const finalName = newName.replace(/\.(asm|85|s|txt)$/i,'') + '.asm'
-        if (!driveToken) connectDrive((token) => performSave(token, finalName))
-        else performSave(driveToken, finalName)
+        if (!driveToken) connectDrive((token) => performSave(token, { explicitName: newName }))
+        else performSave(driveToken, { explicitName: newName })
       }
     })
   }
@@ -120,14 +122,44 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
     try {
       const query = encodeURIComponent("mimeType='application/vnd.google-apps.folder' and name='sim8085' and trashed=false")
       const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}`, { headers: { Authorization: 'Bearer ' + token } })
-      if (searchRes.status === 401) { setDriveToken(null); engine.setMsg('✗ Drive session expired.'); setDriveFiles(null); setDriveLoading(false); return }
+      if (searchRes.status === 401) { setDriveToken(null); throw new Error('Drive session expired.'); }
       const searchData = await searchRes.json()
       if (!searchData.files || searchData.files.length === 0) { setDriveFiles([]); setDriveLoading(false); return }
       const filesQuery = encodeURIComponent(`'${searchData.files[0].id}' in parents and trashed=false`)
       const filesData = await (await fetch(`https://www.googleapis.com/drive/v3/files?q=${filesQuery}&orderBy=modifiedTime desc`, { headers: { Authorization: 'Bearer ' + token } })).json()
+      if (filesData.error?.code === 401) { setDriveToken(null); throw new Error('Drive session expired.'); }
       setDriveFiles(filesData.files || [])
-    } catch(e) { engine.setMsg('✗ Network error loading from Google Drive.'); setDriveFiles(null) }
+    } catch(e) { engine.setMsg(`✗ ${e.message}`); setDriveFiles(null) }
     finally { setDriveLoading(false) }
+  }
+
+  async function savePrefs(prefs) {
+    if (!driveToken) return;
+    try {
+      await performSave(driveToken, {
+        filename: 'sim8085_prefs.json',
+        content: JSON.stringify(prefs, null, 2),
+        mimeType: 'application/json'
+      });
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('Failed to save prefs to Drive:', e.message);
+    }
+  }
+
+  async function loadPrefs() {
+    if (!driveToken) return null;
+    try {
+      const folderId = await getSimFolderId(driveToken);
+      const fileQuery = encodeURIComponent(`name='sim8085_prefs.json' and '${folderId}' in parents and trashed=false`);
+      const fileSearchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${fileQuery}`, { headers: { Authorization: 'Bearer ' + driveToken } });
+      if (fileSearchRes.status === 401) { setDriveToken(null); return null; }
+      const fileSearchData = await fileSearchRes.json();
+      const fileId = fileSearchData.files?.[0]?.id;
+      if (!fileId) return null;
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&access_token=${encodeURIComponent(driveToken)}`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) { return null; }
   }
 
   async function fetchDriveFile(fileId, fileName) {
@@ -161,7 +193,7 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
 
   return {
     driveFiles, setDriveFiles, driveToken, driveLoading, driveSaveStatus,
-    connectDrive, handleDriveDisconnect, saveToDrive, saveAsToDrive,
+    connectDrive, handleDriveDisconnect, saveToDrive, saveAsToDrive, savePrefs, loadPrefs,
     loadFromDrive, fetchDriveFile, deleteDriveFile
   }
 }
