@@ -69,6 +69,17 @@ async function setTheme(page, theme) {
   await sleep(300)
 }
 
+async function switchToView(page, view) {
+  const labelMap = { simulator: 'Simulator', challenges: 'Challenges', instructions: 'Reference' }
+  const label = labelMap[view] || view
+  const tabs = await page.$$('.view-tab')
+  for (const tab of tabs) {
+    const txt = await tab.evaluate(el => el.textContent.trim())
+    if (txt === label) { await tab.click(); await sleep(500); return }
+  }
+  throw new Error(`View tab "${label}" not found`)
+}
+
 // ── Annotation system ─────────────────────────────────────────────────────────
 // Labels float OUTSIDE panel content; dashed arrows point to the feature.
 
@@ -139,7 +150,6 @@ async function injectAnnotations(page, anns) {
       // Pick nearest edge of label to target as line start
       const cx = r.left + r.width  / 2
       const cy = r.top  + r.height / 2
-      // clamp start to label edge toward target
       const dx = tx - cx, dy = ty - cy
       const len = Math.sqrt(dx*dx + dy*dy)
       if (len < 1) continue
@@ -202,10 +212,9 @@ async function shot02_editor(page) {
   const ty = toolbar?.y ?? 0
   const th = toolbar?.h ?? 44
 
-  // Labels sit ABOVE the content they describe (in the toolbar strip or just above panel)
   const anns = [
     {
-      text: '✏️  Write 8085 assembly\nSyntax highlighting · auto-indent',
+      text: '✏️  Write 8085 assembly\nSyntax highlighting · auto-indent · format',
       x: col.x + 8, y: ty + 6,
       tx: editor ? editor.x + editor.w * 0.5 : col.x + col.w * 0.5,
       ty: editor ? editor.y + 80 : col.y + th + 80,
@@ -234,46 +243,67 @@ async function shot02_editor(page) {
   console.log('  Saved: 02-editor-panel.png')
 }
 
-// ── Shot 03: Center panel — Disassembly + Memory ──────────────────────────────
+// ── Shot 03: Center top — Disassembly + Trace / Stack / Call Stack ────────────
 async function shot03_center(page) {
-  console.log('  Shot 03 — Center panel…')
+  console.log('  Shot 03 — Center panel (disasm + trace/stack)…')
+  // Run briefly so the trace panel has entries
+  await loadExample(page, 'I/O', 'LED Count')
+  await build(page)
+  await setSpeed(page, 4)
+  await run(page)
+  await sleep(1500)
+  await stop(page)
 
-  const toolbar = await getRect(page, '.toolbar')
-  const col     = await getRect(page, '.col-center')
-  const disasm  = await getRect(page, '.disasm-panel')
-  const mem     = await getRect(page, '.mem-panel')
+  const toolbar    = await getRect(page, '.toolbar')
+  const col        = await getRect(page, '.col-center')
+  const disasm     = await getRect(page, '.disasm-panel')
+  const disasmRow  = await getRect(page, '.disasm-trace-row')
+  const tracePanel = await getRect(page, '.trace-panel')
+  const stackPanel = await getRect(page, '.stack-panel')
 
   const ty = toolbar?.y ?? 0
   const th = toolbar?.h ?? 44
 
-  const disY = disasm?.y ?? col.y + th
-  const memY = mem?.y    ?? col.y + th + col.h * 0.5
+  const disY    = disasm?.y     ?? col.y + th
+  const traceY  = tracePanel?.y ?? (disasmRow ? disasmRow.y + disasmRow.h * 0.5 : col.y + th + 150)
+  const stackY  = stackPanel?.y ?? (disasmRow ? disasmRow.y + 40 : col.y + th + 40)
+  const rowH    = disasmRow?.h  ?? col.h * 0.55
+
+  // Disasm label on left; trace/stack labels also on left but arrows point right
+  const disasmMidX  = disasm     ? disasm.x     + disasm.w     * 0.5 : col.x + col.w * 0.3
+  const rightMidX   = tracePanel ? tracePanel.x + tracePanel.w * 0.5 : col.x + col.w * 0.8
 
   const anns = [
     {
-      text: '📋  Live disassembly\nPC highlighted · click row to set breakpoint',
+      text: '📋  Live disassembly\nPC highlighted · click row to toggle breakpoint',
       x: col.x + 8, y: ty + 6,
-      tx: col.x + col.w * 0.5,
+      tx: disasmMidX,
       ty: disY + 60,
     },
     {
-      text: '💾  Hex memory editor\nDouble-click any cell to edit\nPC and SP highlighted in colour',
-      x: col.x + 8, y: memY - 70,
-      tx: col.x + col.w * 0.5,
-      ty: memY + 80,
+      text: '📚  Stack viewer\nSP location · recent push/pop highlighted',
+      x: col.x + 8, y: ty + 58,
+      tx: rightMidX,
+      ty: stackY + 35,
+    },
+    {
+      text: '🔍  Execution trace\nEvery instruction logged with register deltas',
+      x: col.x + 8, y: ty + 108,
+      tx: rightMidX,
+      ty: traceY + 50,
     },
   ]
 
   await injectAnnotations(page, anns)
   await page.screenshot({
     path: path.join(OUT, '03-center-panel.png'),
-    clip: { x: Math.round(col.x), y: Math.round(ty), width: Math.round(col.w), height: Math.round(th + col.h) },
+    clip: { x: Math.round(col.x), y: Math.round(ty), width: Math.round(col.w), height: Math.round(th + rowH) },
   })
   await removeAnnotations(page)
   console.log('  Saved: 03-center-panel.png')
 }
 
-// ── Shot 04: Right panel — Registers + Interrupts + I/O ──────────────────────
+// ── Shot 04: Right panel — Registers, Pairs, Flags, Interrupts, I/O, Audio ───
 async function shot04_right(page) {
   console.log('  Shot 04 — Right panel…')
 
@@ -282,17 +312,19 @@ async function shot04_right(page) {
   const regs    = await getRect(page, '.reg-panel')
   const intp    = await getRect(page, '.int-panel')
   const iop     = await getRect(page, '.ioport-panel')
+  const audio   = await getRect(page, '.audio-panel')
 
   const ty = toolbar?.y ?? 0
   const th = toolbar?.h ?? 44
 
-  const regsY = regs?.y ?? col.y + th
-  const intY  = intp?.y ?? col.y + th + 300
-  const ioY   = iop?.y  ?? col.y + th + 500
+  const regsY  = regs?.y  ?? col.y + th
+  const intY   = intp?.y  ?? col.y + th + 320
+  const ioY    = iop?.y   ?? col.y + th + 500
+  const audioY = audio?.y ?? col.y + th + 680
 
   const anns = [
     {
-      text: '🧠  Registers & flags\nHighlighted green on each step',
+      text: '🧠  Registers · Pairs · Flags\nChanged cells flash green on each step\nDrag to reorder · collapsible panels',
       x: col.x + 6, y: ty + 6,
       tx: col.x + col.w * 0.5,
       ty: regsY + 60,
@@ -310,6 +342,16 @@ async function shot04_right(page) {
       ty: ioY + 40,
     },
   ]
+
+  // Annotate audio only if it fits in the viewport
+  if (audio && audioY + audio.h <= ty + th + col.h + 10) {
+    anns.push({
+      text: '🔊  Audio output\nPort writes drive audio tones',
+      x: col.x + 6, y: audioY - 40,
+      tx: col.x + col.w * 0.5,
+      ty: audioY + 30,
+    })
+  }
 
   await injectAnnotations(page, anns)
   await page.screenshot({
@@ -369,7 +411,7 @@ async function shot05_breakpoint(page) {
 // ── Shot 06: TRAP interrupt fired ─────────────────────────────────────────────
 async function shot06_interrupt(page) {
   console.log('  Shot 06 — TRAP interrupt…')
-  await loadExample(page, 'Interrupts', 'TRAP (NMI)')
+  await loadExample(page, 'Interrupts', 'Trap (NMI)')
   await build(page)
   await setSpeed(page, 0)
   await run(page)
@@ -467,6 +509,90 @@ async function shot07_keyboard(page) {
   console.log('  Saved: 07-keyboard.png')
 }
 
+// ── Shot 08: Watch panel + Console output ─────────────────────────────────────
+async function shot08_watchConsole(page) {
+  console.log('  Shot 08 — Watch panel + Console output…')
+  await loadExample(page, 'I/O', 'Console Hello')
+  await build(page)
+
+  // Add watch entries via the input UI
+  for (const expr of ['A', 'HL', '0120H']) {
+    await page.focus('.watch-input')
+    await page.type('.watch-input', expr)
+    await page.keyboard.press('Enter')
+    await sleep(150)
+  }
+
+  // Run to completion (Console Hello hits HLT quickly)
+  await setSpeed(page, 4)
+  await run(page)
+  await sleep(1500)
+  await stop(page)
+
+  const col     = await getRect(page, '.col-center')
+  const memRow  = await getRect(page, '.mem-watch-row')
+  const watch   = await getRect(page, '.watch-panel')
+  const console_ = await getRect(page, '.console-panel')
+  const mem     = await getRect(page, '.mem-panel')
+
+  const rowY = memRow?.y ?? (col ? col.y + col.h * 0.55 : 400)
+  const rowH = memRow?.h ?? 300
+  const watchMidX  = watch    ? watch.x    + watch.w    * 0.5 : (col ? col.x + col.w * 0.75 : 900)
+  const consoleMidX = console_ ? console_.x + console_.w * 0.5 : watchMidX
+  const memMidX    = mem      ? mem.x      + mem.w      * 0.5 : (col ? col.x + col.w * 0.25 : 400)
+
+  const anns = [
+    {
+      text: '💾  Hex memory editor\nDouble-click any cell to edit live\nPC and SP highlighted in colour',
+      x: (col?.x ?? 0) + 8, y: rowY + 6,
+      tx: memMidX,
+      ty: rowY + 80,
+    },
+    {
+      text: '👁  Watch expressions\nRegisters · addresses · mem[HL+offset]',
+      x: (watch?.x ?? (col?.x ?? 0) + (col?.w ?? 600) * 0.55) + 4, y: rowY + 6,
+      tx: watchMidX,
+      ty: watch ? watch.y + 60 : rowY + 60,
+    },
+    {
+      text: '🖥️  Console panel\nASCII output via OUT port · configurable port',
+      x: (console_?.x ?? watchMidX - 80) + 4, y: rowY + (watch?.h ?? 100) + 10,
+      tx: consoleMidX,
+      ty: console_ ? console_.y + 50 : rowY + (watch?.h ?? 120) + 50,
+    },
+  ]
+
+  await injectAnnotations(page, anns)
+  await page.screenshot({
+    path: path.join(OUT, '08-watch-console.png'),
+    clip: { x: Math.round(col?.x ?? 0), y: Math.round(rowY), width: Math.round(col?.w ?? 800), height: Math.round(rowH) },
+  })
+  await removeAnnotations(page)
+  console.log('  Saved: 08-watch-console.png')
+}
+
+// ── Shot 09: Challenges view ──────────────────────────────────────────────────
+async function shot09_challenges(page) {
+  console.log('  Shot 09 — Challenges view…')
+  await switchToView(page, 'challenges')
+  await sleep(300)
+  await page.screenshot({ path: path.join(OUT, '09-challenges.png') })
+  await switchToView(page, 'simulator')
+  await sleep(300)
+  console.log('  Saved: 09-challenges.png')
+}
+
+// ── Shot 10: Instruction set reference ───────────────────────────────────────
+async function shot10_instructions(page) {
+  console.log('  Shot 10 — Instruction reference…')
+  await switchToView(page, 'instructions')
+  await sleep(300)
+  await page.screenshot({ path: path.join(OUT, '10-instructions.png') })
+  await switchToView(page, 'simulator')
+  await sleep(300)
+  console.log('  Saved: 10-instructions.png')
+}
+
 // ── Theme showcase shots (one full-viewport per theme) ───────────────────────
 
 async function shotTheme(page, theme, filename) {
@@ -486,13 +612,14 @@ async function shotTheme(page, theme, filename) {
 async function main() {
   if (!existsSync(OUT)) await mkdir(OUT, { recursive: true })
 
-  const server = spawn('npx', ['vite', 'preview', '--port', String(PORT)], {
+  const vitePath = path.resolve(__dirname, 'node_modules/vite/bin/vite.js')
+  const server = spawn(process.execPath, [vitePath, '--port', String(PORT), '--strictPort'], {
     cwd: __dirname, shell: true, stdio: 'pipe'
   })
   process.on('exit', () => server.kill())
 
   try {
-    console.log('Starting preview server…')
+    console.log('Starting dev server…')
     await waitForServer(BASE)
     console.log('Server ready.')
 
@@ -506,7 +633,8 @@ async function main() {
     await page.evaluateOnNewDocument(() => {
       localStorage.setItem('sim8085_welcomed', '1')
       localStorage.setItem('sim8085_theme', 'dark')
-      // Hide 8255 PPI floating panel (and 8253 PIT)
+      localStorage.setItem('sim8085_watches', JSON.stringify([]))
+      // Enable all panels; keep floating PPI/PIT hidden
       localStorage.setItem('sim8085_panels', JSON.stringify({
         regs: true, pairs: true, flags: true, ints: true, io: true,
         memmap: false, ppi: false, pit: false, audio: true,
@@ -516,9 +644,9 @@ async function main() {
 
     await page.goto(BASE, { waitUntil: 'networkidle0' })
     await sleep(600)
-    console.log('App loaded (dark theme, PPI/PIT hidden).')
+    console.log('App loaded (dark theme, all debug panels enabled).')
 
-    // Dark theme shots
+    // Annotated feature shots
     await shot01_ledCount(page)
     await shot02_editor(page)
     await shot03_center(page)
@@ -526,13 +654,19 @@ async function main() {
     await shot05_breakpoint(page)
     await shot06_interrupt(page)
     await shot07_keyboard(page)
+    await shot08_watchConsole(page)
+    await shot09_challenges(page)
+    await shot10_instructions(page)
 
     // Theme showcase shots
+    await shotTheme(page, 'dracula',    'theme-dracula.png')
     await shotTheme(page, 'green',      'theme-green.png')
     await shotTheme(page, 'dim',        'theme-dim.png')
     await shotTheme(page, 'light',      'theme-light.png')
     await shotTheme(page, 'amber-mono', 'theme-amber-mono.png')
     await shotTheme(page, 'gray-crt',   'theme-gray-crt.png')
+    await shotTheme(page, 'blue-crt',   'theme-blue-crt.png')
+    await shotTheme(page, 'plasma',     'theme-plasma.png')
     await shotTheme(page, 'turbo-c',    'theme-turbo-c.png')
     await shotTheme(page, 'cp437',      'theme-cp437.png')
 
