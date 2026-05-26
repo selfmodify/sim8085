@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { PanelHelp } from './PanelHelp.jsx';
 
 const CALC_BASES = [
   { key: 'dec', label: 'DEC', radix: 10, maxLen:  5, placeholder: '65535',            allowed: /^[0-9]$/,     sep: true },
@@ -68,6 +69,7 @@ export function CalcFloat({ onClose, onPopout, isPoppedOut }) {
       <div className="calc-float-hd" onMouseDown={onDragDown} onTouchStart={onDragDown} style={{ cursor: isPoppedOut ? 'default' : 'move', touchAction: 'none' }}>
         <span><span className="panel-icon">🖩</span>CALCULATOR</span>
         <div style={{ display: 'flex', gap: '4px', alignItems: 'center', marginLeft: 'auto' }}>
+          <PanelHelp panel="CALCULATOR" />
           {!isPoppedOut && onPopout && (
             <button className="reg-base-btn mobile-hidden" onClick={onPopout} title="Open in separate window">⧉</button>
           )}

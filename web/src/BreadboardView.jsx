@@ -3,6 +3,7 @@ import { PPI8255Panel } from './PPI8255Panel.jsx';
 import { PIT8253Panel } from './PIT8253Panel.jsx';
 import { LedBreadboardPanel } from './LedBreadboardPanel.jsx';
 import { useCollapsible } from './hooks.js';
+import { PanelHelp } from './PanelHelp.jsx';
 
 const DEFAULT_WIRES = [
   { id: 'w1', start: 'pit0', end: 'ppiA_in', color: 'var(--blue, #4090ff)' },
@@ -182,6 +183,7 @@ export function BreadboardView({ engine, panels, togglePanel, ppiPos, setPpiPos,
             <button className={`reg-base-btn${textSize === 0 ? ' active' : ''}`} onClick={() => setTextSize(0)} title="Small Text">A</button>
             <button className={`reg-base-btn${textSize === 1 ? ' active' : ''}`} style={{ fontSize: '11px' }} onClick={() => setTextSize(1)} title="Medium Text">A</button>
             <button className={`reg-base-btn${textSize === 2 ? ' active' : ''}`} style={{ fontSize: '12px' }} onClick={() => setTextSize(2)} title="Large Text">A</button>
+            <PanelHelp panel="BREADBOARD" />
             <span className="panel-chevron" onClick={toggleInfoCollapsed} style={{ cursor: 'pointer', paddingLeft: '4px' }}>{infoCollapsed ? '▾' : '▴'}</span>
           </div>
         </div>
