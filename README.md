@@ -3,28 +3,32 @@
 A complete Intel 8085 simulator ported from the original DOS application
 by Vijay Kumar (1995) to a modern web platform.
 
-**[Live Demo →](https://selfmodify.github.io/sim8085/)**
+**[Live Website →](https://selfmodify.github.io/sim8085/)**
 
 ---
+
+## Screenshots
+
+### Overview
 
 ![sim8085 — LED counter running at turbo speed](screenshots/gif-01-turbo-led.gif)
 
 <table>
 <tr>
 <td><img src="screenshots/02-editor-panel.png" alt="Editor — write 8085 assembly with syntax highlighting and 20+ built-in examples"></td>
-<td><img src="screenshots/03-center-panel.png" alt="Center — live disassembly and hex memory editor"></td>
-<td><img src="screenshots/04-right-panel.png" alt="Right — registers, flags, interrupts, and I/O ports"></td>
+<td><img src="screenshots/03-center-panel.png" alt="Center — live disassembly, execution trace, and stack viewer"></td>
+<td><img src="screenshots/04-right-panel.png" alt="Right — registers, pairs, flags, interrupts, I/O ports, and audio"></td>
 </tr>
 <tr>
 <td align="center"><sub>Editor · 20+ built-in examples</sub></td>
-<td align="center"><sub>Live disassembly · hex memory editor</sub></td>
-<td align="center"><sub>Registers · flags · interrupts · I/O ports</sub></td>
+<td align="center"><sub>Disassembly · trace · stack viewer</sub></td>
+<td align="center"><sub>Registers · pairs · flags · interrupts · I/O</sub></td>
 </tr>
 </table>
 
 ---
 
-## Debugger
+### Debugger
 
 <table>
 <tr>
@@ -47,7 +51,7 @@ by Vijay Kumar (1995) to a modern web platform.
 
 ---
 
-## Interrupts & I/O
+### Interrupts & I/O
 
 <table>
 <tr>
@@ -64,31 +68,71 @@ by Vijay Kumar (1995) to a modern web platform.
 
 ---
 
-## Themes
+### Watch, Console & Memory
 
 <table>
 <tr>
+<td><img src="screenshots/08-watch-console.png" alt="Watch expressions, console output, and hex memory editor"></td>
+</tr>
+<tr>
+<td align="center"><sub>Watch panel · console output · hex memory editor</sub></td>
+</tr>
+</table>
+
+---
+
+### Challenges & Reference
+
+<table>
+<tr>
+<td><img src="screenshots/09-challenges.png" alt="Coding challenges — auto-verified programming exercises"></td>
+<td><img src="screenshots/10-instructions.png" alt="Instruction set reference — searchable 8085 opcode guide"></td>
+</tr>
+<tr>
+<td align="center"><sub>Coding challenges · auto-verified</sub></td>
+<td align="center"><sub>Instruction set reference · searchable</sub></td>
+</tr>
+</table>
+
+---
+
+### Themes
+
+<table>
+<tr>
+<td><img src="screenshots/theme-dracula.png"    alt="Dracula theme"></td>
 <td><img src="screenshots/theme-green.png"      alt="Green CRT theme"></td>
 <td><img src="screenshots/theme-dim.png"        alt="Dim theme"></td>
 <td><img src="screenshots/theme-light.png"      alt="Light theme"></td>
-<td><img src="screenshots/theme-amber-mono.png" alt="Amber monochrome CRT theme"></td>
 </tr>
 <tr>
+<td align="center"><sub>🧛 Dracula</sub></td>
 <td align="center"><sub>🟢 Green CRT</sub></td>
 <td align="center"><sub>🌗 Dim</sub></td>
 <td align="center"><sub>☀︎ Light</sub></td>
-<td align="center"><sub>🟡 Amber mono</sub></td>
 </tr>
 <tr>
+<td><img src="screenshots/theme-amber-mono.png" alt="Amber monochrome CRT theme"></td>
 <td><img src="screenshots/theme-gray-crt.png"   alt="Gray CRT theme"></td>
+<td><img src="screenshots/theme-blue-crt.png"   alt="Blue CRT theme"></td>
+<td><img src="screenshots/theme-plasma.png"     alt="Plasma theme"></td>
+</tr>
+<tr>
+<td align="center"><sub>🟡 Amber mono</sub></td>
+<td align="center"><sub>⬜ Gray CRT</sub></td>
+<td align="center"><sub>🔷 Blue CRT</sub></td>
+<td align="center"><sub>🟣 Plasma</sub></td>
+</tr>
+<tr>
 <td><img src="screenshots/theme-turbo-c.png"    alt="Turbo C theme"></td>
 <td><img src="screenshots/theme-cp437.png"      alt="DOS CP437 theme"></td>
 <td></td>
+<td></td>
 </tr>
 <tr>
-<td align="center"><sub>⬜ Gray CRT</sub></td>
 <td align="center"><sub>🔵 Turbo C</sub></td>
 <td align="center"><sub>🔳 DOS CP437</sub></td>
+<td></td>
 <td></td>
 </tr>
 </table>
