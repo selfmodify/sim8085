@@ -485,11 +485,23 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
           }),
           EditorView.domEventHandlers({
             click(e, view) {
-              if (!e.ctrlKey) return false
+              if (!e.ctrlKey && !e.altKey) return false
               const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
               if (pos == null) return false
-              const word = getInstWord(view.state, pos)
-              if (word && INST_HELP[word]) { detailCb.current?.(word); return true }
+              
+              if (e.ctrlKey) {
+                const word = getInstWord(view.state, pos)
+                if (word && INST_HELP[word]) { detailCb.current?.(word); return true }
+              }
+              
+              if (e.altKey && lineAddrRef?.current) {
+                const lineNum = view.state.doc.lineAt(pos).number
+                const addr = lineAddrRef.current.get(lineNum)
+                if (addr !== undefined) {
+                  onAddressClickRef.current?.(addr)
+                  return true
+                }
+              }
               return false
             },
             contextmenu(e, view) {

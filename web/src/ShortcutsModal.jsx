@@ -19,6 +19,7 @@ const SHORTCUTS = [
       { keys: ['Ctrl', 'Z'],    desc: 'Undo' },
       { keys: ['Ctrl', 'Y'],    desc: 'Redo' },
       { keys: ['Ctrl', 'click'],desc: 'Open instruction reference' },
+      { keys: ['Alt', 'click'], desc: 'Jump disassembly to instruction' },
       { keys: ['Right-click'],  desc: 'Run to this line (after assembly)' },
     ]
   },

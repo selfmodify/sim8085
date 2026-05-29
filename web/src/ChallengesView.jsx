@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import * as sim from './simProxy.js';
 
 export const CHALLENGES = [
@@ -109,7 +110,11 @@ export const CHALLENGES = [
 ]
 
 export function ChallengesView({ onSelect, onSolution, completedIds }) {
-  const doneCount = completedIds ? [...completedIds].filter(id => CHALLENGES.some(c => c.id === id)).length : 0
+  const doneCount = useMemo(() => {
+    if (!completedIds) return 0;
+    return CHALLENGES.filter(c => completedIds.has(c.id)).length;
+  }, [completedIds]);
+
   return (
     <div className="challenges-view">
       <div className="challenges-container">

@@ -12,7 +12,7 @@ const PAIR_DEFS = [
   { name: 'HL', hi: 'h', lo: 'l' },
 ]
 
-export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, symbols, onJump, onMemoryEdited, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, symbols, onJump, onJumpDisasm, onMemoryEdited, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('pairs', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_pairs_popped_out') === 'true')
@@ -79,8 +79,8 @@ export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, 
                   onBlur={commitEdit}
                   onKeyDown={e => { if (e.key==='Enter') commitEdit(); if (e.key==='Escape') setEditing(null) }} />
               : <span className="pair-addr"
-                  onClick={() => { onJump(val & 0xFFF0); startEdit(name, 'addr', hex4(val)) }}
-                  title={lbl ? `${hex4(val)}H (${lbl}) — click to edit pair address, jump memory` : `${hex4(val)}H — click to edit pair address, jump memory`}>
+                  onClick={() => { onJump(val & 0xFFF0); onJumpDisasm?.(val); startEdit(name, 'addr', hex4(val)) }}
+                  title={lbl ? `${hex4(val)}H (${lbl}) — click to edit pair address, jump memory and disassembly` : `${hex4(val)}H — click to edit pair address, jump memory and disassembly`}>
                   {fmtWord(val, regBase)}
                   {lbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({lbl})</span>}
                 </span>

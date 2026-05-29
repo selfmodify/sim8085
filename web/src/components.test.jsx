@@ -230,7 +230,7 @@ describe('CallStackPanel', () => {
     const stack = [{ targetAddr: 0x0200, callAddr: 0x0103, retAddr: 0x0106 }];
     render(<CallStackPanel callStack={stack} onJump={onJump} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
     fireEvent.click(screen.getByText('CALL STACK'));
-    fireEvent.click(screen.getByTitle('Target address'));
+    fireEvent.click(screen.getByTitle('Target address — click to jump memory and disassembly'));
     expect(onJump).toHaveBeenCalledWith(0x0200);
   });
 });

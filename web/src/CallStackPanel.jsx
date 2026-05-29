@@ -4,7 +4,7 @@ import { PanelHelp } from './PanelHelp.jsx';
 import { hex4 } from './utils.js';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-export function CallStackPanel({ callStack, symbols, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+export function CallStackPanel({ callStack, symbols, onJump, onJumpDisasm, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('callstack', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_callstack_popped_out') === 'true')
 
@@ -28,11 +28,11 @@ export function CallStackPanel({ callStack, symbols, onJump, dragHandleProps, dr
                   const callLbl = addrToLabel.get(frame.callAddr);
                   return (
                     <div key={`${frame.targetAddr}-${frame.callAddr}-${i}`} className={`callstack-row${i === 0 ? ' callstack-top' : ''}`}>
-                      <span className="callstack-target" title="Target address" onClick={() => onJump(frame.targetAddr)}>
+                      <span className="callstack-target" title="Target address — click to jump memory and disassembly" onClick={() => { onJump(frame.targetAddr); onJumpDisasm?.(frame.targetAddr); }}>
                         {hex4(frame.targetAddr)}H{targetLbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({targetLbl})</span>}
                       </span>
                       <span className="callstack-arrow">←</span>
-                      <span className="callstack-site" title="Call site" onClick={() => onJump(frame.callAddr)}>
+                      <span className="callstack-site" title="Call site — click to jump memory and disassembly" onClick={() => { onJump(frame.callAddr); onJumpDisasm?.(frame.callAddr); }}>
                         {hex4(frame.callAddr)}H{callLbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({callLbl})</span>}
                       </span>
                       <span className="callstack-ret" title="Return address">ret:{hex4(frame.retAddr)}H</span>

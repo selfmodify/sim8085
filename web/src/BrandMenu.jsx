@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { RETRO_THEMES } from './utils.js';
 
-export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, onExport, onExportHex, onExportBin, onSaveToDrive, onSaveAsToDrive, onSaveToGist, onShare, onCalc, onChat, memSize, onMemSize, theme, onTheme, onSetTheme, crtBrightness, onCrtBrightness, crtContrast, onCrtContrast, crtGlitch, onCrtGlitch, crtVignette, onCrtVignette, panels, onTogglePanel, driveToken, onConnectDrive, onDriveDisconnect, onBrewCoffee }) {
+export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, onExport, onExportHex, onExportBin, onSaveToDrive, onSaveAsToDrive, onSaveToGist, onShare, onCalc, onChat, memSize, onMemSize, theme, onTheme, onSetTheme, crtBrightness, onCrtBrightness, crtContrast, onCrtContrast, crtGlitch, onCrtGlitch, crtVignette, onCrtVignette, panels, onTogglePanel, driveToken, onConnectDrive, onDriveDisconnect, onBrewCoffee, autoStopHlt, onAutoStopHlt }) {
   const [open, setOpen] = useState(false);
   const [activeSub, setActiveSub] = useState(null);
   const wrapRef = useRef(null)
@@ -174,6 +174,12 @@ export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, on
               </div>
             </>
           )}
+      <div className="bmenu-setting">
+        <span className="bmenu-setting-label">Auto-stop on HLT</span>
+        <button className={`btn btn-xs ${autoStopHlt ? 'btn-run' : ''}`} onClick={() => onAutoStopHlt(!autoStopHlt)}>
+          {autoStopHlt ? 'ON' : 'OFF'}
+        </button>
+      </div>
           <div className="bmenu-setting">
             <span className="bmenu-setting-label">RAM size</span>
             <select className="bmenu-setting-sel" value={memSize}

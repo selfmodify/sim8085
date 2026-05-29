@@ -1,8 +1,103 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import * as sim from './simProxy.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4, fmtCount } from './utils.js';
 import { PopoutWindow } from './PopoutWindow.jsx';
+
+const DisasmRow = memo(function DisasmRow({
+  row, cur, bp, cond, label, hasHit, hit, currentMax, pcFlash,
+  onToggleBp, onSetCondition, onGotoLine, onJumpMem, onRunTo, setCtxMenu, curRowRef,
+  addrToLabel
+}) {
+  return (
+    <div key={cur ? `cur-${row.addr}-${pcFlash}` : row.addr}>
+      {label && (
+        <div className="disasm-label"
+          onClick={() => { onJumpMem?.(row.addr & 0xFFF0); onGotoLine?.(row.addr, label) }}
+          title={`${label}: at ${hex4(row.addr)}H — click to jump memory + editor`}>
+          {label}:
+        </div>
+      )}
+      <div
+        ref={cur ? curRowRef : null}
+        className={`disasm-row${cur ? ' cur' : ''}${bp ? ' bp' : ''}${row.mnem === 'ASSERT' ? ' assert' : ''}`}
+        data-addr={row.addr}
+        onClick={() => onGotoLine?.(row.addr)}
+        onContextMenu={e => { 
+          e.preventDefault(); 
+          setCtxMenu({ 
+            addr: row.addr, 
+            x: Math.min(e.clientX, window.innerWidth - 180), 
+            y: Math.min(e.clientY, window.innerHeight - 150) 
+          }) 
+        }}
+      >
+        <span className="disasm-bp"
+          role="button"
+          aria-label={bp ? (cond ? `Conditional breakpoint at ${hex4(row.addr)}H` : `Breakpoint at ${hex4(row.addr)}H — click to remove`) : `Set breakpoint at ${hex4(row.addr)}H`}
+          title={bp ? (cond ? `Condition: ${cond} — right-click to edit` : 'Breakpoint — right-click to add condition') : 'Click to set breakpoint'}
+          onClick={e => { e.stopPropagation(); onToggleBp(row.addr) }}
+          onContextMenu={e => { e.preventDefault(); e.stopPropagation(); bp && onSetCondition?.(row.addr) }}
+        >
+          {bp ? (cond ? '◆' : '●') : '·'}
+        </span>
+        <span className="disasm-text">
+          {(() => {
+            const m = row.text.match(/^([0-9A-Fa-f]{4})(\s+)((?:[0-9A-Fa-f]{2}\s+)+)(.*)$/);
+            if (m) {
+              const [, addr, s1, hex, rest] = m;
+              const prefix = <><span style={{ color: 'var(--text3)' }}>{addr}</span>{s1}<span style={{ opacity: 0.6 }}>{hex}</span></>;
+              
+              const mPart = rest.match(/^([a-zA-Z0-9_]+)(\s+)(.+)$/);
+              if (mPart) {
+                const [, mnem, space, operand] = mPart;
+                const opNodes = operand.split(/([0-9A-Fa-f]{4}H)/).map((part, i) => {
+                  if (i % 2 === 1) {
+                    const val = parseInt(part.slice(0, -1), 16);
+                    const lbl = addrToLabel.get(val);
+                    if (lbl) return <span key={i}>{part} <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}>({lbl})</span></span>;
+                  }
+                  return <span key={i}>{part}</span>;
+                });
+                if (cur) return <>{prefix}{mnem}{space}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{opNodes}</span></>;
+                return <>{prefix}{mnem}{space}{opNodes}</>;
+              }
+              return <>{prefix}{rest}</>;
+            }
+            if (!cur) return row.text;
+            const mFallback = row.text.match(/^([0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+[a-zA-Z0-9_]+)(\s+)(.+)$/);
+            if (mFallback) return <>{mFallback[1]}{mFallback[2]}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{mFallback[3]}</span></>;
+            return row.text;
+          })()}
+        </span>
+        {cond && bp && <span className="disasm-cond">{cond}</span>}
+        <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span className="disasm-hitcnt" title={hasHit ? "Execution count" : undefined} style={{ margin: 0, minWidth: '24px', textAlign: 'right' }}>
+            {hasHit ? fmtCount(hit) : ''}
+          </span>
+          <span className="disasm-heat"
+            title={hasHit ? `${hit.toLocaleString()} hits` : undefined}
+            style={{ opacity: hasHit ? Math.max(0.15, hit / currentMax) : 0, margin: 0 }} />
+          {row.cycles > 0 ? (
+            <span className="disasm-cycles" style={{ margin: 0, minWidth: '24px', textAlign: 'right', ...(cur ? { color: 'var(--accent)', fontWeight: 700 } : {}) }} title="Clock cycles (T-states)">{row.cycles}T</span>
+          ) : <span style={{ minWidth: '24px' }} />}
+          <span className="disasm-pc-arrow" style={{ margin: 0, width: '12px', visibility: cur ? 'visible' : 'hidden' }}>◀</span>
+        </span>
+      </div>
+    </div>
+  )
+}, (prev, next) => {
+  if (prev.cur !== next.cur) return false;
+  if (prev.bp !== next.bp) return false;
+  if (prev.cond !== next.cond) return false;
+  if (prev.label !== next.label) return false;
+  if (prev.hit !== next.hit) return false;
+  if (prev.hasHit !== next.hasHit) return false;
+  if (prev.pcFlash !== next.pcFlash) return false;
+  if (prev.row !== next.row) return false;
+  if (prev.hasHit && next.hasHit && prev.currentMax !== next.currentMax) return false;
+  return true;
+});
 
 export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSetCondition, onGotoLine, buildId, pcFlash, onRunTo, symbols, onJumpMem, hitcnts, maxHit, flashReq, addrLineMap, theme, popoutCrtProps }) {
   const [viewStart, setViewStart] = useState(() => regs.pc)
@@ -58,7 +153,13 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
     return lo
   }, [])
 
-  useEffect(() => { setViewStart(regs.pc) }, [buildId])
+  useEffect(() => {
+    setViewStart(regs.pc)
+    setFollowPC(true)
+    setTimeout(() => {
+      if (listRef.current) listRef.current.scrollTop = 0
+    }, 10)
+  }, [buildId])
 
   useEffect(() => {
     if (!followPC) return
@@ -218,81 +319,15 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
           const hasHit = currentMax > 0 && hit > 0
 
           return (
-            <div key={cur ? `cur-${regs.pc}-${pcFlash}` : row.addr}>
-            {label && (
-              <div className="disasm-label"
-                onClick={() => { onJumpMem?.(row.addr & 0xFFF0); onGotoLine?.(row.addr, label) }}
-                title={`${label}: at ${hex4(row.addr)}H — click to jump memory + editor`}>
-                {label}:
-              </div>
-            )}
-            <div
-              ref={cur ? curRowRef : null}
-              className={`disasm-row${cur ? ' cur' : ''}${bp ? ' bp' : ''}${row.mnem === 'ASSERT' ? ' assert' : ''}`}
-              data-addr={row.addr}
-              onClick={() => onGotoLine?.(row.addr)}
-              onContextMenu={e => { 
-                e.preventDefault(); 
-                setCtxMenu({ 
-                  addr: row.addr, 
-                  x: Math.min(e.clientX, window.innerWidth - 180), 
-                  y: Math.min(e.clientY, window.innerHeight - 150) 
-                }) 
-              }}
-            >
-              <span className="disasm-bp"
-                role="button"
-                aria-label={bp ? (cond ? `Conditional breakpoint at ${hex4(row.addr)}H` : `Breakpoint at ${hex4(row.addr)}H — click to remove`) : `Set breakpoint at ${hex4(row.addr)}H`}
-                title={bp ? (cond ? `Condition: ${cond} — right-click to edit` : 'Breakpoint — right-click to add condition') : 'Click to set breakpoint'}
-                onClick={e => { e.stopPropagation(); onToggleBp(row.addr) }}
-                onContextMenu={e => { e.preventDefault(); e.stopPropagation(); bp && onSetCondition?.(row.addr) }}
-              >
-                {bp ? (cond ? '◆' : '●') : '·'}
-              </span>
-              <span className="disasm-text">
-                {(() => {
-                  const m = row.text.match(/^([0-9A-Fa-f]{4})(\s+)((?:[0-9A-Fa-f]{2}\s+)+)(.*)$/);
-                  if (m) {
-                    const [, addr, s1, hex, rest] = m;
-                    const prefix = <><span style={{ color: 'var(--text3)' }}>{addr}</span>{s1}<span style={{ opacity: 0.6 }}>{hex}</span></>;
-                    
-                    const mPart = rest.match(/^([a-zA-Z0-9_]+)(\s+)(.+)$/);
-                    if (mPart) {
-                      const [, mnem, space, operand] = mPart;
-                      const opNodes = operand.split(/([0-9A-Fa-f]{4}H)/).map((part, i) => {
-                        if (i % 2 === 1) {
-                          const val = parseInt(part.slice(0, -1), 16);
-                          const lbl = addrToLabel.get(val);
-                          if (lbl) return <span key={i}>{part} <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}>({lbl})</span></span>;
-                        }
-                        return <span key={i}>{part}</span>;
-                      });
-                      if (cur) return <>{prefix}{mnem}{space}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{opNodes}</span></>;
-                      return <>{prefix}{mnem}{space}{opNodes}</>;
-                    }
-                    return <>{prefix}{rest}</>;
-                  }
-                  if (!cur) return row.text;
-                  const mFallback = row.text.match(/^([0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+[a-zA-Z0-9_]+)(\s+)(.+)$/);
-                  if (mFallback) return <>{mFallback[1]}{mFallback[2]}<span style={{ color: 'var(--amber)', fontWeight: 600 }}>{mFallback[3]}</span></>;
-                  return row.text;
-                })()}
-              </span>
-              {cond && bp && <span className="disasm-cond">{cond}</span>}
-              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span className="disasm-hitcnt" title={hasHit ? "Execution count" : undefined} style={{ margin: 0, minWidth: '24px', textAlign: 'right' }}>
-                  {hasHit ? fmtCount(hit) : ''}
-                </span>
-                <span className="disasm-heat"
-                  title={hasHit ? `${hit.toLocaleString()} hits` : undefined}
-                  style={{ opacity: hasHit ? Math.max(0.15, hit / currentMax) : 0, margin: 0 }} />
-                {row.cycles > 0 ? (
-                  <span className="disasm-cycles" style={{ margin: 0, minWidth: '24px', textAlign: 'right', ...(cur ? { color: 'var(--accent)', fontWeight: 700 } : {}) }} title="Clock cycles (T-states)">{row.cycles}T</span>
-                ) : <span style={{ minWidth: '24px' }} />}
-                <span className="disasm-pc-arrow" style={{ margin: 0, width: '12px', visibility: cur ? 'visible' : 'hidden' }}>◀</span>
-              </span>
-            </div>
-            </div>
+            <DisasmRow
+              key={cur ? `cur-${row.addr}-${pcFlash}` : row.addr}
+              row={row} cur={cur} bp={bp} cond={cond} label={label}
+              hasHit={hasHit} hit={hit} currentMax={currentMax} pcFlash={pcFlash}
+              onToggleBp={onToggleBp} onSetCondition={onSetCondition}
+              onGotoLine={onGotoLine} onJumpMem={onJumpMem} onRunTo={onRunTo}
+              setCtxMenu={setCtxMenu} curRowRef={curRowRef}
+              addrToLabel={addrToLabel}
+            />
           )
         })}
       </div>

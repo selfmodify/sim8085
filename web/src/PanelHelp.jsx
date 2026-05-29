@@ -5,6 +5,7 @@ const PANEL_HELP_TEXT = {
 • ORG <addr>  sets the load address
 • KICKOFF <addr>  sets the entry point (where execution starts)
 • Ctrl+click any mnemonic → full instruction docs
+• Alt+click any line → jump disassembly to that address
 • Ctrl+F → find / replace bar
 • Right-click an assembled line → run execution up to that line
 • Directives: EQU, DB, DW, DS (highlighted purple)

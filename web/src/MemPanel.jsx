@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import * as sim from './simProxy.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex2, hex4 } from './utils.js';
@@ -27,6 +27,94 @@ function parseAddrExpr(s, regs) {
   
   return (addr + offset) & 0xFFFF;
 }
+
+const MemRow = memo(function MemRow({
+  row, base, COLS, mem, regsPc, regsSp, cursor, programRegion, presetAddrs,
+  searchMatches, searchIdx, searchMatchSet, previewRange, flashAddr, changedAddrs,
+  editing, editBuf, setEditBuf, commit, setEditing, setCursor
+}) {
+  let ascii = ''
+  return (
+    <tr key={row}>
+      <td className="mem-row-addr">{hex4(base)}</td>
+      {Array.from({length:COLS},(_,col)=>{
+        const addr = base + col
+        const val  = mem[row*COLS+col] ?? 0
+        const isPC     = addr === regsPc
+        const isSP     = addr === regsSp
+        const isCursor = addr === cursor
+        const isCode     = !isPC && !isSP && programRegion && addr >= programRegion.start && addr < programRegion.end
+        const isPreset   = !isPC && !isSP && !isCode && presetAddrs?.has(addr)
+        const isMatchCur = searchMatches.length > 0 && addr === searchMatches[searchIdx]
+        const isMatch    = !isMatchCur && searchMatchSet.has(addr)
+        const isFillPrev = !isPC && !isSP && !isMatchCur && !isMatch && previewRange && addr >= previewRange.start && addr <= previewRange.end
+        const isFlash    = addr === flashAddr
+        ascii += (val >= 0x20 && val <= 0x7E) ? String.fromCharCode(val) : '.'
+        if (editing === addr)
+          return (
+            <td key={col} className="mem-cell editing">
+              <input autoFocus maxLength={2} value={editBuf}
+                onChange={e=>setEditBuf(e.target.value.toUpperCase())}
+                onFocus={e => e.target.select()}
+                onBlur={()=>commit(addr,editBuf)}
+                onKeyDown={e=>{if(e.key==='Enter')commit(addr,editBuf);if(e.key==='Escape')setEditing(null)}}
+              />
+            </td>
+          )
+        return (
+          <td key={col}
+            className={`mem-cell${isPC?' mem-pc':''}${isSP?' mem-sp':''}${isCode?' mem-code':''}${isPreset?' mem-preset':''}${isCursor?' mem-cursor':''}${val?' mem-nz':''}${changedAddrs?.has(addr)?' mem-diff':''}${isMatchCur?' mem-match-cur':''}${isMatch?' mem-match':''}${isFillPrev?' mem-fill-prev':''}${isFlash?' mem-flash':''}`}
+            title={`${hex4(addr)}: ${hex2(val)}H = ${val}`}
+            onClick={()=>setCursor(addr)}
+            onDoubleClick={()=>{setEditing(addr);setEditBuf(hex2(val))}}
+          >{hex2(val)}</td>
+        )
+      })}
+      <td className="mem-cell-ascii mobile-hidden" style={{ paddingLeft: 16, letterSpacing: '1px', opacity: 0.6, whiteSpace: 'pre' }}>{ascii}</td>
+    </tr>
+  )
+}, (prev, next) => {
+  if (prev.base !== next.base || prev.COLS !== next.COLS) return false;
+  const rowStart = next.base;
+  const rowEnd = next.base + next.COLS - 1;
+  const wasInRow = (addr) => addr >= rowStart && addr <= rowEnd;
+  
+  if (wasInRow(prev.regsPc) || wasInRow(next.regsPc)) if (prev.regsPc !== next.regsPc) return false;
+  if (wasInRow(prev.regsSp) || wasInRow(next.regsSp)) if (prev.regsSp !== next.regsSp) return false;
+  if (wasInRow(prev.cursor) || wasInRow(next.cursor)) if (prev.cursor !== next.cursor) return false;
+  if (wasInRow(prev.flashAddr) || wasInRow(next.flashAddr)) if (prev.flashAddr !== next.flashAddr) return false;
+  if (wasInRow(prev.editing) || wasInRow(next.editing)) {
+    if (prev.editing !== next.editing) return false;
+    if (prev.editBuf !== next.editBuf) return false;
+  }
+  
+  if (prev.searchIdx !== next.searchIdx) return false;
+  if (prev.searchMatches !== next.searchMatches || prev.searchMatchSet !== next.searchMatchSet) return false;
+  
+  const ppr = prev.previewRange;
+  const npr = next.previewRange;
+  if ((ppr && !npr) || (!ppr && npr)) return false;
+  if (ppr && npr && (ppr.start !== npr.start || ppr.end !== npr.end)) return false;
+  
+  if (prev.programRegion !== next.programRegion) return false;
+  
+  if (prev.changedAddrs !== next.changedAddrs) {
+    for (let i = 0; i < next.COLS; i++) {
+      if (prev.changedAddrs?.has(next.base + i) !== next.changedAddrs?.has(next.base + i)) return false;
+    }
+  }
+  
+  if (prev.presetAddrs !== next.presetAddrs) {
+    for (let i = 0; i < next.COLS; i++) {
+      if (prev.presetAddrs?.has(next.base + i) !== next.presetAddrs?.has(next.base + i)) return false;
+    }
+  }
+
+  for (let i = 0; i < next.COLS; i++) {
+    if (prev.mem[prev.row * prev.COLS + i] !== next.mem[next.row * next.COLS + i]) return false;
+  }
+  return true;
+});
 
 export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, programRegion, presetAddrs, onMemoryEdited, memVisibleRangeRef, flashReq, theme, popoutCrtProps }) {
   const { onShowDialog } = useSimulator()
@@ -352,45 +440,16 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
           <tbody>
             {Array.from({length:rows},(_,row)=>{
               const base = memStart + row*COLS
-              let ascii = ''
               return (
-                <tr key={row}>
-                  <td className="mem-row-addr">{hex4(base)}</td>
-                  {Array.from({length:COLS},(_,col)=>{
-                    const addr = base + col
-                    const val  = mem[row*COLS+col] ?? 0
-                    const isPC     = addr === regs.pc
-                    const isSP     = addr === regs.sp
-                    const isCursor = addr === cursor
-                    const isCode     = !isPC && !isSP && programRegion && addr >= programRegion.start && addr < programRegion.end
-                    const isPreset   = !isPC && !isSP && !isCode && presetAddrs?.has(addr)
-                    const isMatchCur = searchMatches.length > 0 && addr === searchMatches[searchIdx]
-                    const isMatch    = !isMatchCur && searchMatchSet.has(addr)
-                    const isFillPrev = !isPC && !isSP && !isMatchCur && !isMatch && previewRange && addr >= previewRange.start && addr <= previewRange.end
-                    const isFlash    = addr === flashAddr
-                    ascii += (val >= 0x20 && val <= 0x7E) ? String.fromCharCode(val) : '.'
-                    if (editing === addr)
-                      return (
-                        <td key={col} className="mem-cell editing">
-                          <input autoFocus maxLength={2} value={editBuf}
-                            onChange={e=>setEditBuf(e.target.value.toUpperCase())}
-                            onFocus={e => e.target.select()}
-                            onBlur={()=>commit(addr,editBuf)}
-                            onKeyDown={e=>{if(e.key==='Enter')commit(addr,editBuf);if(e.key==='Escape')setEditing(null)}}
-                          />
-                        </td>
-                      )
-                    return (
-                      <td key={col}
-                        className={`mem-cell${isPC?' mem-pc':''}${isSP?' mem-sp':''}${isCode?' mem-code':''}${isPreset?' mem-preset':''}${isCursor?' mem-cursor':''}${val?' mem-nz':''}${changedAddrs?.has(addr)?' mem-diff':''}${isMatchCur?' mem-match-cur':''}${isMatch?' mem-match':''}${isFillPrev?' mem-fill-prev':''}${isFlash?' mem-flash':''}`}
-                        title={`${hex4(addr)}: ${hex2(val)}H = ${val}`}
-                        onClick={()=>setCursor(addr)}
-                        onDoubleClick={()=>{setEditing(addr);setEditBuf(hex2(val))}}
-                      >{hex2(val)}</td>
-                    )
-                  })}
-                  <td className="mem-cell-ascii mobile-hidden" style={{ paddingLeft: 16, letterSpacing: '1px', opacity: 0.6, whiteSpace: 'pre' }}>{ascii}</td>
-                </tr>
+                <MemRow
+                  key={row} row={row} base={base} COLS={COLS} mem={mem}
+                  regsPc={regs.pc} regsSp={regs.sp} cursor={cursor}
+                  programRegion={programRegion} presetAddrs={presetAddrs}
+                  searchMatches={searchMatches} searchIdx={searchIdx} searchMatchSet={searchMatchSet}
+                  previewRange={previewRange} flashAddr={flashAddr} changedAddrs={changedAddrs}
+                  editing={editing} editBuf={editBuf} setEditBuf={setEditBuf}
+                  commit={commit} setEditing={setEditing} setCursor={setCursor}
+                />
               )
             })}
           </tbody>

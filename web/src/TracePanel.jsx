@@ -1,10 +1,51 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4, fmtTraceVal, TRACE_REG16 } from './utils.js';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-export function TracePanel({ trace, symbols, onClear, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+const TraceRow = memo(function TraceRow({ e, lbl, addrToLabel, onJumpDisasm }) {
+  const stripped = e.text.replace(/^[0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+/, '').trim();
+  const mPart = stripped.match(/^([a-zA-Z0-9_]+)(\s+)(.+)$/);
+  let opNodes = stripped;
+  
+  if (mPart) {
+    const [, mnem, space, operand] = mPart;
+    opNodes = <>{mnem}{space}{operand.split(/([0-9A-Fa-f]{4}H)/).map((part, idx) => {
+      if (idx % 2 === 1) {
+        const val = parseInt(part.slice(0, -1), 16);
+        const l = addrToLabel.get(val);
+        if (l) return <span key={idx}>{part} <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}>({l})</span></span>;
+      }
+      return <span key={idx}>{part}</span>;
+    })}</>;
+  }
+
+  return (
+    <div className="trace-row" onClick={() => onJumpDisasm?.(e.addr)} style={{ cursor: 'pointer' }} title="Click to jump disassembly here">
+      <span className="trace-addr" title={lbl}>{hex4(e.addr)}</span>
+      <span className="trace-text">
+        {lbl && <span style={{ color: 'var(--amber)', marginRight: '6px' }}>{lbl}:</span>}
+        {opNodes}
+      </span>
+      {e.changedKeys.length > 0 &&
+        <span className="trace-delta">
+          {e.changedKeys.map(k => {
+            const FLAG_SHORT = { flagS:'S', flagZ:'Z', flagAC:'AC', flagP:'P', flagCY:'CY' }
+            const isFlag = !!FLAG_SHORT[k]
+            const is16 = TRACE_REG16.has(k)
+            const name = FLAG_SHORT[k] ?? k.toUpperCase()
+            const val  = isFlag ? e.regs[k] : fmtTraceVal(k, e.regs[k])
+            const color = isFlag ? '#ff8a66' : is16 ? '#c792ea' : '#82aaff'
+            return <span key={k} style={{ color, marginRight: 7 }}>{name}={val}</span>
+          })}
+        </span>
+      }
+    </div>
+  )
+});
+
+export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('trace', true)
   const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_trace_popped_out') === 'true')
   const [bodyEl, setBodyEl] = useState(null)
@@ -54,44 +95,7 @@ export function TracePanel({ trace, symbols, onClear, dragHandleProps, dropTarge
           ? <div className="trace-empty">Step through code to record execution</div>
           : trace.map((e, i) => {
             const lbl = addrToLabel.get(e.addr);
-            const stripped = e.text.replace(/^[0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+/, '').trim();
-            const mPart = stripped.match(/^([a-zA-Z0-9_]+)(\s+)(.+)$/);
-            let opNodes = stripped;
-            
-            if (mPart) {
-              const [, mnem, space, operand] = mPart;
-              opNodes = <>{mnem}{space}{operand.split(/([0-9A-Fa-f]{4}H)/).map((part, idx) => {
-                if (idx % 2 === 1) {
-                  const val = parseInt(part.slice(0, -1), 16);
-                  const l = addrToLabel.get(val);
-                  if (l) return <span key={idx}>{part} <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}>({l})</span></span>;
-                }
-                return <span key={idx}>{part}</span>;
-              })}</>;
-            }
-
-            return (
-            <div key={`${e.addr}-${i}`} className="trace-row">
-              <span className="trace-addr" title={lbl}>{hex4(e.addr)}</span>
-              <span className="trace-text">
-                {lbl && <span style={{ color: 'var(--amber)', marginRight: '6px' }}>{lbl}:</span>}
-                {opNodes}
-              </span>
-              {e.changedKeys.length > 0 &&
-                <span className="trace-delta">
-                  {e.changedKeys.map(k => {
-                    const FLAG_SHORT = { flagS:'S', flagZ:'Z', flagAC:'AC', flagP:'P', flagCY:'CY' }
-                    const isFlag = !!FLAG_SHORT[k]
-                    const is16 = TRACE_REG16.has(k)
-                    const name = FLAG_SHORT[k] ?? k.toUpperCase()
-                    const val  = isFlag ? e.regs[k] : fmtTraceVal(k, e.regs[k])
-                    const color = isFlag ? '#ff8a66' : is16 ? '#c792ea' : '#82aaff'
-                    return <span key={k} style={{ color, marginRight: 7 }}>{name}={val}</span>
-                  })}
-                </span>
-              }
-            </div>
-            )
+            return <TraceRow key={`${e.addr}-${i}`} e={e} lbl={lbl} addrToLabel={addrToLabel} onJumpDisasm={onJumpDisasm} />
           })
         }
       </div>

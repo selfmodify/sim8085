@@ -295,6 +295,7 @@ export default function App() {
     const s = parseInt(localStorage.getItem('sim8085_speed'), 10)
     return s >= 0 && s < SPEEDS.length ? s : 3
   })
+  const [autoStopHlt, setAutoStopHlt] = useState(() => localStorage.getItem('sim8085_autostop_hlt') === 'true')
   
   const [regBase, setRegBase]       = useState('hex')    // 'hex'|'dec'|'bin'
   const [statusLog, setStatusLog]   = useState([])
@@ -381,6 +382,12 @@ export default function App() {
     const kind = engine.msg.startsWith('✗') || engine.msg.startsWith('❌') ? 'error' : engine.msg.startsWith('✓') || engine.msg.startsWith('🏆') ? 'success' : engine.msg.startsWith('■') ? 'halted' : 'info'
     setStatusLog(log => [...log.slice(-19), { text: engine.msg, kind, t }])
   }, [engine.msg])
+
+  useEffect(() => {
+    if (autoStopHlt && engine.appState === 'halted' && engine.running) {
+      engine.handleRun()
+    }
+  }, [autoStopHlt, engine.appState, engine.running, engine])
 
   useEffect(() => {
     if (engine.haltTrigger > lastHaltRef.current && activeChallenge && !challengeResult) {
@@ -859,7 +866,8 @@ export default function App() {
                 crtGlitch={crtGlitch} onCrtGlitch={() => { const modes = ['off','flicker','static','vsync','hsync','chroma','chaos']; const next = modes[(modes.indexOf(crtGlitch) + 1) % modes.length]; setCrtGlitch(next); localStorage.setItem('sim8085_crt_glitch', next) }}
                 crtVignette={crtVignette} onCrtVignette={v => { setCrtVignette(v); localStorage.setItem('sim8085_crt_vignette', String(v)) }}
                 panels={panels} onTogglePanel={togglePanel}
-                onBrewCoffee={onBrewCoffee} />
+            onBrewCoffee={onBrewCoffee}
+            autoStopHlt={autoStopHlt} onAutoStopHlt={v => { setAutoStopHlt(v); localStorage.setItem('sim8085_autostop_hlt', String(v)) }} />
               <div className="view-tabs">
                 <button className={`view-tab${activeView === 'simulator' ? ' active' : ''}`} onClick={() => handleSetView('simulator')} title="Code editor, memory, and debugger">Simulator</button>
                 <button className={`view-tab${activeView === 'breadboard' ? ' active' : ''} mobile-hidden`} onClick={() => handleSetView('breadboard')} title="Interactive hardware peripherals">Hardware</button>
@@ -982,7 +990,7 @@ export default function App() {
             ? <span className="statusbar-empty">—</span>
             : (() => { 
                 const e = statusLog[statusLog.length - 1]; 
-                const activeKind = engine.running ? 'running' : engine.appState === 'error' ? 'error' : engine.appState === 'halted' ? 'halted' : e.kind;
+                const activeKind = engine.appState === 'error' ? 'error' : engine.appState === 'halted' ? 'halted' : engine.running ? 'running' : e.kind;
                 return (
                   <div className={`statusbar-entry sbar-${activeKind}`}>
                     <span className="statusbar-text">{e.text}</span>
