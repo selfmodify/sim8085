@@ -145,6 +145,30 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   const [scrollEl, setScrollEl] = useState(null)
   const panelRef  = useRef(null)
 
+  const isScrolling = useRef(false)
+  const scrollTimeout = useRef(null)
+
+  function handleScroll(e) {
+    isScrolling.current = true
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current)
+    scrollTimeout.current = setTimeout(() => { isScrolling.current = false }, 150)
+
+    const row = Math.floor(e.target.scrollTop / 20)
+    const newMemStart = Math.max(0, Math.min(0x10000 - COLS, row * COLS))
+    if (newMemStart !== memStart) {
+      setFollowPC(false)
+      onJump(newMemStart)
+    }
+  }
+
+  useEffect(() => {
+    if (!scrollEl || isScrolling.current) return
+    const targetTop = (memStart / COLS) * 20
+    if (Math.abs(scrollEl.scrollTop - targetTop) > 2) {
+      scrollEl.scrollTop = targetTop
+    }
+  }, [memStart, COLS, scrollEl])
+
   useEffect(() => {
     localStorage.setItem('sim8085_mem_popped_out', String(poppedOut))
   }, [poppedOut])
@@ -201,7 +225,8 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   useEffect(() => {
     if (!scrollEl) return
     const ro = new ResizeObserver(([e]) => {
-      setRows(r => { const n = Math.max(2, Math.floor((e.contentRect.height - 22) / 20)); return n !== r ? n : r })
+      // Add +1 overscan row to prevent empty gaps while scrolling between fractions of a row
+      setRows(r => { const n = Math.max(2, Math.ceil((e.contentRect.height - 22) / 20) + 1); return n !== r ? n : r })
       setCols(c => {
         if (!poppedOut) return 16;
         const w = e.contentRect.width;
@@ -427,10 +452,9 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
           <button className="mem-btn" onClick={runExport}>Download .bin</button>
         </div>
       )}
-      <div className="mem-scroll" ref={setScrollEl}
-        onWheel={e => { e.preventDefault(); const delta = e.deltaY > 0 ? COLS : -COLS; setFollowPC(false); onJump(Math.max(0, Math.min(0xFFF0, memStart + delta))) }}>
+      <div className="mem-scroll" ref={setScrollEl} onScroll={handleScroll}>
         <table className="mem-tbl">
-          <thead>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 2, background: 'var(--bg1)' }}>
             <tr>
               <th className="mem-th-addr"></th>
               {Array.from({length:COLS},(_,i)=><th key={i} className="mem-th">{hex2(i)}</th>)}
@@ -438,11 +462,17 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
             </tr>
           </thead>
           <tbody>
+            {memStart > 0 && (
+              <tr style={{ height: (memStart / COLS) * 20 }}>
+                <td colSpan={COLS + 2} style={{ padding: 0, border: 0 }} />
+              </tr>
+            )}
             {Array.from({length:rows},(_,row)=>{
               const base = memStart + row*COLS
+              if (base >= 0x10000) return null
               return (
                 <MemRow
-                  key={row} row={row} base={base} COLS={COLS} mem={mem}
+                  key={base} row={row} base={base} COLS={COLS} mem={mem}
                   regsPc={regs.pc} regsSp={regs.sp} cursor={cursor}
                   programRegion={programRegion} presetAddrs={presetAddrs}
                   searchMatches={searchMatches} searchIdx={searchIdx} searchMatchSet={searchMatchSet}
@@ -452,6 +482,11 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
                 />
               )
             })}
+            {memStart + rows * COLS < 0x10000 && (
+              <tr style={{ height: ((0x10000 - memStart - rows * COLS) / COLS) * 20 }}>
+                <td colSpan={COLS + 2} style={{ padding: 0, border: 0 }} />
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
