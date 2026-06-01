@@ -88,13 +88,24 @@ const MemRow = memo(function MemRow({
     if (prev.editBuf !== next.editBuf) return false;
   }
   
-  if (prev.searchIdx !== next.searchIdx) return false;
-  if (prev.searchMatches !== next.searchMatches || prev.searchMatchSet !== next.searchMatchSet) return false;
+  if (prev.searchIdx !== next.searchIdx) {
+    const prevMatch = prev.searchMatches[prev.searchIdx];
+    const nextMatch = next.searchMatches[next.searchIdx];
+    if (wasInRow(prevMatch) || wasInRow(nextMatch)) return false;
+  }
+  if (prev.searchMatchSet !== next.searchMatchSet) {
+    for (let i = 0; i < next.COLS; i++) {
+      if (prev.searchMatchSet.has(next.base + i) !== next.searchMatchSet.has(next.base + i)) return false;
+    }
+  }
   
   const ppr = prev.previewRange;
   const npr = next.previewRange;
-  if ((ppr && !npr) || (!ppr && npr)) return false;
-  if (ppr && npr && (ppr.start !== npr.start || ppr.end !== npr.end)) return false;
+  if (ppr !== npr) {
+    const wasInPrev = ppr && (rowEnd >= ppr.start && rowStart <= ppr.end);
+    const isInNext  = npr && (rowEnd >= npr.start && rowStart <= npr.end);
+    if (wasInPrev || isInNext) return false;
+  }
   
   if (prev.programRegion !== next.programRegion) return false;
   
@@ -160,6 +171,10 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
       onJump(newMemStart)
     }
   }
+
+  useEffect(() => {
+    return () => { if (scrollTimeout.current) clearTimeout(scrollTimeout.current) }
+  }, [])
 
   useEffect(() => {
     if (!scrollEl || isScrolling.current) return

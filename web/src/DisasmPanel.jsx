@@ -93,8 +93,10 @@ const DisasmRow = memo(function DisasmRow({
   if (prev.label !== next.label) return false;
   if (prev.hit !== next.hit) return false;
   if (prev.hasHit !== next.hasHit) return false;
-  if (prev.pcFlash !== next.pcFlash) return false;
-  if (prev.row !== next.row) return false;
+  if (prev.addrToLabel !== next.addrToLabel) return false;
+  if (prev.row.text !== next.row.text) return false;
+  if (prev.row.cycles !== next.row.cycles) return false;
+  if (prev.row.mnem !== next.row.mnem) return false;
   if (prev.hasHit && next.hasHit && prev.currentMax !== next.currentMax) return false;
   return true;
 });
@@ -189,6 +191,7 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
       }
 
       let retries = 0
+    let timer;
       const tryHighlight = () => {
         const row = listRef.current?.querySelector(`.disasm-row[data-addr="${flashReq.addr}"]`)
         if (row) {
@@ -198,10 +201,11 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
           row.classList.add('flash-highlight')
         } else if (retries < 15) {
           retries++
-          setTimeout(tryHighlight, 50)
+        timer = setTimeout(tryHighlight, 50)
         }
       }
-      setTimeout(tryHighlight, 10)
+    timer = setTimeout(tryHighlight, 10)
+    return () => clearTimeout(timer)
     }
   }, [flashReq, findIdx])
 

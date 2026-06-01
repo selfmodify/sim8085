@@ -1,9 +1,118 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo } from 'react';
 import * as sim from './simProxy.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4, fmtWord, fmtByte, BASE_CYCLE } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
+
+const PAIR_KEYS = { bc: ['b','c'], de: ['d','e'], hl: ['h','l'] };
+const REG_NAMES = new Set(['a','b','c','d','e','h','l','pc','sp','flags','bc','de','hl']);
+
+function getWatchInfo(w, regs) {
+  if (w.type === 'reg') {
+    const p = PAIR_KEYS[w.key];
+    if (p) return { v: (regs[p[0]] << 8) | regs[p[1]], editable: true, kind: 'reg16' };
+    return { v: regs[w.key] ?? 0, editable: true, kind: 'reg8' };
+  }
+  if (w.type === 'mem') {
+    return { v: sim.simReadByte(w.addr), editable: true, kind: 'mem8', addr: w.addr };
+  }
+  if (w.type === 'expr') {
+    const s = w.expr.toLowerCase();
+    const memMatch = s.match(/^mem\[\s*(.*?)\s*\]$/);
+    if (memMatch) {
+      const inner = memMatch[1].replace(/\s+/g, '');
+      const mathMatch = inner.match(/^([a-z0-9]+)([+-])([0-9a-f]+h?)$/);
+      let baseStr = inner;
+      let offset = 0;
+      if (mathMatch) {
+        baseStr = mathMatch[1];
+        offset = parseInt(mathMatch[3].replace(/h$/, ''), 16);
+        if (mathMatch[2] === '-') offset = -offset;
+      }
+      let addr;
+      if (PAIR_KEYS[baseStr]) {
+        addr = (regs[PAIR_KEYS[baseStr][0]] << 8) | regs[PAIR_KEYS[baseStr][1]];
+      } else if (REG_NAMES.has(baseStr)) {
+        addr = regs[baseStr];
+      } else if (/^[0-9a-f]+h?$/.test(baseStr)) {
+        addr = parseInt(baseStr.replace(/h$/, ''), 16);
+      } else {
+        return { v: 'ERR', editable: false };
+      }
+      const finalAddr = (addr + offset) & 0xFFFF;
+      return { v: sim.simReadByte(finalAddr), editable: true, kind: 'mem8', addr: finalAddr };
+    }
+    return { v: 'ERR', editable: false };
+  }
+  return { v: 0, editable: false };
+}
+
+const WatchRow = memo(function WatchRow({ watch, info, changed, isBrk, isEditing, editValue, onStartEdit, onCommitEdit, onCancelEdit, onSetEditValue, onRemove, onToggleBreak, addrToLabel, regBase }) {
+  const editInputRef = useRef(null);
+  useEffect(() => {
+    if (isEditing && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const v = info.v;
+  const isErr = v === 'ERR';
+  const isWord = (watch.type === 'reg' && ['pc','sp','bc','de','hl'].includes(watch.key)) || (watch.type === 'expr' && v > 0xFF);
+  const isEditable = info.editable && !isErr;
+
+  const label = watch.type === 'reg' ? watch.key.toUpperCase() : watch.type === 'mem' ? hex4(watch.addr) + 'H' : watch.expr;
+  const sym = watch.type === 'mem' ? addrToLabel.get(watch.addr) : null;
+
+  return (
+    <div className={`watch-row${changed ? ' changed' : ''}`}>
+      <span className="watch-label" title={sym ? `${label} (${sym})` : label}>
+        {label}
+        {sym && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({sym})</span>}
+      </span>
+      {isErr ? (
+        <span className="watch-val" style={{ color: 'var(--red)' }}>ERR</span>
+      ) : isEditing ? (
+        <input
+          ref={editInputRef}
+          className="watch-input"
+          style={{ width: isWord ? 52 : 36, padding: '1px 4px', margin: '0 4px', flex: 'none' }}
+          value={editValue}
+          onChange={e => onSetEditValue(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') onCommitEdit();
+            if (e.key === 'Escape') onCancelEdit();
+          }}
+          onBlur={onCommitEdit}
+        />
+      ) : (<>
+        <span className="watch-val"
+          style={isEditable ? { cursor: 'pointer' } : {}}
+          onDoubleClick={() => isEditable && onStartEdit()}
+          title={isEditable ? 'Double-click to edit' : undefined}
+        >{isWord ? fmtWord(v, regBase) : fmtByte(v, regBase)}</span>
+        {(regBase||'hex') === 'hex' && <span className="watch-dec">{v}</span>}
+      </>)}
+      {watch.type === 'mem' && (
+        <button className={`watch-brk${isBrk ? ' active' : ''}`}
+          title={isBrk ? 'Break on write: ON — click to disable' : 'Break on write: OFF — click to enable'}
+          onClick={() => onToggleBreak?.(watch.addr)}>W</button>
+      )}
+      <button className="watch-rm" onClick={onRemove}>✕</button>
+    </div>
+  );
+}, (prev, next) => {
+  if (prev.info.v !== next.info.v) return false;
+  if (prev.changed !== next.changed) return false;
+  if (prev.isBrk !== next.isBrk) return false;
+  if (prev.isEditing !== next.isEditing) return false;
+  if (prev.isEditing && next.isEditing && prev.editValue !== next.editValue) return false;
+  if (prev.regBase !== next.regBase) return false;
+  if (prev.watch !== next.watch) return false;
+  if (prev.addrToLabel !== next.addrToLabel) return false;
+  return true;
+});
 
 export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onAdd, onRemove, dataBps, onToggleBreak, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit } = useSimulator()
@@ -12,16 +121,6 @@ export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onA
   const [input, setInput] = useState('')
   const [editingIndex, setEditingIndex] = useState(-1)
   const [editValue, setEditValue] = useState('')
-  const editInputRef = useRef(null)
-  const PAIR_KEYS = { bc: ['b','c'], de: ['d','e'], hl: ['h','l'] }
-  const REG_NAMES = new Set(['a','b','c','d','e','h','l','pc','sp','flags','bc','de','hl'])
-
-  useEffect(() => {
-    if (editingIndex >= 0 && editInputRef.current) {
-      editInputRef.current.focus()
-      editInputRef.current.select()
-    }
-  }, [editingIndex])
 
   useEffect(() => {
     localStorage.setItem('sim8085_watch_popped_out', String(poppedOut))
@@ -33,50 +132,10 @@ export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onA
     return m
   }, [symbols])
 
-  function getWatchInfo(w) {
-    if (w.type === 'reg') {
-      const p = PAIR_KEYS[w.key]
-      if (p) return { v: (regs[p[0]] << 8) | regs[p[1]], editable: true, kind: 'reg16' }
-      return { v: regs[w.key] ?? 0, editable: true, kind: 'reg8' }
-    }
-    if (w.type === 'mem') {
-      return { v: sim.simReadByte(w.addr), editable: true, kind: 'mem8', addr: w.addr }
-    }
-    if (w.type === 'expr') {
-      const s = w.expr.toLowerCase();
-      const memMatch = s.match(/^mem\[\s*(.*?)\s*\]$/);
-      if (memMatch) {
-        const inner = memMatch[1].replace(/\s+/g, '');
-        const mathMatch = inner.match(/^([a-z0-9]+)([+-])([0-9a-f]+h?)$/);
-        let baseStr = inner;
-        let offset = 0;
-        if (mathMatch) {
-          baseStr = mathMatch[1];
-          offset = parseInt(mathMatch[3].replace(/h$/, ''), 16);
-          if (mathMatch[2] === '-') offset = -offset;
-        }
-        let addr;
-        if (PAIR_KEYS[baseStr]) {
-          addr = (regs[PAIR_KEYS[baseStr][0]] << 8) | regs[PAIR_KEYS[baseStr][1]];
-        } else if (REG_NAMES.has(baseStr)) {
-          addr = regs[baseStr];
-        } else if (/^[0-9a-f]+h?$/.test(baseStr)) {
-          addr = parseInt(baseStr.replace(/h$/, ''), 16);
-        } else {
-          return { v: 'ERR', editable: false };
-        }
-        const finalAddr = (addr + offset) & 0xFFFF;
-        return { v: sim.simReadByte(finalAddr), editable: true, kind: 'mem8', addr: finalAddr };
-      }
-      return { v: 'ERR', editable: false };
-    }
-    return { v: 0, editable: false };
-  }
-
   function commitEdit() {
     if (editingIndex < 0) return
     const w = watches[editingIndex]
-    const info = getWatchInfo(w)
+    const info = getWatchInfo(w, regs)
     
     if (info.editable) {
       const parsed = parseInt(editValue.replace(/h$/i, ''), regBase === 'dec' ? 10 : 16)
@@ -147,71 +206,30 @@ export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onA
       <div className="watch-body" style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
         {watches.length === 0
           ? <div className="watch-empty">Type a register or address above</div>
-          : watches.map((w, i) => {
-              const info = getWatchInfo(w)
-              const v = info.v
-              const isErr = v === 'ERR';
-              const isWord = (w.type === 'reg' && ['pc','sp','bc','de','hl'].includes(w.key)) || (w.type === 'expr' && v > 0xFF);
-              const isEditable = info.editable && !isErr;
-
-              const label = w.type === 'reg' ? w.key.toUpperCase() : w.type === 'mem' ? hex4(w.addr) + 'H' : w.expr;
-              const isBrk = w.type === 'mem' && dataBps?.has(w.addr)
-              const sym = w.type === 'mem' ? addrToLabel.get(w.addr) : null
-
-              let changed = false
-              if (w.type === 'reg' && prevRegs) {
-                const p = PAIR_KEYS[w.key]
+          : watches.map((watch, i) => {
+              const info = getWatchInfo(watch, regs);
+              const isBrk = watch.type === 'mem' && dataBps?.has(watch.addr);
+              let changed = false;
+              if (watch.type === 'reg' && prevRegs) {
+                const p = PAIR_KEYS[watch.key];
                 if (p) {
-                  const prevV = (prevRegs[p[0]] << 8) | prevRegs[p[1]]
-                  changed = v !== prevV
+                  const prevV = (prevRegs[p[0]] << 8) | prevRegs[p[1]];
+                  changed = info.v !== prevV;
                 } else {
-                  changed = v !== prevRegs[w.key]
+                  changed = info.v !== prevRegs[watch.key];
                 }
               } else if (info.kind === 'mem8' && info.addr !== undefined) {
-                changed = changedAddrs?.has(info.addr)
+                changed = changedAddrs?.has(info.addr);
               }
 
               return (
-                <div key={w.type === 'reg' ? `reg-${w.key}` : w.type === 'mem' ? `mem-${w.addr}` : `expr-${w.expr}`} className={`watch-row${changed ? ' changed' : ''}`}>
-                  <span className="watch-label" title={sym ? `${label} (${sym})` : label}>
-                    {label}
-                    {sym && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({sym})</span>}
-                  </span>
-                  {isErr ? (
-                    <span className="watch-val" style={{ color: 'var(--red)' }}>ERR</span>
-                  ) : editingIndex === i ? (
-                    <input
-                      ref={editInputRef}
-                      className="watch-input"
-                      style={{ width: isWord ? 52 : 36, padding: '1px 4px', margin: '0 4px', flex: 'none' }}
-                      value={editValue}
-                      onChange={e => setEditValue(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') commitEdit()
-                        if (e.key === 'Escape') setEditingIndex(-1)
-                      }}
-                      onBlur={commitEdit}
-                    />
-                  ) : (<>
-                    <span className="watch-val"
-                      style={isEditable ? { cursor: 'pointer' } : {}}
-                      onDoubleClick={() => {
-                        if (isEditable) {
-                          setEditingIndex(i);
-                          setEditValue(regBase === 'dec' ? v.toString(10) : v.toString(16).toUpperCase());
-                        }
-                      }}
-                      title={isEditable ? 'Double-click to edit' : undefined}
-                    >{isWord ? fmtWord(v, regBase) : fmtByte(v, regBase)}</span>
-                    {(regBase||'hex') === 'hex' && editingIndex !== i && <span className="watch-dec">{v}</span>}
-                  </>)}
-                  {w.type === 'mem' && (
-                    <button className={`watch-brk${isBrk ? ' active' : ''}`}
-                      title={isBrk ? 'Break on write: ON — click to disable' : 'Break on write: OFF — click to enable'}
-                      onClick={() => onToggleBreak?.(w.addr)}>W</button>
-                  )}
-                  <button className="watch-rm" onClick={() => onRemove(i)}>✕</button>
-                </div>
+                <WatchRow key={watch.type === 'reg' ? `reg-${watch.key}` : watch.type === 'mem' ? `mem-${watch.addr}` : `expr-${watch.expr}`}
+                  watch={watch} info={info} changed={changed} isBrk={isBrk}
+                  isEditing={editingIndex === i} editValue={editValue}
+                  onStartEdit={() => { setEditingIndex(i); setEditValue(regBase === 'dec' ? info.v.toString(10) : info.v.toString(16).toUpperCase()); }}
+                  onCommitEdit={commitEdit} onCancelEdit={() => setEditingIndex(-1)} onSetEditValue={setEditValue}
+                  onRemove={() => onRemove(i)} onToggleBreak={onToggleBreak}
+                  addrToLabel={addrToLabel} regBase={regBase} />
               )
             })
         }

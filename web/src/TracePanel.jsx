@@ -43,6 +43,11 @@ const TraceRow = memo(function TraceRow({ e, lbl, addrToLabel, onJumpDisasm }) {
       }
     </div>
   )
+}, (prev, next) => {
+  if (prev.e !== next.e) return false;
+  if (prev.lbl !== next.lbl) return false;
+  if (prev.addrToLabel !== next.addrToLabel) return false;
+  return true;
 });
 
 export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {

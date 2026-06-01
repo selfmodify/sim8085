@@ -1,10 +1,22 @@
-import { useRef, useMemo, useState, useEffect } from 'react';
+import { useRef, useMemo, useState, useEffect, memo } from 'react';
 import * as sim from './simProxy.js';
 import { useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4, fmtWord, BASE_CYCLE } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
+
+const StackRow = memo(function StackRow({ addr, val, isTop, regBase }) {
+  return (
+    <div className={`stack-row${isTop ? ' stack-top' : ''}`}>
+      <span className="stack-addr">{hex4(addr)}</span>
+      <span className="stack-sep">→</span>
+      <span className="stack-val">{fmtWord(val, regBase)}</span>
+    </div>
+  );
+}, (prev, next) => {
+  return prev.val === next.val && prev.isTop === next.isTop && prev.regBase === next.regBase;
+});
 
 export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase } = useSimulator()
@@ -21,7 +33,7 @@ export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver,
       out.push({ addr: a, val: sim.simReadByte(a) | (sim.simReadByte(a+1)<<8) })
     }
     return out
-  }, [regs.sp])
+  }, [regs])
 
   function onResizeDown(e) {
     e.preventDefault()
@@ -39,7 +51,11 @@ export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver,
   const content = (
     <div className="panel-anim-body" style={poppedOut ? { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } : undefined}>
       <div className="stack-body" style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
-          {entries.length === 0 ? <div className="stack-empty">empty</div> : entries.map((e,i) => (<div key={e.addr} className={`stack-row${i===0?' stack-top':''}`}><span className="stack-addr">{hex4(e.addr)}</span><span className="stack-sep">→</span><span className="stack-val">{fmtWord(e.val, regBase)}</span></div>))}
+          {entries.length === 0
+            ? <div className="stack-empty">empty</div>
+            : entries.map((e, i) => (
+                <StackRow key={e.addr} addr={e.addr} val={e.val} isTop={i === 0} regBase={regBase} />
+              ))}
         </div>
       {!poppedOut && <div className="stack-resize-handle" onMouseDown={onResizeDown} />}
     </div>

@@ -1,8 +1,29 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4 } from './utils.js';
 import { PopoutWindow } from './PopoutWindow.jsx';
+
+const CallStackRow = memo(function CallStackRow({ frame, isTop, targetLbl, callLbl, onJump, onJumpDisasm }) {
+  return (
+    <div className={`callstack-row${isTop ? ' callstack-top' : ''}`}>
+      <span className="callstack-target" title="Target address — click to jump memory and disassembly" onClick={() => { onJump(frame.targetAddr); onJumpDisasm?.(frame.targetAddr); }}>
+        {hex4(frame.targetAddr)}H{targetLbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({targetLbl})</span>}
+      </span>
+      <span className="callstack-arrow">←</span>
+      <span className="callstack-site" title="Call site — click to jump memory and disassembly" onClick={() => { onJump(frame.callAddr); onJumpDisasm?.(frame.callAddr); }}>
+        {hex4(frame.callAddr)}H{callLbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({callLbl})</span>}
+      </span>
+      <span className="callstack-ret" title="Return address">ret:{hex4(frame.retAddr)}H</span>
+    </div>
+  )
+}, (prev, next) => {
+  if (prev.frame !== next.frame) return false;
+  if (prev.isTop !== next.isTop) return false;
+  if (prev.targetLbl !== next.targetLbl) return false;
+  if (prev.callLbl !== next.callLbl) return false;
+  return true;
+});
 
 export function CallStackPanel({ callStack, symbols, onJump, onJumpDisasm, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('callstack', true)
@@ -27,16 +48,7 @@ export function CallStackPanel({ callStack, symbols, onJump, onJumpDisasm, dragH
                   const targetLbl = addrToLabel.get(frame.targetAddr);
                   const callLbl = addrToLabel.get(frame.callAddr);
                   return (
-                    <div key={`${frame.targetAddr}-${frame.callAddr}-${i}`} className={`callstack-row${i === 0 ? ' callstack-top' : ''}`}>
-                      <span className="callstack-target" title="Target address — click to jump memory and disassembly" onClick={() => { onJump(frame.targetAddr); onJumpDisasm?.(frame.targetAddr); }}>
-                        {hex4(frame.targetAddr)}H{targetLbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({targetLbl})</span>}
-                      </span>
-                      <span className="callstack-arrow">←</span>
-                      <span className="callstack-site" title="Call site — click to jump memory and disassembly" onClick={() => { onJump(frame.callAddr); onJumpDisasm?.(frame.callAddr); }}>
-                        {hex4(frame.callAddr)}H{callLbl && <span style={{ color: 'var(--text3)', fontWeight: 'normal' }}> ({callLbl})</span>}
-                      </span>
-                      <span className="callstack-ret" title="Return address">ret:{hex4(frame.retAddr)}H</span>
-                    </div>
+                    <CallStackRow key={`${frame.targetAddr}-${frame.callAddr}-${i}`} frame={frame} isTop={i === 0} targetLbl={targetLbl} callLbl={callLbl} onJump={onJump} onJumpDisasm={onJumpDisasm} />
                   )
                 })}
               </div>
