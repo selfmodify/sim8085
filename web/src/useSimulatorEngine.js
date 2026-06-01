@@ -324,10 +324,12 @@ export function useSimulatorEngine(srcRef) {
     const retAddr = currentR.pc + (RST_OPS.has(op) ? 1 : 3)
     let stepCount = 0
     let result = null
-    while (true) {
+    let watchHit = -1
+    while (stepCount < 500000) {
       result = performStep()
       stepCount += 1
-      if (!result.ok) break
+      watchHit = sim.simGetDataWatchHit?.() ?? -1
+      if (!result.ok || watchHit >= 0) break
       if (result.afterR.pc === retAddr) break
       if (sim.simIsHaltWaiting() || !sim.simIsRunning() || sim.simGetError()) break
     }
@@ -336,7 +338,10 @@ export function useSimulatorEngine(srcRef) {
     refresh()
     updateMemDiff()
     refreshOutputPorts()
-    if (sim.simIsHaltWaiting()) {
+    if (watchHit >= 0) {
+      setAppState('idle')
+      setMsg(`⏹ Watchpoint: write to ${hex4(watchHit)}H at PC=${hex4(sim.simGetRegisters().pc)}H`)
+    } else if (sim.simIsHaltWaiting()) {
       setAppState('halted')
       setMsg('⏸ HLT — awaiting interrupt…')
       setHaltTrigger(t => t + 1)
@@ -346,6 +351,8 @@ export function useSimulatorEngine(srcRef) {
       if (!sim.simGetError()) setHaltTrigger(t => t + 1)
     } else if (result && !result.ok) {
       setAppState('idle')
+    } else if (stepCount >= 500000) {
+      setMsg('⚠ Step over limit reached — subroutine may be infinite')
     }
   }
 
@@ -356,10 +363,12 @@ export function useSimulatorEngine(srcRef) {
     const targetDepth = callStackRef.current.length - 1
     let stepCount = 0
     let result = null
-    while (true) {
+    let watchHit = -1
+    while (stepCount < 500000) {
       result = performStep()
       stepCount += 1
-      if (!result.ok) break
+      watchHit = sim.simGetDataWatchHit?.() ?? -1
+      if (!result.ok || watchHit >= 0) break
       if (callStackRef.current.length === targetDepth) break
       if (sim.simIsHaltWaiting() || !sim.simIsRunning() || sim.simGetError()) break
     }
@@ -368,7 +377,10 @@ export function useSimulatorEngine(srcRef) {
     refresh()
     updateMemDiff()
     refreshOutputPorts()
-    if (sim.simIsHaltWaiting()) {
+    if (watchHit >= 0) {
+      setAppState('idle')
+      setMsg(`⏹ Watchpoint: write to ${hex4(watchHit)}H at PC=${hex4(sim.simGetRegisters().pc)}H`)
+    } else if (sim.simIsHaltWaiting()) {
       setAppState('halted')
       setMsg('⏸ HLT — awaiting interrupt…')
       setHaltTrigger(t => t + 1)
@@ -378,6 +390,8 @@ export function useSimulatorEngine(srcRef) {
       if (!sim.simGetError()) setHaltTrigger(t => t + 1)
     } else if (result && !result.ok) {
       setAppState('idle')
+    } else if (stepCount >= 500000) {
+      setMsg('⚠ Step out limit reached — subroutine may be infinite')
     }
   }
 
