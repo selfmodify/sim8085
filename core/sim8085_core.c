@@ -248,10 +248,11 @@ int SetSign(int x)     { return x ? SetFlag(GetFlag()|SIGN)     :SetFlag(GetFlag
 int SetParity(int x)   { return x ? SetFlag(GetFlag()|PARITY)   :SetFlag(GetFlag()&~PARITY);   }
 
 static int ComputeParity(int val) {
-    int bits = 0;
     val &= 0xFF;
-    while (val) { bits += (val & 1); val >>= 1; }
-    return (bits % 2 == 0) ? 1 : 0;
+    val ^= val >> 4;
+    val ^= val >> 2;
+    val ^= val >> 1;
+    return (~val) & 1;
 }
 
 void Set8085Flag(void) {
