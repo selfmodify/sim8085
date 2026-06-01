@@ -34,7 +34,7 @@ const LED_COUNT = 8
 const MEM_START_DEFAULT = 0x100
 
 const BUILD_TIME_STR = (() => {
-  const d = new Date(__BUILD_TIME__)
+  const d = typeof __BUILD_TIME__ !== 'undefined' ? new Date(__BUILD_TIME__) : new Date()
   const yyyy = d.getFullYear()
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')
@@ -390,22 +390,24 @@ export default function App() {
   }, [autoStopHlt, engine.appState, engine.running, engine])
 
   useEffect(() => {
-    if (engine.haltTrigger > lastHaltRef.current && activeChallenge && !challengeResult) {
+    if (engine.haltTrigger > lastHaltRef.current) {
       lastHaltRef.current = engine.haltTrigger
-      if (activeChallenge.test()) {
-        setChallengeResult({ passed: true, msg: activeChallenge.successMsg })
-        engine.setMsg(`🏆 Challenge Passed: ${activeChallenge.successMsg}`)
-        setCompletedChallenges(s => {
-          const next = new Set(s); next.add(activeChallenge.id)
-          try { localStorage.setItem('sim8085_completed', JSON.stringify([...next])) } catch {}
-          if (driveToken) {
-            savePrefs({ completedChallenges: [...next] });
-          }
-          return next
-        })
-      } else {
-        setChallengeResult({ passed: false, msg: 'Memory output does not match expected result. Check your logic and try again!' })
-        engine.setMsg(`❌ Challenge Failed: Output is incorrect. Keep trying!`)
+      if (activeChallenge && !challengeResult) {
+        if (activeChallenge.test()) {
+          setChallengeResult({ passed: true, msg: activeChallenge.successMsg })
+          engine.setMsg(`🏆 Challenge Passed: ${activeChallenge.successMsg}`)
+          setCompletedChallenges(s => {
+            const next = new Set(s); next.add(activeChallenge.id)
+            try { localStorage.setItem('sim8085_completed', JSON.stringify([...next])) } catch {}
+            if (driveToken) {
+              savePrefs({ completedChallenges: [...next] });
+            }
+            return next
+          })
+        } else {
+          setChallengeResult({ passed: false, msg: 'Memory output does not match expected result. Check your logic and try again!' })
+          engine.setMsg(`❌ Challenge Failed: Output is incorrect. Keep trying!`)
+        }
       }
     }
   }, [engine.haltTrigger, activeChallenge, challengeResult, driveToken, savePrefs])
@@ -427,7 +429,10 @@ export default function App() {
         title: 'Simulator Running',
         message: 'The simulator is currently running. Building will stop execution and reset the CPU state. Proceed?',
         confirmText: 'Yes, build',
-        onConfirm: () => engine.doAssemble(srcRef.current)
+        onConfirm: () => {
+          if (engine.running) engine.handleRun()
+          engine.doAssemble(srcRef.current)
+        }
       })
     } else {
       engine.doAssemble(srcRef.current)
