@@ -133,6 +133,15 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
     finally { setDriveLoading(false) }
   }
 
+  async function getSimFolderId(token) {
+    const query = encodeURIComponent("mimeType='application/vnd.google-apps.folder' and name='sim8085' and trashed=false")
+    const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}`, { headers: { Authorization: 'Bearer ' + token } })
+    if (searchRes.status === 401) { setDriveToken(null); throw new Error('Session expired. Please connect again.'); }
+    if (!searchRes.ok) return null
+    const searchData = await searchRes.json()
+    return searchData.files?.[0]?.id || null
+  }
+
   async function savePrefs(prefs) {
     if (!driveToken) return;
     try {
