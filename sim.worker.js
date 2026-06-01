@@ -9,6 +9,8 @@ let sharedRegs = null;
 let sharedInPorts = null;
 let sharedOutPorts = null;
 let activeBreakpoints = new Set();
+let activeDataBreakpoints = new Set();
+let dataWatchHit = -1;
 let tempBreakpoint = -1;
 let stepOutDepth = 0;
 let throughput = { steps: 0, ms: 0, mhz: 0 };
@@ -20,7 +22,7 @@ Sim8085Module().then((instance) => {
   postMessage({ type: 'READY' });
 });
 
-function broadcastState(mhz = 0) {
+function broadcastState(mhz = 0, watchHit = -1) {
   if (!simModule) return;
   
   // Sync WASM memory to the SharedArrayBuffer
@@ -71,7 +73,28 @@ function broadcastState(mhz = 0) {
   }
   
   // Dispatch a lightweight signal to trigger UI re-renders
-  postMessage({ type: 'STATE_UPDATE', payload: { mhz } });
+  const updatePayload = { mhz };
+  if (watchHit >= 0) updatePayload.watchHit = watchHit;
+  postMessage({ type: 'STATE_UPDATE', payload: updatePayload });
+}
+
+// Returns steps executed; sets dataWatchHit if a watchpoint was triggered.
+// Falls back to JS-side per-step checking when data breakpoints are active.
+function runBatch(maxSteps) {
+  if (activeDataBreakpoints.size === 0) return simModule._sim_run(maxSteps);
+  const addrs = [...activeDataBreakpoints];
+  let steps = 0;
+  while (steps < maxSteps) {
+    const before = addrs.map(a => simModule._sim_read_byte(a));
+    if (!simModule._sim_step()) break;
+    steps++;
+    for (let i = 0; i < addrs.length; i++) {
+      if (simModule._sim_read_byte(addrs[i]) !== before[i]) { dataWatchHit = addrs[i]; return steps; }
+    }
+    const pc = simModule._wasm_reg_pc();
+    if (activeBreakpoints.has(pc) || (tempBreakpoint !== -1 && pc === tempBreakpoint)) break;
+  }
+  return steps;
 }
 
 function runLoop() {
@@ -80,15 +103,16 @@ function runLoop() {
   const t0 = performance.now();
   let executedSteps = 0;
   
+  dataWatchHit = -1;
   // Run the simulation natively for up to 16ms (~60 FPS) to keep the UI smooth
   while (isRunning && (performance.now() - t0 < 16)) {
-    // Execute 100,000 instructions at once entirely inside the WASM engine.
-    // This eliminates the overhead of crossing the JS-WASM boundary 100,000 times.
-    const steps = simModule._sim_run(100000);
+    const steps = runBatch(100000);
     executedSteps += steps;
-    
+
+    if (dataWatchHit >= 0) { isRunning = false; break; }
+
     const pc = simModule._wasm_reg_pc();
-    
+
     // If we hit our temporary step-over breakpoint
     if (tempBreakpoint !== -1 && pc === tempBreakpoint) {
       isRunning = false;
@@ -118,7 +142,8 @@ function runLoop() {
   }
 
   // Sync the 64KB RAM and Registers to the UI only once per frame
-  broadcastState(throughput.mhz);
+  broadcastState(throughput.mhz, dataWatchHit);
+  dataWatchHit = -1;
 
   if (isRunning) {
     // Yield briefly to process incoming messages (like "PAUSE"), then continue
@@ -300,6 +325,19 @@ self.onmessage = function(e) {
     case 'CLEAR_ALL_BREAKPOINTS':
       activeBreakpoints.clear();
       if (simModule) simModule._sim_clear_all_breakpoints();
+      break;
+
+    case 'SET_DATA_BREAKPOINT':
+      activeDataBreakpoints.add(payload.addr);
+      break;
+
+    case 'CLEAR_DATA_BREAKPOINT':
+      activeDataBreakpoints.delete(payload.addr);
+      break;
+
+    case 'CLEAR_ALL_DATA_BREAKPOINTS':
+      activeDataBreakpoints.clear();
+      dataWatchHit = -1;
       break;
 
     case 'RESTORE_SNAPSHOT':

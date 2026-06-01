@@ -54,7 +54,7 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
     performSave(driveToken)
   }
 
-  async function performSave(token, { explicitName, content, mimeType = 'text/plain', filename }) {
+  async function performSave(token, { explicitName, content, mimeType = 'text/plain', filename } = {}) {
     engine.setMsg('Saving to Google Drive…')
     setDriveSaveStatus('saving')
     try {
@@ -159,6 +159,7 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
     if (!driveToken) return null;
     try {
       const folderId = await getSimFolderId(driveToken);
+      if (!folderId) return null;
       const fileQuery = encodeURIComponent(`name='sim8085_prefs.json' and '${folderId}' in parents and trashed=false`);
       const fileSearchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${fileQuery}`, { headers: { Authorization: 'Bearer ' + driveToken } });
       if (fileSearchRes.status === 401) { setDriveToken(null); return null; }

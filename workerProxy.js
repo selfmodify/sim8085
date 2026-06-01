@@ -41,6 +41,9 @@ export class SimWorkerProxy {
         if (payload && payload.mhz !== undefined) {
           this.lastMhz = payload.mhz;
         }
+        if (payload?.watchHit !== undefined && payload.watchHit >= 0) {
+          this.jsDataWatchHit = payload.watchHit;
+        }
         if (this.onStateUpdate) this.onStateUpdate();
       } else if (type === 'RESULT' && this.callbacks.has(id)) {
         this.callbacks.get(id).resolve(payload);
@@ -158,23 +161,23 @@ export class SimWorkerProxy {
   simSetDataBreakpoint(addr) {
     if (this.jsDBP.has(addr)) {
       this.jsDBP.delete(addr);
-      this.worker.postMessage({ cmd: 'clearDataBreakpoint', addr });
+      this.worker.postMessage({ type: 'CLEAR_DATA_BREAKPOINT', payload: { addr } });
       return 2; // Indicate it was toggled OFF
     }
     this.jsDBP.add(addr);
-    this.worker.postMessage({ cmd: 'setDataBreakpoint', addr });
+    this.worker.postMessage({ type: 'SET_DATA_BREAKPOINT', payload: { addr } });
     return 1; // Indicate it was toggled ON
   }
 
   simClearDataBreakpoint(addr) {
     this.jsDBP.delete(addr);
-    this.worker.postMessage({ cmd: 'clearDataBreakpoint', addr });
+    this.worker.postMessage({ type: 'CLEAR_DATA_BREAKPOINT', payload: { addr } });
   }
 
   simClearAllDataBreakpoints() {
     this.jsDBP.clear();
     this.jsDataWatchHit = -1;
-    this.worker.postMessage({ cmd: 'clearAllDataBreakpoints' });
+    this.worker.postMessage({ type: 'CLEAR_ALL_DATA_BREAKPOINTS' });
   }
 
   simIsDataBreakpoint(addr) { 
