@@ -192,12 +192,12 @@ EXPORT void sim_get_memory(uint16_t start, uint16_t length, uint8_t *out_buf) {
 }
 
 EXPORT uint8_t sim_read_byte(uint16_t addr) {
-    if (!KIT || addr >= MAIN_MEMORY) return 0;
+    if (!KIT || (int)addr >= g_memory_size) return 0;
     return KIT->cpu.ram[addr];
 }
 
 EXPORT void sim_write_byte(uint16_t addr, uint8_t val) {
-    if (!KIT || addr >= MAIN_MEMORY) return;
+    if (!KIT || (int)addr >= g_memory_size) return;
     KIT->cpu.ram[addr] = val;
 }
 
@@ -342,7 +342,6 @@ EXPORT int sim_get_key_queue(char *buf, int max_len) {
 /* -----------------------------------------------------------------------
  * Memory size
  * --------------------------------------------------------------------- */
-extern int g_memory_size;
 
 EXPORT void sim_set_memory_size(int bytes) {
     if (bytes == 16*1024 || bytes == 32*1024 || bytes == 64*1024)

@@ -1685,6 +1685,17 @@ static int parse_cm(void)   { return JmpParse(0xFC); }
 static int parse_push(void) { return PushPopParse(PUSH_START); }
 static int parse_pop(void)  { return PushPopParse(POP_START); }
 
+/* Parsers for undocumented instructions */
+static int parse_dsub(void)  { return NoOperandParse(0x08); }
+static int parse_arhl(void)  { return NoOperandParse(0x10); }
+static int parse_rdel(void)  { return NoOperandParse(0x18); }
+static int parse_ldhi(void)  { return ImmParse8(0x28); }
+static int parse_ldsi(void)  { return ImmParse8(0x38); }
+static int parse_rstv(void)  { return NoOperandParse(0xCB); }
+static int parse_shlx(void)  { return NoOperandParse(0xD9); }
+static int parse_lhlx(void)  { return NoOperandParse(0xED); }
+static int parse_jk(void)    { return JmpParse(0xFD); }
+
 static const mnem_entry mnem_table[] = {
     {"NOP",parse_nop},{"HLT",parse_hlt},{"EI",parse_ei},{"DI",parse_di},
     {"MOV",MovParse}, {"MVI",MviParse}, {"LXI",LxiParse},
@@ -1713,6 +1724,10 @@ static const mnem_entry mnem_table[] = {
     {"RST",RstParse},
     {"IN",InParse},{"OUT",OutParse},
     {"RIM",parse_rim},{"SIM",parse_sim},
+    /* Undocumented instructions */
+    {"DSUB",parse_dsub},{"ARHL",parse_arhl},{"RDEL",parse_rdel},
+    {"LDHI",parse_ldhi},{"LDSI",parse_ldsi},{"RSTV",parse_rstv},
+    {"SHLX",parse_shlx},{"LHLX",parse_lhlx},{"JK",parse_jk},
     {NULL, NULL}
 };
 
@@ -1726,7 +1741,7 @@ int IsInstruction(void) {
         if (strcmp(TOKEN(), mnem_table[i].name) == 0)
             return mnem_table[i].parse();
     }
-    return -1;
+    return -15; /* INVALID_OPCODE */
 }
 
 /* -----------------------------------------------------------------------
@@ -1822,36 +1837,39 @@ int ParseLex(void) {
         if (ret < 0) return ret;
         return ret;
     }
-    return -1;
+    return -15; /* INVALID_OPCODE */
 }
 
-/* -----------------------------------------------------------------------
- * Disassembler: opcode → mnemonic string
- * --------------------------------------------------------------------- */
+static uchar safe_ram_read(unsigned addr) {
+    addr &= 0xFFFF;
+    if (addr >= (unsigned)g_memory_size) return 0;
+    return KIT->cpu.ram[addr];
+}
+
 int GetStringFromCode(unsigned a, char *s) {
-    if (a >= MAIN_MEMORY) { strcpy(s, "???"); return 1; }
-    uchar op = KIT->cpu.ram[a];
+    if (a >= (unsigned)g_memory_size) { strcpy(s, "???"); return 1; }
+    uchar op = safe_ram_read(a);
 
     /* ASSERT override (opcode 0xDD) */
     if (op == 0xDD) {
-        uchar sub = KIT->cpu.ram[a+1];
+        uchar sub = safe_ram_read(a+1);
         const char *REG8_N[] = {"B","C","D","E","H","L","M","A"};
         const char *FLAG_N[] = {"CY","Z","S","P","AC"};
         const char *PAIR_N[] = {"BC","DE","HL","SP","PC"};
         char mnemText[64] = "ASSERT ???";
         int len = 2;
         if (sub <= 0x07) {
-            uchar val = KIT->cpu.ram[a+2];
+            uchar val = safe_ram_read(a+2);
             sprintf(mnemText, "ASSERT %s, %02XH", REG8_N[sub], val); len = 3;
         } else if (sub >= 0x10 && sub <= 0x14) {
-            uchar val = KIT->cpu.ram[a+2];
+            uchar val = safe_ram_read(a+2);
             sprintf(mnemText, "ASSERT %s, %u", FLAG_N[sub-0x10], val & 1); len = 3;
         } else if (sub >= 0x20 && sub <= 0x24) {
-            word val = (word)(KIT->cpu.ram[a+2] | ((word)KIT->cpu.ram[a+3] << 8));
+            word val = (word)(safe_ram_read(a+2) | ((word)safe_ram_read(a+3) << 8));
             sprintf(mnemText, "ASSERT %s, %04XH", PAIR_N[sub-0x20], val); len = 4;
         } else if (sub == 0x30) {
-            word a16 = (word)(KIT->cpu.ram[a+2] | ((word)KIT->cpu.ram[a+3] << 8));
-            uchar val = KIT->cpu.ram[a+4];
+            word a16 = (word)(safe_ram_read(a+2) | ((word)safe_ram_read(a+3) << 8));
+            uchar val = safe_ram_read(a+4);
             sprintf(mnemText, "ASSERT MEM, %04XH, %02XH", a16, val); len = 5;
         }
         sprintf(s, "%04X  DD %02X         %s", a, sub, mnemText);
@@ -1864,13 +1882,20 @@ int GetStringFromCode(unsigned a, char *s) {
             sprintf(s, "%04X  %02X        %s", a, op, mot[op].name);
             break;
         case 2:
-            sprintf(s, "%04X  %02X %02X     %s%02XH",
-                a, op, KIT->cpu.ram[a+1], mot[op].name, KIT->cpu.ram[a+1]);
+            {
+                uchar byte1 = safe_ram_read(a+1);
+                sprintf(s, "%04X  %02X %02X     %s%02XH",
+                    a, op, byte1, mot[op].name, byte1);
+            }
             break;
         case 3:
-            sprintf(s, "%04X  %02X %02X %02X  %s%02X%02XH",
-                a, op, KIT->cpu.ram[a+1], KIT->cpu.ram[a+2], mot[op].name,
-                KIT->cpu.ram[a+2], KIT->cpu.ram[a+1]);
+            {
+                uchar byte1 = safe_ram_read(a+1);
+                uchar byte2 = safe_ram_read(a+2);
+                sprintf(s, "%04X  %02X %02X %02X  %s%02X%02XH",
+                    a, op, byte1, byte2, mot[op].name,
+                    byte2, byte1);
+            }
             break;
         default:
             sprintf(s, "%04X  %02X        %s", a, op, mot[op].name);

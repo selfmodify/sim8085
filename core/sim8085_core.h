@@ -447,6 +447,7 @@ typedef machine *machine_ptr;
  * --------------------------------------------------------------------- */
 extern machine_ptr  _8085;   /* pointer to active machine */
 extern machine_ptr   m;      /* global machine instance   */
+extern int           g_memory_size;
 extern unsigned long data;
 extern unsigned long addr;
 extern long          X;
