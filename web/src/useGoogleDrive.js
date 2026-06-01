@@ -33,6 +33,7 @@ export function useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, 
       return
     }
     const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '467288235889-r6gbjd0ou6ubuiktrnaj54bee6iggr01.apps.googleusercontent.com'
+    if (import.meta.env.DEV && !import.meta.env.VITE_GOOGLE_CLIENT_ID) console.warn('VITE_GOOGLE_CLIENT_ID not set — using built-in fallback')
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: 'https://www.googleapis.com/auth/drive.file',

@@ -30,7 +30,7 @@ export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver,
     const out = []
     for (let i = 0; i < 64; i++) {
       const a = (regs.sp + i*2) & 0xFFFF
-      out.push({ addr: a, val: sim.simReadByte(a) | (sim.simReadByte(a+1)<<8) })
+      out.push({ addr: a, val: sim.simReadByte(a) | (sim.simReadByte((a+1)&0xFFFF)<<8) })
     }
     return out
   }, [regs])
