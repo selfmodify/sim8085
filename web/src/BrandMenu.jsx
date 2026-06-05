@@ -114,10 +114,12 @@ export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, on
             {activeSub === 'theme' && (
               <div className="exmenu-sub" onClick={e => e.stopPropagation()}>
                 {[
-                  { id: 'dark',    label: '🌙  Dark'    },
-                  { id: 'dim',     label: '🌗  Dim'     },
-                  { id: 'dracula', label: '🧛  Dracula' },
-                  { id: 'light',   label: '☀︎  Light'   },
+                  { id: 'dark',        label: '🌙  Dark'         },
+                  { id: 'dim',         label: '🌗  Dim'          },
+                  { id: 'tokyo-night', label: '🗼  Tokyo Night'  },
+                  { id: 'dracula',     label: '🧛  Dracula'      },
+                  { id: 'light',       label: '☀︎  Light'        },
+                  { id: 'paper-white', label: '📄  Paper White'  },
                 ].map(({ id, label }) => (
                   <button key={id} className="exmenu-sub-item"
                     style={{ color: theme === id ? 'var(--accent)' : undefined,
