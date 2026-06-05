@@ -192,7 +192,7 @@ export default function App() {
   }
 
   const [activeView,     setActiveView]     = useState('simulator') // 'simulator' | 'challenges' | 'breadboard' | 'instructions'
-  const [theme, setTheme] = useState(() => localStorage.getItem('sim8085_theme') || 'dracula')
+  const [theme, setTheme] = useState(() => localStorage.getItem('sim8085_theme') || 'tokyo-night')
   const [breadboardPoppedOut, setBreadboardPoppedOut] = useState(() => localStorage.getItem('sim8085_breadboard_popped_out') === 'true')
 
   useEffect(() => {
@@ -218,8 +218,8 @@ export default function App() {
     localStorage.setItem('sim8085_theme', theme)
   }, [theme])
   
-  const [crtBrightness, setCrtBrightness] = useState(() => parseFloat(localStorage.getItem(`sim8085_crt_b_${localStorage.getItem('sim8085_theme') || 'dracula'}`) || '1'))
-  const [crtContrast, setCrtContrast]     = useState(() => parseFloat(localStorage.getItem(`sim8085_crt_c_${localStorage.getItem('sim8085_theme') || 'dracula'}`) || '1'))
+  const [crtBrightness, setCrtBrightness] = useState(() => parseFloat(localStorage.getItem(`sim8085_crt_b_${localStorage.getItem('sim8085_theme') || 'tokyo-night'}`) || '1'))
+  const [crtContrast, setCrtContrast]     = useState(() => parseFloat(localStorage.getItem(`sim8085_crt_c_${localStorage.getItem('sim8085_theme') || 'tokyo-night'}`) || '1'))
   const [crtGlitch, setCrtGlitch]         = useState(() => { const v = localStorage.getItem('sim8085_crt_glitch'); return v === 'true' ? 'flicker' : (v && v !== 'false' ? v : 'off') })
   const [crtVignette, setCrtVignette]     = useState(() => localStorage.getItem('sim8085_crt_vignette') !== 'false')
   const [chaosCalm, setChaosCalm]         = useState(false)

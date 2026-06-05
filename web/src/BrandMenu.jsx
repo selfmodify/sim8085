@@ -125,7 +125,7 @@ export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, on
                     style={{ color: theme === id ? 'var(--accent)' : undefined,
                              fontWeight: theme === id ? 700 : undefined }}
                     onClick={() => { onSetTheme(id); setOpen(false); setActiveSub(null) }}>
-                    {label}
+                    {label}{theme === id ? '  ✓' : ''}
                   </button>
                 ))}
                 <hr className="exmenu-sep" />
