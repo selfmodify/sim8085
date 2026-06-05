@@ -864,7 +864,6 @@ export default function App() {
                 onShare={shareURL}
                 onCalc={() => setShowCalc(c => !c)}
                 onChat={() => setShowChat(c => !c)}
-                memSize={engine.memSize} onMemSize={engine.changeMemSize}
                 theme={theme} onTheme={toggleTheme} onSetTheme={setTheme}
                 crtBrightness={crtBrightness} onCrtBrightness={v => { setCrtBrightness(v); localStorage.setItem(`sim8085_crt_b_${theme}`, v) }}
                 crtContrast={crtContrast} onCrtContrast={v => { setCrtContrast(v); localStorage.setItem(`sim8085_crt_c_${theme}`, v) }}

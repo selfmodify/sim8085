@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { RETRO_THEMES } from './utils.js';
 
-export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, onExport, onExportHex, onExportBin, onSaveToDrive, onSaveAsToDrive, onSaveToGist, onShare, onCalc, onChat, memSize, onMemSize, theme, onTheme, onSetTheme, crtBrightness, onCrtBrightness, crtContrast, onCrtContrast, crtGlitch, onCrtGlitch, crtVignette, onCrtVignette, panels, onTogglePanel, driveToken, onConnectDrive, onDriveDisconnect, onBrewCoffee, autoStopHlt, onAutoStopHlt }) {
+export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, onExport, onExportHex, onExportBin, onSaveToDrive, onSaveAsToDrive, onSaveToGist, onShare, onCalc, onChat, theme, onTheme, onSetTheme, crtBrightness, onCrtBrightness, crtContrast, onCrtContrast, crtGlitch, onCrtGlitch, crtVignette, onCrtVignette, panels, onTogglePanel, driveToken, onConnectDrive, onDriveDisconnect, onBrewCoffee, autoStopHlt, onAutoStopHlt }) {
   const [open, setOpen] = useState(false);
   const [activeSub, setActiveSub] = useState(null);
   const wrapRef = useRef(null)
@@ -180,15 +180,6 @@ export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, on
           {autoStopHlt ? 'ON' : 'OFF'}
         </button>
       </div>
-          <div className="bmenu-setting">
-            <span className="bmenu-setting-label">RAM size</span>
-            <select className="bmenu-setting-sel" value={memSize}
-              onChange={e => { onMemSize(+e.target.value); setOpen(false) }}>
-              <option value={16*1024}>16 KB</option>
-              <option value={32*1024}>32 KB</option>
-              <option value={64*1024}>64 KB</option>
-            </select>
-          </div>
           <div className="bmenu-sep" />
           <button className="bmenu-item" onClick={() => { onBrewCoffee(); setOpen(false); setActiveSub(null) }}>
             <span style={{ color: 'var(--amber)' }}>☕</span> Brew Virtual Coffee

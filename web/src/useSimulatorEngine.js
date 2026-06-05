@@ -5,7 +5,7 @@ import { hex4, SPEEDS, evalCondition } from './utils.js'
 
 const INITIAL_PC = 0x100
 const MEM_START_DEFAULT = 0x100
-const MEM_SIZES = [16 * 1024, 32 * 1024, 64 * 1024]
+const MEM_SIZE = 64 * 1024
 const LED_COUNT = 8
 
 let _buildAddrLineMapCache = null
@@ -78,12 +78,7 @@ export function useSimulatorEngine(srcRef) {
   const [histIndex, setHistIndex] = useState(0)
   const [maxHistLen, setMaxHistLen] = useState(0)
   const [addrLineMap, setAddrLineMap] = useState(new Map())
-  const [memSize, _setMemSize] = useState(() => {
-    const s = parseInt(localStorage.getItem('sim8085_memsize'), 10)
-    return MEM_SIZES.includes(s) ? s : 64 * 1024
-  })
-
-  const memSizeRef = useRef(memSize)
+  const memSizeRef = useRef(MEM_SIZE)
   const lineAddrRef = useRef(new Map())
   const speedRef = useRef((() => { const s = parseInt(localStorage.getItem('sim8085_speed'), 10); return s >= 0 && s < SPEEDS.length ? s : 3 })())
   const historyRef = useRef([])
@@ -794,13 +789,6 @@ export function useSimulatorEngine(srcRef) {
     }
   }
 
-  function changeMemSize(n) {
-    memSizeRef.current = n
-    _setMemSize(n)
-    localStorage.setItem('sim8085_memsize', n)
-    doAssemble(srcRef.current)
-  }
-
   function assertInterrupt(type, vec) {
     if (warpWorkerActiveRef.current) {
       warpWorkerRef.current?.postMessage({ cmd: 'assertInterrupt', intType: type })
@@ -864,7 +852,6 @@ export function useSimulatorEngine(srcRef) {
     histLen,
     histIndex, maxHistLen,
     addrLineMap,
-    memSize,
     haltTrigger,
     // computed
     running,
@@ -884,7 +871,6 @@ export function useSimulatorEngine(srcRef) {
     setInputPort, removeInputPort,
     enqueueKeys, clearKeyQueue,
     handleEngineSwitch,
-    changeMemSize,
     changeConsolePort,
     assertInterrupt, deassertInterrupt,
     setRunSpeed,
