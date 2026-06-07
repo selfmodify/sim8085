@@ -27,6 +27,7 @@ import { PopoutWindow } from './PopoutWindow.jsx'
 import { BreadboardView } from './BreadboardView.jsx'
 import { PanelWorkspace } from './PanelWorkspace.jsx'
 import { hex2, hex4, b64encode, b64decode, BASE_CYCLE, SPEEDS, fmtByte, fmtWord, TRACE_REG16, fmtTraceVal, evalCondition, fmtCount, RETRO_THEMES } from './utils.js'
+import { getAutoStopHltDefault } from './preferences.js'
 import './App.css'
 
 const INITIAL_PC = 0x100
@@ -295,7 +296,7 @@ export default function App() {
     const s = parseInt(localStorage.getItem('sim8085_speed'), 10)
     return s >= 0 && s < SPEEDS.length ? s : 3
   })
-  const [autoStopHlt, setAutoStopHlt] = useState(() => localStorage.getItem('sim8085_autostop_hlt') === 'true')
+  const [autoStopHlt, setAutoStopHlt] = useState(getAutoStopHltDefault)
   
   const [regBase, setRegBase]       = useState('hex')    // 'hex'|'dec'|'bin'
   const [statusLog, setStatusLog]   = useState([])
