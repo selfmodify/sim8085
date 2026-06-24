@@ -1,18 +1,40 @@
 #!/bin/sh
-# Run the Vitest suite before every commit.
-# Tests live in web/ and must run under WSL (Node + npm are WSL-side).
+#
+# pre-commit hook that runs `npm test` inside the `web/` directory.
+# If run on Windows (not in a WSL shell), it will delegate the test
+# run to WSL to ensure a consistent Linux-based test environment.
+
 echo "[pre-commit] Running tests..."
-if command -v wsl >/dev/null 2>&1; then
-  echo "[pre-commit] Executing tests inside WSL..."
-  wsl -e bash -c "source ~/.nvm/nvm.sh && nvm use 22 && cd /mnt/f/code/sim8085-web/web && npm test -- --run" 2>&1
+
+# Check if we are on Windows by looking for wsl.exe and not already in a WSL shell
+if command -v wsl.exe >/dev/null 2>&1 && ! grep -qEi "(Microsoft|WSL)" /proc/version &>/dev/null; then
+  echo "[pre-commit] On Windows, executing tests inside WSL..."
+
+  # Convert the Git Bash POSIX path (/f/code/...) to a WSL path (/mnt/f/code/...).
+  # wslpath inside WSL doesn't understand Git Bash paths, so we do it with string ops.
+  GIT_ROOT=$(git rev-parse --show-toplevel)
+  if echo "$GIT_ROOT" | grep -q "^/mnt/"; then
+    WSL_PATH="$GIT_ROOT"
+  else
+    DRIVE=$(echo "$GIT_ROOT" | sed 's|^/\([A-Za-z]\)/.*|\1|' | tr '[:upper:]' '[:lower:]')
+    REST=$(echo "$GIT_ROOT" | sed 's|^/[A-Za-z]/||')
+    WSL_PATH="/mnt/${DRIVE}/${REST}"
+  fi
+  WSL_CMD="cd \"$WSL_PATH\" && . ~/.nvm/nvm.sh && nvm use 22 && npm --prefix web test -- --run"
+
+  # Execute the command inside WSL's default shell.
+  wsl.exe bash -c "$WSL_CMD"
+  EXIT_CODE=$?
 else
-  echo "[pre-commit] WSL not found, running local shell tests..."
-  cd web && npm test -- --run 2>&1
+  # We are already in a Linux-like environment (WSL, macOS, Linux), run tests directly.
+  . ~/.nvm/nvm.sh && nvm use 22 && npm --prefix web test -- --run
+  EXIT_CODE=$?
 fi
-status=$?
-if [ $status -ne 0 ]; then
+
+if [ $EXIT_CODE -ne 0 ]; then
   echo "[pre-commit] Tests FAILED — commit aborted."
   exit 1
 fi
-echo "[pre-commit] All tests passed."
+
+echo "[pre-commit] Tests passed."
 exit 0

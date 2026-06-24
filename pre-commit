@@ -6,27 +6,20 @@
 
 echo "[pre-commit] Running tests..."
 
-# Check if we are on Windows by looking for wsl.exe and not already in a WSL shell
+# Check if we are on Windows by looking for wsl.exe
 if command -v wsl.exe >/dev/null 2>&1 && ! grep -qEi "(Microsoft|WSL)" /proc/version &>/dev/null; then
   echo "[pre-commit] On Windows, executing tests inside WSL..."
 
   # Use the full path to wsl.exe to avoid PATH conflicts.
   # The `wslpath` utility converts the Windows path to a WSL/Linux path.
-  # The command sources nvm, uses node 22, and then runs the tests.
-  GIT_ROOT=$(git rev-parse --show-toplevel)
-  # Robustly determine the correct WSL path.
-  # If the path already starts with /mnt/, use it as is. Otherwise, convert it.
-  # This handles inconsistencies between different shell environments on Windows.
-  if echo "$GIT_ROOT" | grep -q "^/mnt/"; then WSL_PATH="$GIT_ROOT"; else WSL_PATH=$(wslpath -u "$GIT_ROOT"); fi
-
-  WSL_CMD="cd \"$WSL_PATH\" && . ~/.nvm/nvm.sh && nvm use 22 && npm --prefix web test -- --run"
+  WSL_CMD="cd \"\$(wslpath '$(pwd)')\" && npm --prefix web test -- --run"
 
   # Execute the command inside WSL's default shell.
   wsl.exe sh -c "$WSL_CMD"
   EXIT_CODE=$?
 else
   # We are already in a Linux-like environment (WSL, macOS, Linux), run tests directly.
-  . ~/.nvm/nvm.sh && nvm use 22 && npm --prefix web test -- --run
+  npm --prefix web test -- --run
   EXIT_CODE=$?
 fi
 
