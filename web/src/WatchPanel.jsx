@@ -117,13 +117,21 @@ const WatchRow = memo(function WatchRow({ watch, info, changed, isBrk, isEditing
 export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onAdd, onRemove, dataBps, onToggleBreak, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit } = useSimulator()
   const panelRef = useRef(null)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_watch_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => {
+    try {
+      return localStorage.getItem('sim8085_watch_popped_out') === 'true'
+    } catch {
+      return false
+    }
+  })
   const [input, setInput] = useState('')
   const [editingIndex, setEditingIndex] = useState(-1)
   const [editValue, setEditValue] = useState('')
 
   useEffect(() => {
-    localStorage.setItem('sim8085_watch_popped_out', String(poppedOut))
+    try {
+      localStorage.setItem('sim8085_watch_popped_out', String(poppedOut))
+    } catch {}
   }, [poppedOut])
 
   const addrToLabel = useMemo(() => {

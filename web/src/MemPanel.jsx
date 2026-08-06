@@ -131,7 +131,13 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   const { onShowDialog } = useSimulator()
   const memCacheRef = useRef(null) // { buildId, data: Uint8Array } — avoid re-fetching 64KB on each search
   const [mem, setMem] = useState(new Uint8Array(128))
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_mem_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => {
+    try {
+      return localStorage.getItem('sim8085_mem_popped_out') === 'true'
+    } catch {
+      return false
+    }
+  })
   const [followPC, setFollowPC] = useState(false)
   const [flashAddr, setFlashAddr] = useState(null)
   const [editing, setEditing] = useState(null)
@@ -185,7 +191,9 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
   }, [memStart, COLS, scrollEl])
 
   useEffect(() => {
-    localStorage.setItem('sim8085_mem_popped_out', String(poppedOut))
+    try {
+      localStorage.setItem('sim8085_mem_popped_out', String(poppedOut))
+    } catch {}
   }, [poppedOut])
 
   const searchMatchSet  = useMemo(() => new Set(searchMatches), [searchMatches])

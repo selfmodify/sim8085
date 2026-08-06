@@ -21,10 +21,18 @@ const StackRow = memo(function StackRow({ addr, val, isTop, regBase }) {
 export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('stack', false)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_stack_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => {
+    try {
+      return localStorage.getItem('sim8085_stack_popped_out') === 'true'
+    } catch {
+      return false
+    }
+  })
   const panelRef = useRef(null)
   useEffect(() => {
-    localStorage.setItem('sim8085_stack_popped_out', String(poppedOut))
+    try {
+      localStorage.setItem('sim8085_stack_popped_out', String(poppedOut))
+    } catch {}
   }, [poppedOut])
   const entries = useMemo(() => {
     const out = []

@@ -1,6 +1,18 @@
 export const hex2 = n => (n >>> 0 & 0xFF).toString(16).toUpperCase().padStart(2,'0')
 export const hex4 = n => (n >>> 0 & 0xFFFF).toString(16).toUpperCase().padStart(4,'0')
 
+export const safeLocalStorage = {
+  getItem: (key) => {
+    try { return localStorage.getItem(key) } catch { return null }
+  },
+  setItem: (key, value) => {
+    try { localStorage.setItem(key, value) } catch {}
+  },
+  removeItem: (key) => {
+    try { localStorage.removeItem(key) } catch {}
+  }
+}
+
 export const b64encode = str => btoa(Array.from(new TextEncoder().encode(str), b => String.fromCharCode(b)).join(''))
 export const b64decode = b64 => { try { return new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0))) } catch { return null } }
 

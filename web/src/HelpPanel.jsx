@@ -7,11 +7,25 @@ import { highlightAsm } from './InstructionsView.jsx';
 export function HelpPanel({ instruction, theme, popoutCrtProps }) {
   const panelRef = useRef(null)
   const inst = instruction ? INST_HELP[instruction] : null
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_help_popped_out') === 'true')
-  const [height, setHeight] = useState(() => localStorage.getItem('sim8085_help_height') || '')
+  const [poppedOut, setPoppedOut] = useState(() => {
+    try {
+      return localStorage.getItem('sim8085_help_popped_out') === 'true'
+    } catch {
+      return false
+    }
+  })
+  const [height, setHeight] = useState(() => {
+    try {
+      return localStorage.getItem('sim8085_help_height') || ''
+    } catch {
+      return ''
+    }
+  })
 
   useEffect(() => {
-    localStorage.setItem('sim8085_help_popped_out', String(poppedOut))
+    try {
+      localStorage.setItem('sim8085_help_popped_out', String(poppedOut))
+    } catch {}
   }, [poppedOut])
 
   function onResizeDown(e) {

@@ -6,16 +6,30 @@ import { KNOWN_PORTS } from './IOPortPanel.jsx';
 export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme, popoutCrtProps }) {
   const [bodyEl, setBodyEl] = useState(null)
   const panelRef = useRef(null)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_console_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => {
+    try {
+      return localStorage.getItem('sim8085_console_popped_out') === 'true'
+    } catch {
+      return false
+    }
+  })
   const [portBuf, setPortBuf] = useState(() => (port ?? 0).toString(16).toUpperCase().padStart(2,'0'))
-  const [height, setHeight] = useState(() => localStorage.getItem('sim8085_console_height') || '')
+  const [height, setHeight] = useState(() => {
+    try {
+      return localStorage.getItem('sim8085_console_height') || ''
+    } catch {
+      return ''
+    }
+  })
   const [showAuto, setShowAuto] = useState(false)
   const [autoIndex, setAutoIndex] = useState(-1)
 
   useEffect(() => { setPortBuf((port ?? 0).toString(16).toUpperCase().padStart(2,'0')) }, [port])
 
   useEffect(() => {
-    localStorage.setItem('sim8085_console_popped_out', String(poppedOut))
+    try {
+      localStorage.setItem('sim8085_console_popped_out', String(poppedOut))
+    } catch {}
   }, [poppedOut])
 
   useEffect(() => {
