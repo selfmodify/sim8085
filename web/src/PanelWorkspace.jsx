@@ -29,10 +29,12 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   const [memFlashReq,   setMemFlashReq]   = useState(null)
 
   const [editorCollapsed, toggleEditorCollapsed] = useCollapsible('editor', false)
-  const [editorPoppedOut, setEditorPoppedOut] = useState(() => localStorage.getItem('sim8085_editor_popped_out') === 'true')
+  const [editorPoppedOut, setEditorPoppedOut] = useState(() => {
+    try { return localStorage.getItem('sim8085_editor_popped_out') === 'true' } catch { return false }
+  })
 
   useEffect(() => {
-    localStorage.setItem('sim8085_editor_popped_out', String(editorPoppedOut))
+    try { localStorage.setItem('sim8085_editor_popped_out', String(editorPoppedOut)) } catch {}
   }, [editorPoppedOut])
   const [draggedPanel, setDraggedPanel] = useState(null)
   const [dragOverPanel, setDragOverPanel] = useState(null)
@@ -99,7 +101,8 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
             setOrderList(prev => {
               const next = [...prev]; const from = next.indexOf(draggedPanel); const to = next.indexOf(id)
               if (from === -1 || to === -1) return prev; next.splice(from, 1); next.splice(to, 0, draggedPanel)
-              localStorage.setItem(storageKey, JSON.stringify(next)); return next
+              try { localStorage.setItem(storageKey, JSON.stringify(next)) } catch {}
+              return next
             })
           }
           setDraggedPanel(null)
@@ -115,21 +118,24 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   const memWatchWatchRef = useRef(null)
   const disasmStackRef   = useRef(null)
 
-  const initialWidths = useMemo(() => ({
-    editor: localStorage.getItem('sim8085_col_editor'),
-    right: localStorage.getItem('sim8085_col_right'),
-    memWatch: localStorage.getItem('sim8085_memwatch_width'),
-    stack: localStorage.getItem('sim8085_stack_width'),
-    memRow: localStorage.getItem('sim8085_mem_row_height')
-  }), [])
+  const initialWidths = useMemo(() => {
+    const getWidth = (key) => { try { return localStorage.getItem(key) } catch { return undefined } }
+    return {
+      editor: getWidth('sim8085_col_editor'),
+      right: getWidth('sim8085_col_right'),
+      memWatch: getWidth('sim8085_memwatch_width'),
+      stack: getWidth('sim8085_stack_width'),
+      memRow: getWidth('sim8085_mem_row_height')
+    }
+  }, [])
 
   function onEditorResizeDown(e) {
     e.preventDefault(); const startX = e.clientX; const startW = editorColRef.current.getBoundingClientRect().width
     let newW = startW
     function onMove(ev) { newW = Math.max(180, Math.min(640, startW + (ev.clientX - startX))); editorColRef.current.style.flexBasis = newW + 'px' }
-    function onUp() { 
+    function onUp() {
       document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp)
-      localStorage.setItem('sim8085_col_editor', newW + 'px')
+      try { localStorage.setItem('sim8085_col_editor', newW + 'px') } catch {}
     }
     document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
   }
@@ -137,9 +143,9 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     e.preventDefault(); const startX = e.clientX; const startW = rightColRef.current.getBoundingClientRect().width
     let newW = startW
     function onMove(ev) { newW = Math.max(160, Math.min(600, startW - (ev.clientX - startX))); rightColRef.current.style.flexBasis = newW + 'px' }
-    function onUp() { 
+    function onUp() {
       document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp)
-      localStorage.setItem('sim8085_col_right', newW + 'px')
+      try { localStorage.setItem('sim8085_col_right', newW + 'px') } catch {}
     }
     document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
   }
@@ -147,9 +153,9 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     e.preventDefault(); const startX = e.clientX; const startW = memWatchMemRef.current?.getBoundingClientRect().width || 0
     let newW = startW
     function onMove(ev) { newW = Math.max(80, startW + (ev.clientX - startX)); if(memWatchMemRef.current) memWatchMemRef.current.style.flex = `0 0 ${newW}px` }
-    function onUp() { 
+    function onUp() {
       document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp)
-      localStorage.setItem('sim8085_memwatch_width', newW + 'px')
+      try { localStorage.setItem('sim8085_memwatch_width', newW + 'px') } catch {}
     }
     document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
   }
@@ -157,9 +163,9 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     e.preventDefault(); const startX = e.clientX; const stack = disasmStackRef.current; const startW = stack?.getBoundingClientRect().width || 0
     let newW = startW
     function onMove(ev) { newW = Math.max(100, startW - (ev.clientX - startX)); if(stack) stack.style.flex = `0 0 ${newW}px` }
-    function onUp() { 
+    function onUp() {
       document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp)
-      localStorage.setItem('sim8085_stack_width', newW + 'px')
+      try { localStorage.setItem('sim8085_stack_width', newW + 'px') } catch {}
     }
     document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
   }
