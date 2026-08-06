@@ -189,7 +189,9 @@ export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onA
     function onUp() {
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseup', onUp)
-      localStorage.setItem('sim8085_mem_row_height', targetEl.style.height)
+      try {
+        localStorage.setItem('sim8085_mem_row_height', targetEl.style.height)
+      } catch {}
     }
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)

@@ -28,7 +28,9 @@ export function HelpPanel({ instruction, theme, popoutCrtProps }) {
       document.removeEventListener('mouseup', onUp)
       const finalH = panelRef.current.style.flex
       setHeight(finalH)
-      localStorage.setItem('sim8085_help_height', finalH)
+      try {
+        localStorage.setItem('sim8085_help_height', finalH)
+      } catch {}
     }
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)

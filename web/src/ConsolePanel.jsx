@@ -41,7 +41,9 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
       document.removeEventListener('mouseup', onUp)
       const finalH = panelRef.current.style.flex
       setHeight(finalH)
-      localStorage.setItem('sim8085_console_height', finalH)
+      try {
+        localStorage.setItem('sim8085_console_height', finalH)
+      } catch {}
     }
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)
