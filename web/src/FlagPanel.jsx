@@ -8,10 +8,10 @@ import { useSimulator } from './SimulatorContext.jsx';
 export function FlagPanel({ regs, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { onEdit, onShowDialog } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('flags', false)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_flags_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_flags_popped_out') === 'true' } catch { return false } })
 
   useEffect(() => {
-    localStorage.setItem('sim8085_flags_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_flags_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   const FLAGS = [

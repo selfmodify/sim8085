@@ -27,10 +27,10 @@ const CallStackRow = memo(function CallStackRow({ frame, isTop, targetLbl, callL
 
 export function CallStackPanel({ callStack, symbols, onJump, onJumpDisasm, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('callstack', true)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_callstack_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_callstack_popped_out') === 'true' } catch { return false } })
 
   useEffect(() => {
-    localStorage.setItem('sim8085_callstack_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_callstack_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   const addrToLabel = useMemo(() => {

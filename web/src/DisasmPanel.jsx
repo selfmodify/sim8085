@@ -107,11 +107,11 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
   const [followPC, setFollowPC]   = useState(true)
   const [addrInput, setAddrInput] = useState('')
   const [showBpList, setShowBpList] = useState(false)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_disasm_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_disasm_popped_out') === 'true' } catch { return false } })
   const curRowRef = useRef(null)
 
   useEffect(() => {
-    localStorage.setItem('sim8085_disasm_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_disasm_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   const addrToLabel = useMemo(() => {

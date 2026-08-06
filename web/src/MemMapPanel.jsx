@@ -6,12 +6,12 @@ import { PopoutWindow } from './PopoutWindow.jsx';
 
 export function MemMapPanel({ regs, programRegion, presetAddrs, onJump, onJumpDisasm, onGotoLine, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('memmap', false)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_memmap_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_memmap_popped_out') === 'true' } catch { return false } })
   const [selectedInfo, setSelectedInfo] = useState('Click a region for details')
   const [dataIndex, setDataIndex] = useState(0)
 
   useEffect(() => {
-    localStorage.setItem('sim8085_memmap_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_memmap_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   // Group scattered preset addresses into contiguous visual chunks

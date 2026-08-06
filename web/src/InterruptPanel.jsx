@@ -6,9 +6,9 @@ import { PopoutWindow } from './PopoutWindow.jsx';
 
 export function InterruptPanel({ intState, onAssert, onDeassert, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('interrupts', true)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_ints_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_ints_popped_out') === 'true' } catch { return false } })
   useEffect(() => {
-    localStorage.setItem('sim8085_ints_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_ints_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
   const { iff, intMask, rst75ff, trapPend, rst65, rst55, intr } = intState
   const [intrRst, setIntrRst] = useState(7)

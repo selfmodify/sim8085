@@ -7,7 +7,7 @@ import { PopoutWindow } from './PopoutWindow.jsx';
 
 export function AudioPanel({ running, onShowDialog, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('audio', false)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_audio_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_audio_popped_out') === 'true' } catch { return false } })
   const [enabled, setEnabled] = useState(false)
   const [volume, setVolume] = useState(0.05)
   const [displayVal, setDisplayVal] = useState(0)
@@ -19,7 +19,7 @@ export function AudioPanel({ running, onShowDialog, dragHandleProps, dropTargetP
   useEffect(() => { volRef.current = volume }, [volume])
 
   useEffect(() => {
-    localStorage.setItem('sim8085_audio_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_audio_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   function toggleAudio() {

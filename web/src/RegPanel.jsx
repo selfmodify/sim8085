@@ -9,10 +9,10 @@ import { PopoutWindow } from './PopoutWindow.jsx';
 export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:0, flags:0 }, prev = {}, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit, onShowDialog } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('reg', false)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_regs_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_regs_popped_out') === 'true' } catch { return false } })
 
   useEffect(() => {
-    localStorage.setItem('sim8085_regs_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_regs_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
   const p = prev || {}
 

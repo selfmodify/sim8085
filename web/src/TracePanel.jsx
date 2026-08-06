@@ -52,7 +52,7 @@ const TraceRow = memo(function TraceRow({ e, lbl, addrToLabel, onJumpDisasm }) {
 
 export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('trace', true)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_trace_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_trace_popped_out') === 'true' } catch { return false } })
   const [bodyEl, setBodyEl] = useState(null)
   
   useEffect(() => {
@@ -60,7 +60,7 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
   }, [trace, bodyEl])
 
   useEffect(() => {
-    localStorage.setItem('sim8085_trace_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_trace_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   const addrToLabel = useMemo(() => {

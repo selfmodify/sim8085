@@ -18,7 +18,7 @@ export const KNOWN_PORTS = [
 
 export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInput, keyQueue, onEnqueueKeys, onClearKeyQueue, sid, sod, onSetSID, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const [collapsed, toggleCollapsed] = useCollapsible('ioports', true)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_ioports_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_ioports_popped_out') === 'true' } catch { return false } })
   const [portBuf, setPortBuf] = useState('')
   const [valBuf,  setValBuf]  = useState('')
   const [kbdBuf,  setKbdBuf]  = useState('')
@@ -26,7 +26,7 @@ export function IOPortPanel({ outputPorts, inputPresets, onSetInput, onRemoveInp
   const [autoIndex, setAutoIndex] = useState(-1)
 
   useEffect(() => {
-    localStorage.setItem('sim8085_ioports_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_ioports_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   function addPreset() {

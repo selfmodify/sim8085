@@ -193,11 +193,17 @@ export default function App() {
   }
 
   const [activeView,     setActiveView]     = useState('simulator') // 'simulator' | 'challenges' | 'breadboard' | 'instructions'
-  const [theme, setTheme] = useState(() => localStorage.getItem('sim8085_theme') || 'tokyo-night')
-  const [breadboardPoppedOut, setBreadboardPoppedOut] = useState(() => localStorage.getItem('sim8085_breadboard_popped_out') === 'true')
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('sim8085_theme') || 'tokyo-night' } catch { return 'tokyo-night' }
+  })
+  const [breadboardPoppedOut, setBreadboardPoppedOut] = useState(() => {
+    try { return localStorage.getItem('sim8085_breadboard_popped_out') === 'true' } catch { return false }
+  })
 
   useEffect(() => {
-    localStorage.setItem('sim8085_breadboard_popped_out', String(breadboardPoppedOut))
+    try {
+      localStorage.setItem('sim8085_breadboard_popped_out', String(breadboardPoppedOut))
+    } catch {}
   }, [breadboardPoppedOut])
 
   function handleSetView(v) {
@@ -206,7 +212,7 @@ export default function App() {
       setPanels(p => {
         if (!p.ppi || !p.pit) {
           const next = { ...p, ppi: true, pit: true };
-          localStorage.setItem('sim8085_panels', JSON.stringify(next));
+          try { localStorage.setItem('sim8085_panels', JSON.stringify(next)) } catch {}
           return next;
         }
         return p;
@@ -216,18 +222,30 @@ export default function App() {
   
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-    localStorage.setItem('sim8085_theme', theme)
+    try {
+      localStorage.setItem('sim8085_theme', theme)
+    } catch {}
   }, [theme])
   
-  const [crtBrightness, setCrtBrightness] = useState(() => parseFloat(localStorage.getItem(`sim8085_crt_b_${localStorage.getItem('sim8085_theme') || 'tokyo-night'}`) || '1'))
-  const [crtContrast, setCrtContrast]     = useState(() => parseFloat(localStorage.getItem(`sim8085_crt_c_${localStorage.getItem('sim8085_theme') || 'tokyo-night'}`) || '1'))
-  const [crtGlitch, setCrtGlitch]         = useState(() => { const v = localStorage.getItem('sim8085_crt_glitch'); return v === 'true' ? 'flicker' : (v && v !== 'false' ? v : 'off') })
-  const [crtVignette, setCrtVignette]     = useState(() => localStorage.getItem('sim8085_crt_vignette') !== 'false')
+  const [crtBrightness, setCrtBrightness] = useState(() => {
+    try { const theme = localStorage.getItem('sim8085_theme') || 'tokyo-night'; return parseFloat(localStorage.getItem(`sim8085_crt_b_${theme}`) || '1') } catch { return 1 }
+  })
+  const [crtContrast, setCrtContrast]     = useState(() => {
+    try { const theme = localStorage.getItem('sim8085_theme') || 'tokyo-night'; return parseFloat(localStorage.getItem(`sim8085_crt_c_${theme}`) || '1') } catch { return 1 }
+  })
+  const [crtGlitch, setCrtGlitch]         = useState(() => {
+    try { const v = localStorage.getItem('sim8085_crt_glitch'); return v === 'true' ? 'flicker' : (v && v !== 'false' ? v : 'off') } catch { return 'off' }
+  })
+  const [crtVignette, setCrtVignette]     = useState(() => {
+    try { return localStorage.getItem('sim8085_crt_vignette') !== 'false' } catch { return true }
+  })
   const [chaosCalm, setChaosCalm]         = useState(false)
   
   useEffect(() => {
-    setCrtBrightness(parseFloat(localStorage.getItem(`sim8085_crt_b_${theme}`) || '1'))
-    setCrtContrast(parseFloat(localStorage.getItem(`sim8085_crt_c_${theme}`) || '1'))
+    try {
+      setCrtBrightness(parseFloat(localStorage.getItem(`sim8085_crt_b_${theme}`) || '1'))
+      setCrtContrast(parseFloat(localStorage.getItem(`sim8085_crt_c_${theme}`) || '1'))
+    } catch {}
   }, [theme])
   
   function toggleTheme() {
@@ -279,22 +297,28 @@ export default function App() {
 
   function togglePanel(key) {
     setPanels(p => {
-      const next = { ...p, [key]: !p[key] }; localStorage.setItem('sim8085_panels', JSON.stringify(next)); return next
+      const next = { ...p, [key]: !p[key] };
+      try { localStorage.setItem('sim8085_panels', JSON.stringify(next)) } catch {}
+      return next
     })
   }
 
-  const [showWelcome,    setShowWelcome]    = useState(() => !localStorage.getItem('sim8085_welcomed'))
+  const [showWelcome,    setShowWelcome]    = useState(() => {
+    try { return !localStorage.getItem('sim8085_welcomed') } catch { return true }
+  })
   const [showCalc,       setShowCalc]       = useState(false)
   const [calcPoppedOut,  setCalcPoppedOut]  = useState(false)
   const [showChat,       setShowChat]       = useState(false)
   const [chatPoppedOut,  setChatPoppedOut]  = useState(false)
   const [showShortcuts,  setShowShortcuts]  = useState(false)
   
-  function dismissWelcome() { localStorage.setItem('sim8085_welcomed', '1'); setShowWelcome(false) }
-  
+  function dismissWelcome() { try { localStorage.setItem('sim8085_welcomed', '1') } catch {}; setShowWelcome(false) }
+
   const [runSpeed, setRunSpeed]     = useState(() => {
-    const s = parseInt(localStorage.getItem('sim8085_speed'), 10)
-    return s >= 0 && s < SPEEDS.length ? s : 3
+    try {
+      const s = parseInt(localStorage.getItem('sim8085_speed'), 10)
+      return s >= 0 && s < SPEEDS.length ? s : 3
+    } catch { return 3 }
   })
   const [autoStopHlt, setAutoStopHlt] = useState(getAutoStopHltDefault)
   
@@ -320,13 +344,15 @@ export default function App() {
 
   useEffect(() => {
     const initApp = async () => {
-      const pref = localStorage.getItem('sim8085_engine') || 'wasm'
-      if (pref === 'wasm') {
-        const res = await switchEngine('wasm')
-        if (!res.ok) { engine.setEngineMode('js'); localStorage.setItem('sim8085_engine', 'js') }
-      } else {
-        engine.setEngineMode('js')
-      }
+      try {
+        const pref = localStorage.getItem('sim8085_engine') || 'wasm'
+        if (pref === 'wasm') {
+          const res = await switchEngine('wasm')
+          if (!res.ok) { engine.setEngineMode('js'); try { localStorage.setItem('sim8085_engine', 'js') } catch {} }
+        } else {
+          engine.setEngineMode('js')
+        }
+      } catch {}
       sim.simInit()
       const hash = window.location.hash
       if (hash.startsWith('#gist=')) {

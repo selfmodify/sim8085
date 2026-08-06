@@ -24,10 +24,10 @@ function SevenSeg({ value }) {
 
 export function LedDisplay({ leds, theme, popoutCrtProps }) {
   const LABELS = ['ST1','ST0','A3','A2','A1','A0','D1','D0']
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_led_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_led_popped_out') === 'true' } catch { return false } })
 
   useEffect(() => {
-    localStorage.setItem('sim8085_led_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_led_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   const content = (

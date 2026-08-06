@@ -15,13 +15,13 @@ const PAIR_DEFS = [
 export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, symbols, onJump, onJumpDisasm, onMemoryEdited, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('pairs', true)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_pairs_popped_out') === 'true')
+  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_pairs_popped_out') === 'true' } catch { return false } })
   const [editing, setEditing] = useState(null)  // { key, field: 'addr'|'content' }
   const [buf, setBuf] = useState('')
   const p = prev || {}
 
   useEffect(() => {
-    localStorage.setItem('sim8085_pairs_popped_out', String(poppedOut))
+    try { localStorage.setItem('sim8085_pairs_popped_out', String(poppedOut)) } catch {}
   }, [poppedOut])
 
   const addrToLabel = useMemo(() => {
