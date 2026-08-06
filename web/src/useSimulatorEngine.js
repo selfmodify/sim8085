@@ -59,7 +59,9 @@ export function useSimulatorEngine(srcRef) {
   const [sod, setSod] = useState(0)
   const [memStart, setMemStart] = useState(MEM_START_DEFAULT)
   const [appState, setAppState] = useState('idle')
-  const [engineMode, setEngineMode] = useState(() => localStorage.getItem('sim8085_engine') || 'wasm')
+  const [engineMode, setEngineMode] = useState(() => {
+    try { return localStorage.getItem('sim8085_engine') || 'wasm' } catch { return 'wasm' }
+  })
   const [engineSwitching, setEngineSwitching] = useState(false)
   const engineSwitchingRef = useRef(false)
   const [msg, setMsg] = useState('Load an example or write code, then click Build.')
@@ -80,7 +82,7 @@ export function useSimulatorEngine(srcRef) {
   const [addrLineMap, setAddrLineMap] = useState(new Map())
   const memSizeRef = useRef(MEM_SIZE)
   const lineAddrRef = useRef(new Map())
-  const speedRef = useRef((() => { const s = parseInt(localStorage.getItem('sim8085_speed'), 10); return s >= 0 && s < SPEEDS.length ? s : 3 })())
+  const speedRef = useRef((() => { try { const s = parseInt(localStorage.getItem('sim8085_speed'), 10); return s >= 0 && s < SPEEDS.length ? s : 3 } catch { return 3 } })())
   const historyRef = useRef([])
   const prevRamRef = useRef(null)
   const bpsRef = useRef(new Map())
@@ -776,11 +778,11 @@ export function useSimulatorEngine(srcRef) {
       if (!result.ok) {
         setMsg(`✗ WASM unavailable: ${result.error}`)
         setEngineMode('js')
-        localStorage.setItem('sim8085_engine', 'js')
+        try { localStorage.setItem('sim8085_engine', 'js') } catch {}
         return
       }
       setEngineMode(mode)
-      localStorage.setItem('sim8085_engine', mode)
+      try { localStorage.setItem('sim8085_engine', mode) } catch {}
       sim.simInit()
       doAssemble(srcRef.current)
     } finally {
