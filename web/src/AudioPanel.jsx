@@ -62,7 +62,13 @@ export function AudioPanel({ running, onShowDialog, dragHandleProps, dropTargetP
   }
 
   useEffect(() => {
-    if (!enabled || !audioRef.current) return
+    if (!enabled || !audioRef.current || collapsed) {
+      if (audioRef.current?.gain) {
+        const { ctx, gain } = audioRef.current;
+        gain.gain.setTargetAtTime(0, ctx.currentTime, 0.015); // Ensure sound stops
+      }
+      return;
+    }
     const { ctx, osc, gain } = audioRef.current
 
     let lastVal = -1
@@ -97,7 +103,7 @@ export function AudioPanel({ running, onShowDialog, dragHandleProps, dropTargetP
     }, 16)
 
     return () => clearInterval(timer)
-  }, [enabled])
+  }, [enabled, collapsed])
 
   useEffect(() => {
     return () => {

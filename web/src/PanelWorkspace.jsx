@@ -40,14 +40,14 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   const [dragOverPanel, setDragOverPanel] = useState(null)
   const [rightPanelOrder, setRightPanelOrder] = useState(() => {
     const defaultOrder = ['regs', 'pairs', 'flags', 'ints', 'io', 'memmap', 'audio']
-    try { 
+    try {
       const saved = JSON.parse(localStorage.getItem('sim8085_right_panels')) || []
       const missing = defaultOrder.filter(k => !saved.includes(k))
       return saved.concat(missing)
     }
     catch { return defaultOrder }
   })
-  
+
   const watchedWords = useMemo(() => {
     const list = new Set()
     for (const w of engine.watches) {
@@ -65,7 +65,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
 
   const [centerPanelOrder, setCenterPanelOrder] = useState(() => {
     const defaultOrder = ['stack', 'callstack', 'trace']
-    try { 
+    try {
       const saved = JSON.parse(localStorage.getItem('sim8085_center_panels')) || []
       const missing = defaultOrder.filter(k => !saved.includes(k))
       return saved.concat(missing)
@@ -171,7 +171,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   }
 
   const editorElement = (
-    <AsmEditor value={src} onChange={v => { srcRef.current = v; setSrc(v) }} gotoRef={gotoLineRef} editorActionsRef={editorActionsRef} 
+    <AsmEditor value={src} onChange={v => { srcRef.current = v; setSrc(v) }} gotoRef={gotoLineRef} editorActionsRef={editorActionsRef}
       onHistoryChange={onHistoryChange}
       onCursorInstruction={setCursorInst} onInstructionDetail={setHelpInst}
       errorLine={engine.errorLine} activeLine={engine.addrLineMap?.get(engine.regs?.pc)} onRunTo={engine.runToAddr} onJumpMem={(addr) => { engine.setMemStart(addr & 0xFFF0); setMemFlashReq({ addr, ts: Date.now() }) }} buildId={engine.buildId} lineAddrRef={engine.lineAddrRef} theme={theme} watchedWords={watchedWords}
@@ -238,7 +238,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
             </>
           )}
         </div>
-        <div className="mem-watch-row" style={initialWidths.memRow ? { height: initialWidths.memRow } : undefined}>
+        <div className="mem-watch-row" style={initialWidths.memRow ? { height: initialWidths.memRow } : { height: '280px' }}>
           <div className="mem-watch-mem" ref={memWatchMemRef} style={initialWidths.memWatch ? { flex: `0 0 ${initialWidths.memWatch}` } : undefined}>
             <MemPanel memStart={engine.memStart} onJump={engine.setMemStart} regs={engine.regs} buildId={engine.buildId} changedAddrs={engine.changedAddrs} programRegion={engine.programRegion} presetAddrs={engine.presetAddrs} onMemoryEdited={() => engine.setBuildId(id => id + 1)} memVisibleRangeRef={engine.memVisibleRangeRef} flashReq={memFlashReq} theme={theme} popoutCrtProps={popoutCrtProps} />
           </div>
