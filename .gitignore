@@ -7,3 +7,4 @@ web/coverage/
 *.o
 *.a
 .claude/
+node_modules/

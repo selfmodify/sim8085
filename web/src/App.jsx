@@ -48,26 +48,30 @@ const BUILD_TIME_STR = (() => {
 })()
 
 function VersionMenu({ onShowDialog }) {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef(null)
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
     const handler = e => {
-      if (!wrapRef.current?.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+      if (!wrapRef.current?.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
 
-  const hash = typeof __COMMIT_HASH__ !== 'undefined' && __COMMIT_HASH__ ? __COMMIT_HASH__ : '';
-  const branch = typeof __BRANCH_NAME__ !== 'undefined' && __BRANCH_NAME__ ? __BRANCH_NAME__ : '';
-  const dateStr = BUILD_TIME_STR.split(' (')[0];
-  const shortDate = dateStr.split(' ')[0];
+  const hash = typeof __COMMIT_HASH__ !== 'undefined' && __COMMIT_HASH__ ? __COMMIT_HASH__ : ''
+  const branch = typeof __BRANCH_NAME__ !== 'undefined' && __BRANCH_NAME__ ? __BRANCH_NAME__ : ''
+  const dateStr = BUILD_TIME_STR.split(' (')[0]
+  const shortDate = dateStr.split(' ')[0]
 
   return (
     <div className="bmenu-wrap" ref={wrapRef} style={{ display: 'flex', alignItems: 'center' }}>
-      <button className="build-chip" onClick={() => setOpen(o => !o)} title="Simulator web app release version" style={{ marginLeft: '6px', background: open ? 'var(--bg3)' : 'transparent', color: open ? 'var(--text)' : 'var(--text2)' }}>
+      <button
+        className="build-chip"
+        onClick={() => setOpen(o => !o)}
+        title="Simulator web app release version"
+        style={{ marginLeft: '6px', background: open ? 'var(--bg3)' : 'transparent', color: open ? 'var(--text)' : 'var(--text2)' }}>
         App Ver: {dateStr} {open ? '▴' : '▾'}
       </button>
       {open && (
@@ -108,7 +112,7 @@ function VersionMenu({ onShowDialog }) {
               title: 'Reset Preferences',
               message: 'Are you sure you want to reset all local preferences, theme settings, and UI layouts? This will reload the simulator.',
               confirmText: 'Reset and reload',
-              onConfirm: () => {
+              onConfirm: () => { // eslint-disable-next-line no-restricted-globals
                 Object.keys(localStorage).forEach(k => {
                   if (k.startsWith('sim8085_') || k === 'ant_key') localStorage.removeItem(k);
                 });
@@ -128,28 +132,30 @@ function VersionMenu({ onShowDialog }) {
 // ── Root app ─────────────────────────────────────────────────────────────
 export default function App() {
   const [src, setSrc]           = useState(() => {
+    let initialSrc = EXAMPLES['I/O']['LED Count']; // Default fallback
     try {
       const hash = location.hash
-      if (hash.startsWith('#code=')) { const d = b64decode(hash.slice(6)); if (d) return d }
-      if (hash.startsWith('#example=')) {
+      if (hash.startsWith('#code=')) {
+        const d = b64decode(hash.slice(6));
+        if (d) initialSrc = d;
+      } else if (hash.startsWith('#example=')) {
         const exName = decodeURIComponent(hash.slice(9)).replace(/_/g, ' ')
         for (const cat in EXAMPLES) {
-          if (EXAMPLES[cat][exName]) return EXAMPLES[cat][exName]
+          if (EXAMPLES[cat][exName]) initialSrc = EXAMPLES[cat][exName];
         }
+      } else {
+        const saved = localStorage.getItem('sim8085_program');
+        if (saved) initialSrc = saved;
       }
-      const saved = localStorage.getItem('sim8085_program')
-      if (saved) return saved
-    } catch {}
-    return EXAMPLES['I/O']['LED Count']
+    } catch (e) {
+      console.error("Error initializing source from hash or localStorage:", e);
+      // initialSrc is already the default example here
+    }
+    return initialSrc;
   })
   const [fileName, setFileName]  = useState(() => {
-    try {
-      const hash = location.hash
-      if (hash.startsWith('#example=')) {
-        const exName = decodeURIComponent(hash.slice(9)).replace(/_/g, ' ')
-        for (const cat in EXAMPLES) { if (EXAMPLES[cat][exName]) return exName }
-      }
-    } catch {}
+    const hash = location.hash
+    if (hash.startsWith('#example=')) { const exName = decodeURIComponent(hash.slice(9)).replace(/_/g, ' '); for (const cat in EXAMPLES) { if (EXAMPLES[cat][exName]) return exName } }
     return localStorage.getItem('sim8085_filename') || ''
   })
   
@@ -259,7 +265,7 @@ export default function App() {
   const lastHaltRef                           = useRef(0)
   
   const [panels, setPanels] = useState(() => {
-    const def = { regs:true, pairs:true, flags:true, ints:true, io:true, memmap:false, ppi:true, pit:false, audio:true, stack:true, callstack:true, trace:true }
+    const def = { regs:true, pairs:true, flags:false, ints:true, io:true, memmap:false, ppi:true, pit:false, audio:false, stack:true, callstack:true, trace:true }
     try { return { ...def, ...JSON.parse(localStorage.getItem('sim8085_panels')) } } catch { return def }
   })
   
@@ -289,7 +295,10 @@ export default function App() {
   const [chatPoppedOut,  setChatPoppedOut]  = useState(false)
   const [showShortcuts,  setShowShortcuts]  = useState(false)
   
-  function dismissWelcome() { localStorage.setItem('sim8085_welcomed', '1'); setShowWelcome(false) }
+  const dismissWelcome = useCallback(() => {
+    localStorage.setItem('sim8085_welcomed', '1');
+    setShowWelcome(false);
+  }, []);
   
   const [runSpeed, setRunSpeed]     = useState(() => {
     const s = parseInt(localStorage.getItem('sim8085_speed'), 10)
@@ -318,27 +327,6 @@ export default function App() {
   }, [src])
 
   useEffect(() => {
-    const initApp = async () => {
-      const pref = localStorage.getItem('sim8085_engine') || 'wasm'
-      if (pref === 'wasm') {
-        const res = await switchEngine('wasm')
-        if (!res.ok) { engine.setEngineMode('js'); localStorage.setItem('sim8085_engine', 'js') }
-      } else {
-        engine.setEngineMode('js')
-      }
-      sim.simInit()
-      const hash = window.location.hash
-      if (hash.startsWith('#gist=')) {
-        loadFromGist(hash.slice(6))
-        window.history.replaceState(null, '', window.location.pathname)
-      } else {
-        engine.doAssemble(srcRef.current)
-      }
-    }
-    initApp()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
     if (driveToken) {
       const doLoadPrefs = async () => {
         const prefs = await loadPrefs();
@@ -353,10 +341,74 @@ export default function App() {
       doLoadPrefs();
     }
   }, [driveToken, loadPrefs]);
-  const hotkeysRef = useRef(null)
-  useEffect(() => { hotkeysRef.current = { handleBuild, handleReset, doStep: engine.doStep, doStepOver: engine.doStepOver, doStepOut: engine.doStepOut, handleRun: engine.handleRun, running: engine.running, appState: engine.appState, saveToDrive, driveToken, setMsg: engine.setMsg } })
+
+  useEffect(() => {
+    const initApp = async () => {
+      try { // Catch errors during any part of the initialization
+        const pref = localStorage.getItem('sim8085_engine') || 'wasm'
+        if (pref === 'wasm') {
+          const res = await switchEngine('wasm')
+          if (!res.ok) { engine.setEngineMode('js'); localStorage.setItem('sim8085_engine', 'js') }
+        } else {
+          engine.setEngineMode('js')
+        }
+
+        // Defer initial simulator setup (simInit) to allow UI to render first.
+        // This try/catch handles errors during simInit.
+        setTimeout(() => {
+          try {
+            sim.simInit(); // Potentially blocking synchronous call
+
+            // Defer the assembly process as well. This try/catch handles errors during assembly.
+            setTimeout(() => {
+              try {
+                const hash = window.location.hash;
+                if (hash.startsWith('#gist=')) {
+                  loadFromGist(hash.slice(6)); // This is an async function, its errors are handled internally
+                  window.history.replaceState(null, '', window.location.pathname);
+                } else {
+                  engine.doAssemble(srcRef.current); // Most likely blocking call
+                }
+              } catch (e_assemble) {
+                console.error("Initial assembly failed:", e_assemble);
+                engine.setMsg(`✗ Initial assembly failed: ${e_assemble.message}. Loading default example.`);
+                setSrc(EXAMPLES['I/O']['LED Count']);
+                setFileName('LED Count');
+                localStorage.setItem('sim8085_filename', 'LED Count');
+                setReadOnlySource('Example');
+                try { engine.doAssemble(EXAMPLES['I/O']['LED Count']); }
+                catch (e2) { console.error("Fallback assembly of default example also failed:", e2); engine.setMsg(`✗ Even default example failed to assemble: ${e2.message}. Simulator may be unstable.`); }
+              }
+            }, 0); // End of inner setTimeout
+          } catch (e_siminit) {
+            console.error("Simulator initialization (simInit) failed:", e_siminit);
+            engine.setMsg(`✗ Simulator core initialization failed: ${e_siminit.message}. Loading default example.`);
+            setSrc(EXAMPLES['I/O']['LED Count']);
+            setFileName('LED Count');
+            localStorage.setItem('sim8085_filename', 'LED Count');
+            setReadOnlySource('Example');
+            try { engine.doAssemble(EXAMPLES['I/O']['LED Count']); }
+            catch (e2) { console.error("Fallback assembly of default example also failed:", e2); engine.setMsg(`✗ Even default example failed to assemble: ${e2.message}. Simulator may be unstable.`); }
+          }
+        }, 0); // End of outer setTimeout
+      } catch (e) {
+        console.error("Application initialization failed:", e);
+        engine.setMsg(`✗ Application startup failed: ${e.message}. Loading default example.`);
+        const defaultExample = EXAMPLES['I/O']['LED Count'];
+        setSrc(defaultExample);
+        setFileName('LED Count');
+        localStorage.setItem('sim8085_filename', 'LED Count');
+        setReadOnlySource('Example');
+        try { engine.doAssemble(defaultExample); }
+        catch (e2) { console.error("Fallback assembly of default example also failed:", e2); engine.setMsg(`✗ Even default example failed to assemble: ${e2.message}. Simulator may be unstable.`); }
+      }
+    }
+    initApp()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     function onKey(e) {
+      if (!hotkeysRef.current) return;
       const h = hotkeysRef.current
       if (e.key === 'F5') { e.preventDefault(); h.handleBuild() }
       if (e.key === 'F6') { e.preventDefault(); if (!h.running) h.handleReset() }
@@ -368,20 +420,11 @@ export default function App() {
       if (e.key === 'F12') { e.preventDefault(); window.dispatchEvent(new Event('sim-dock-all')) }
       if (e.key === 's' && e.ctrlKey) { e.preventDefault(); if (h.driveToken) h.saveToDrive(); else h.setMsg('✓ Saved locally') }
       if (e.key === 'Escape' && h.running) { e.preventDefault(); h.handleRun() }
-      if (e.key === '?' && !e.ctrlKey && !e.altKey && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
-        e.preventDefault(); setShowShortcuts(s => !s)
-      }
+      if (e.key === '?' && !e.ctrlKey && !e.altKey && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) { e.preventDefault(); setShowShortcuts(s => !s) }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [])
-
-  useEffect(() => {
-    if (engine.msg === 'Load an example or write code, then click Build.') return
-    const t = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})
-    const kind = engine.msg.startsWith('✗') || engine.msg.startsWith('❌') ? 'error' : engine.msg.startsWith('✓') || engine.msg.startsWith('🏆') ? 'success' : engine.msg.startsWith('■') ? 'halted' : 'info'
-    setStatusLog(log => [...log.slice(-19), { text: engine.msg, kind, t }])
-  }, [engine.msg])
 
   useEffect(() => {
     if (autoStopHlt && engine.appState === 'halted' && engine.running) {
@@ -420,19 +463,19 @@ export default function App() {
   useEffect(() => { lsSet('sim8085_led_pos', JSON.stringify(ledPos)) }, [ledPos])
   useEffect(() => { lsSet('sim8085_readonly', readOnlySource || '') }, [readOnlySource])
   
-  function handleBuild() {
+  const handleBuild = useCallback(() => {
     if (engine.running) {
       setAppDialog({
         type: 'confirm',
         title: 'Simulator Running',
         message: 'The simulator is currently running. Building will stop execution and reset the CPU state. Proceed?',
         confirmText: 'Yes, build',
-        onConfirm: () => engine.doAssemble(srcRef.current)
+        onConfirm: () => engine.doAssemble(srcRef.current),
       })
     } else {
       engine.doAssemble(srcRef.current)
     }
-  }
+  }, [engine, setAppDialog, srcRef])
 
   function confirmLoad(action, onCancel) {
     if (engine.running) {
@@ -449,8 +492,13 @@ export default function App() {
     }
   }
 
-  function handleReset() { if (!engine.running) engine.doAssemble(srcRef.current) }
+  const handleReset = useCallback(() => {
+    if (!engine.running) engine.doAssemble(srcRef.current)
+  }, [engine])
   
+  const hotkeysRef = useRef(null)
+  useEffect(() => { hotkeysRef.current = { handleBuild, handleReset, doStep: engine.doStep, doStepOver: engine.doStepOver, doStepOut: engine.doStepOut, handleRun: engine.handleRun, running: engine.running, appState: engine.appState, saveToDrive, driveToken, setMsg: engine.setMsg } }, [handleBuild, handleReset, engine.doStep, engine.doStepOver, engine.doStepOut, engine.handleRun, engine.running, engine.appState, saveToDrive, driveToken, engine.setMsg])
+
   function openConditionDialog(addr) {
     if (!engine.bps.has(addr)) return
     const cur = engine.bps.get(addr) || ''
@@ -771,7 +819,7 @@ export default function App() {
     })
   }
 
-  function onBrewCoffee() {
+  const onBrewCoffee = useCallback(() => {
     const base = "       ###\n      #####\n       ###\n     =======\n    |       |\\\n    |       | |\n     \\_____/ /\n      ======";
     setAppDialog({
       type: 'alert',
@@ -788,8 +836,8 @@ export default function App() {
       animationSpeed: 300,
       confirmText: 'Buy me a real coffee ☕',
       onConfirm: () => window.open('https://ko-fi.com/sim8085', '_blank')
-    })
-  }
+    });
+  }, [setAppDialog]);
 
   useEffect(() => {
     const isRetro = RETRO_THEMES.includes(theme)

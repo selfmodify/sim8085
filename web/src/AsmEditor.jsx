@@ -417,7 +417,7 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
       state: EditorState.create({
         doc: value,
         extensions: [
-          history({ minDepth: 50 }),
+          history({ minDepth: 1 }), // Reduced history depth as requested
           lineNumbers(),
           addressGutterState,
           addressGutterExt,
