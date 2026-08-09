@@ -23,6 +23,8 @@ import { ChallengesView, CHALLENGES } from './ChallengesView.jsx'
 import { InstructionsView } from './InstructionsView.jsx'
 import { useSimulatorEngine } from './useSimulatorEngine.js'
 import { useGoogleDrive } from './useGoogleDrive.js'
+import { useThemeManager } from './useThemeManager.js'
+import { useLayoutManager } from './useLayoutManager.js'
 import { PopoutWindow } from './PopoutWindow.jsx'
 import { BreadboardView } from './BreadboardView.jsx'
 import { PanelWorkspace } from './PanelWorkspace.jsx'
@@ -199,12 +201,25 @@ export default function App() {
   }
 
   const [activeView,     setActiveView]     = useState('simulator') // 'simulator' | 'challenges' | 'breadboard' | 'instructions'
-  const [theme, setTheme] = useState(() => {
-    try { return localStorage.getItem('sim8085_theme') || 'tokyo-night' } catch { return 'tokyo-night' }
-  })
   const [breadboardPoppedOut, setBreadboardPoppedOut] = useState(() => {
     try { return localStorage.getItem('sim8085_breadboard_popped_out') === 'true' } catch { return false }
   })
+
+  const {
+    theme, setTheme, toggleTheme,
+    crtBrightness, onCrtBrightness,
+    crtContrast, onCrtContrast,
+    crtGlitch, onCrtGlitch,
+    crtVignette, onCrtVignette,
+    chaosCalm, isRetroTheme, popoutCrtProps
+  } = useThemeManager();
+
+  const {
+    panels, setPanels, togglePanel,
+    ppiPos, setPpiPos,
+    pitPos, setPitPos,
+    ledPos, setLedPos,
+  } = useLayoutManager();
 
   useEffect(() => {
     try {
@@ -226,47 +241,6 @@ export default function App() {
     }
   }
   
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    try {
-      localStorage.setItem('sim8085_theme', theme)
-    } catch {}
-  }, [theme])
-  
-  const [crtBrightness, setCrtBrightness] = useState(() => {
-    try { const theme = localStorage.getItem('sim8085_theme') || 'tokyo-night'; return parseFloat(localStorage.getItem(`sim8085_crt_b_${theme}`) || '1') } catch { return 1 }
-  })
-  const [crtContrast, setCrtContrast]     = useState(() => {
-    try { const theme = localStorage.getItem('sim8085_theme') || 'tokyo-night'; return parseFloat(localStorage.getItem(`sim8085_crt_c_${theme}`) || '1') } catch { return 1 }
-  })
-  const [crtGlitch, setCrtGlitch]         = useState(() => {
-    try { const v = localStorage.getItem('sim8085_crt_glitch'); return v === 'true' ? 'flicker' : (v && v !== 'false' ? v : 'off') } catch { return 'off' }
-  })
-  const [crtVignette, setCrtVignette]     = useState(() => {
-    try { return localStorage.getItem('sim8085_crt_vignette') !== 'false' } catch { return true }
-  })
-  const [chaosCalm, setChaosCalm]         = useState(false)
-  
-  useEffect(() => {
-    try {
-      setCrtBrightness(parseFloat(localStorage.getItem(`sim8085_crt_b_${theme}`) || '1'))
-      setCrtContrast(parseFloat(localStorage.getItem(`sim8085_crt_c_${theme}`) || '1'))
-    } catch {}
-  }, [theme])
-  
-  function toggleTheme() {
-    setTheme(t =>
-      t === 'dark'       ? 'dim'        :
-      t === 'dim'        ? 'dracula'    :
-      t === 'dracula'    ? 'light'      :
-      t === 'light'      ? 'amber-mono' :
-      t === 'amber-mono' ? 'gray-crt'   :
-      t === 'gray-crt'   ? 'green'      :
-      t === 'green'      ? 'blue-crt'   :
-      t === 'blue-crt'   ? 'plasma'     : 'dark'
-    )
-  }
-
   const [activeChallenge, setActiveChallenge] = useState(null)
   const [challengeResult, setChallengeResult] = useState(null)
   const [completedChallenges, setCompletedChallenges] = useState(() => {
@@ -281,34 +255,6 @@ export default function App() {
     loadFromDrive, fetchDriveFile, deleteDriveFile
   } = useGoogleDrive({ engine, srcRef, setSrc, fileName, setFileName, setActiveChallenge, setAppDialog })
 
-  const lastHaltRef                           = useRef(0)
-  
-  const [panels, setPanels] = useState(() => {
-    const def = { regs:true, pairs:true, flags:false, ints:true, io:true, memmap:false, ppi:true, pit:false, audio:false, stack:true, callstack:true, trace:true }
-    try { return { ...def, ...JSON.parse(localStorage.getItem('sim8085_panels')) } } catch { return def }
-  })
-  
-  const [ppiPos, setPpiPos] = useState(() => {
-    try { const p = JSON.parse(localStorage.getItem('sim8085_ppi_pos')); if (p && typeof p.x === 'number') return p; } catch {}
-    return { x: Math.max(0, Math.round((window.innerWidth / 2 + 50) / 20) * 20), y: 100 }
-  })
-  const [pitPos, setPitPos] = useState(() => {
-    try { const p = JSON.parse(localStorage.getItem('sim8085_pit_pos')); if (p && typeof p.x === 'number') return p; } catch {}
-    return { x: Math.max(0, Math.round((window.innerWidth / 2 - 350) / 20) * 20), y: 100 }
-  })
-  const [ledPos, setLedPos] = useState(() => {
-    try { const p = JSON.parse(localStorage.getItem('sim8085_led_pos')); if (p && typeof p.x === 'number') return p; } catch {}
-    return { x: Math.max(0, Math.round((window.innerWidth / 2 - 150) / 20) * 20), y: 360 }
-  })
-
-  function togglePanel(key) {
-    setPanels(p => {
-      const next = { ...p, [key]: !p[key] };
-      try { localStorage.setItem('sim8085_panels', JSON.stringify(next)) } catch {}
-      return next
-    })
-  }
-
   const [showWelcome,    setShowWelcome]    = useState(() => {
     try { return !localStorage.getItem('sim8085_welcomed') } catch { return true }
   })
@@ -317,8 +263,11 @@ export default function App() {
   const [showChat,       setShowChat]       = useState(false)
   const [chatPoppedOut,  setChatPoppedOut]  = useState(false)
   const [showShortcuts,  setShowShortcuts]  = useState(false)
-
-  function dismissWelcome() { try { localStorage.setItem('sim8085_welcomed', '1') } catch {}; setShowWelcome(false) }
+  
+  const dismissWelcome = useCallback(() => {
+    localStorage.setItem('sim8085_welcomed', '1');
+    setShowWelcome(false);
+  }, []);
 
   const [runSpeed, setRunSpeed]     = useState(() => {
     try {
@@ -327,6 +276,8 @@ export default function App() {
     } catch { return 3 }
   })
   const [autoStopHlt, setAutoStopHlt] = useState(getAutoStopHltDefault)
+
+  const lastHaltRef = useRef(0)
   
   const [regBase, setRegBase]       = useState('hex')    // 'hex'|'dec'|'bin'
   const [statusLog, setStatusLog]   = useState([])
@@ -866,27 +817,10 @@ export default function App() {
     });
   }, [setAppDialog]);
 
-  useEffect(() => {
-    const isRetro = RETRO_THEMES.includes(theme)
-    if (!isRetro || crtGlitch !== 'chaos') { setChaosCalm(false); return }
-    let id
-    const tick = (calm) => { id = setTimeout(() => { setChaosCalm(!calm); tick(!calm) }, calm ? 1000 : 4000) }
-    setChaosCalm(false)
-    tick(false)
-    return () => clearTimeout(id)
-  }, [theme, crtGlitch])
-
-  const isRetroTheme = RETRO_THEMES.includes(theme)
-
   const simCtxValue = useMemo(
     () => ({ regBase, onRegBase: setRegBase, onEdit: engine.refresh, onShowDialog: setAppDialog }),
     [regBase] // eslint-disable-line react-hooks/exhaustive-deps
   )
-
-  const popoutCrtProps = {
-    containerStyle: isRetroTheme ? { filter: `brightness(${crtBrightness}) contrast(${crtContrast})` } : undefined,
-    containerClass: `${isRetroTheme && crtGlitch !== 'off' ? `crt-glitch-${crtGlitch}` : ''}${isRetroTheme && !crtVignette ? ' crt-no-vignette' : ''}`
-  }
 
   return (
     <SimulatorContext.Provider value={simCtxValue}>
@@ -935,10 +869,10 @@ export default function App() {
                 onCalc={() => setShowCalc(c => !c)}
                 onChat={() => setShowChat(c => !c)}
                 theme={theme} onTheme={toggleTheme} onSetTheme={setTheme}
-                crtBrightness={crtBrightness} onCrtBrightness={v => { setCrtBrightness(v); localStorage.setItem(`sim8085_crt_b_${theme}`, v) }}
-                crtContrast={crtContrast} onCrtContrast={v => { setCrtContrast(v); localStorage.setItem(`sim8085_crt_c_${theme}`, v) }}
-                crtGlitch={crtGlitch} onCrtGlitch={() => { const modes = ['off','flicker','static','vsync','hsync','chroma','chaos']; const next = modes[(modes.indexOf(crtGlitch) + 1) % modes.length]; setCrtGlitch(next); localStorage.setItem('sim8085_crt_glitch', next) }}
-                crtVignette={crtVignette} onCrtVignette={v => { setCrtVignette(v); localStorage.setItem('sim8085_crt_vignette', String(v)) }}
+                crtBrightness={crtBrightness} onCrtBrightness={onCrtBrightness}
+                crtContrast={crtContrast} onCrtContrast={onCrtContrast}
+                crtGlitch={crtGlitch} onCrtGlitch={onCrtGlitch}
+                crtVignette={crtVignette} onCrtVignette={onCrtVignette}
                 panels={panels} onTogglePanel={togglePanel}
             onBrewCoffee={onBrewCoffee}
             autoStopHlt={autoStopHlt} onAutoStopHlt={v => { setAutoStopHlt(v); localStorage.setItem('sim8085_autostop_hlt', String(v)) }} />

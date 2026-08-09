@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import * as sim from './simProxy.js';
 import { useCopy, useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
@@ -6,17 +6,15 @@ import { hex4, fmtWord, fmtByte, BASE_CYCLE } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:0, flags:0 }, prev = {}, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+const EditableRow = memo(function EditableRow({ name, val, prevVal, regKey, is16, regBase, onJump, onEdit, onShowDialog }) {
   const { regBase, onRegBase, onEdit, onShowDialog } = useSimulator()
   const [collapsed, toggleCollapsed] = useCollapsible('reg', false)
-  const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_regs_popped_out') === 'true' } catch { return false } })
+  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_regs_popped_out') === 'true')
 
   useEffect(() => {
-    try { localStorage.setItem('sim8085_regs_popped_out', String(poppedOut)) } catch {}
+    localStorage.setItem('sim8085_regs_popped_out', String(poppedOut))
   }, [poppedOut])
   const p = prev || {}
-
-  function EditableRow({ name, val, prevVal, regKey, is16 }) {
     const [editing, setEditing] = useState(false)
     const [buf, setBuf] = useState('')
     const [copied, copy] = useCopy()
@@ -60,10 +58,10 @@ export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:
            onContextMenu={e => { e.preventDefault(); copy(displayVal) }}>
         <span className="reg-name">{name}</span>
         <span className="reg-hex">{copied !== null ? '✓' : displayVal}</span>
-        {regBase === 'hex' && copied === null && <span className="reg-dec">{val}</span>}
+        {regBase === 'hex' && copied === null && <span className="reg-dec">{val.toString(10)}</span>}
       </div>
     )
-  }
+})
 
   // Paired cell: two 8-bit registers side-by-side
   function PairCell({ name, val, prevVal, regKey }) {
@@ -101,6 +99,18 @@ export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:
       </div>
     )
   }
+
+export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:0, flags:0 }, prev = {}, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
+  const { regBase, onRegBase, onEdit, onShowDialog } = useSimulator()
+  const [collapsed, toggleCollapsed] = useCollapsible('reg', false)
+  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_regs_popped_out') === 'true')
+
+  useEffect(() => {
+    localStorage.setItem('sim8085_regs_popped_out', String(poppedOut))
+  }, [poppedOut])
+  const p = prev || {}
+
+
 
   const nextBase = BASE_CYCLE[(BASE_CYCLE.indexOf(regBase || 'hex') + 1) % 3]
 

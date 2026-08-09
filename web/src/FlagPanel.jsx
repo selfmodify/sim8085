@@ -1,9 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import * as sim from './simProxy.js';
 import { useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 import { useSimulator } from './SimulatorContext.jsx';
+
+const Flag = memo(function Flag({ flag, value, onClick }) {
+  return (
+    <div className={`flag${value ? ' flag-on' : ''}`} title={flag.title + ' (Click to toggle)'} style={{ cursor: 'pointer' }} onClick={onClick}>
+      <div className="flag-lbl">{flag.label}</div>
+      <div className="flag-val">{value}</div>
+    </div>
+  );
+});
 
 export function FlagPanel({ regs, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { onEdit, onShowDialog } = useSimulator()
@@ -48,12 +57,7 @@ export function FlagPanel({ regs, dragHandleProps, dropTargetProps, isDragOver, 
 
   const content = (
     <div className="panel-anim-body flags-row">
-      {FLAGS.map(f => (
-        <div key={f.key} className={`flag${regs[f.key] ? ' flag-on' : ''}`} title={f.title + ' (Click to toggle)'} style={{ cursor: 'pointer' }} onClick={() => handleFlagClick(f)}>
-          <div className="flag-lbl">{f.label}</div>
-          <div className="flag-val">{regs[f.key]}</div>
-        </div>
-      ))}
+      {FLAGS.map(f => <Flag key={f.key} flag={f} value={regs[f.key]} onClick={() => handleFlagClick(f)} />)}
     </div>
   )
 
