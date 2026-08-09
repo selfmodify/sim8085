@@ -238,7 +238,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
             </>
           )}
         </div>
-        <div className="mem-watch-row" style={{ height: '280px' }}>
+        <div className="mem-watch-row" style={{ height: initialWidths.memRow || '280px' }}>
           <div className="mem-watch-mem" ref={memWatchMemRef} style={initialWidths.memWatch ? { flex: `0 0 ${initialWidths.memWatch}` } : undefined}>
             <MemPanel memStart={engine.memStart} onJump={engine.setMemStart} regs={engine.regs} buildId={engine.buildId} changedAddrs={engine.changedAddrs} programRegion={engine.programRegion} presetAddrs={engine.presetAddrs} onMemoryEdited={() => engine.setBuildId(id => id + 1)} memVisibleRangeRef={engine.memVisibleRangeRef} flashReq={memFlashReq} theme={theme} popoutCrtProps={popoutCrtProps} />
           </div>
