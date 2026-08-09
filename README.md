@@ -209,6 +209,15 @@ sim8085-web/
 
 ### Run the web app locally
 
+**Easiest way:**
+```bash
+# From the repo root
+./run.sh           # macOS / Linux
+./run.bat          # Windows
+# Then open http://localhost:5173/sim8085/
+```
+
+**Or manually:**
 ```bash
 cd web
 npm install
