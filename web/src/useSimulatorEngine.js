@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, useTransition } from 'react'
 import * as sim from './simProxy.js'
 import { getEngineMode, switchEngine } from './simProxy.js'
 import { hex4, SPEEDS, evalCondition } from './utils.js'
@@ -31,6 +31,7 @@ function buildAddrLineMap(code) {
 }
 
 export function useSimulatorEngine(srcRef) {
+  const [isPending, startTransition] = useTransition()
   const [regs, setRegs] = useState({ a: 0, b: 0, c: 0, d: 0, e: 0, h: 0, l: 0, flags: 0, pc: INITIAL_PC, sp: 0, flagS: 0, flagZ: 0, flagAC: 0, flagP: 0, flagCY: 0, halted: false, hasError: false })
   const [prevRegs, setPrev] = useState(null)
   const [leds, setLeds] = useState(Array(LED_COUNT).fill(0))
@@ -136,9 +137,11 @@ export function useSimulatorEngine(srcRef) {
         if (cnt > mx) mx = cnt
       }
     }
-    setHitcnts(m.size > 0 ? m : null)
-    setMaxHit(mx)
-  }, [])
+    startTransition(() => {
+      setHitcnts(m.size > 0 ? m : null)
+      setMaxHit(mx)
+    })
+  }, [startTransition])
 
   const refresh = useCallback(() => {
     if (refreshRafRef.current) cancelAnimationFrame(refreshRafRef.current)
@@ -687,9 +690,11 @@ export function useSimulatorEngine(srcRef) {
     const d = sim.simDisassemble(prevR.pc)
     const SKIP = new Set(['pc', 'flags', 'halted', 'hasError'])
     const changed = Object.keys(prevR).filter(k => !SKIP.has(k) && typeof prevR[k] === 'number' && r[k] !== prevR[k])
-    setTrace(t => {
-      const entry = { addr: prevR.pc, text: d.text, regs: r, changedKeys: changed }
-      return t.length >= 50 ? [...t.slice(1), entry] : [...t, entry]
+    startTransition(() => {
+      setTrace(t => {
+        const entry = { addr: prevR.pc, text: d.text, regs: r, changedKeys: changed }
+        return t.length >= 50 ? [...t.slice(1), entry] : [...t, entry]
+      })
     })
   }
 

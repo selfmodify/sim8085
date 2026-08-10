@@ -3,6 +3,7 @@ import { useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex4, fmtTraceVal, TRACE_REG16 } from './utils.js';
 import { PopoutWindow } from './PopoutWindow.jsx';
+import { VirtualList } from './VirtualList.jsx';
 
 const TraceRow = memo(function TraceRow({ e, lbl, addrToLabel, onJumpDisasm }) {
   const stripped = e.text.replace(/^[0-9A-Fa-f]{4}\s+(?:[0-9A-Fa-f]{2}\s+)+/, '').trim();
@@ -56,8 +57,13 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
   const [bodyEl, setBodyEl] = useState(null)
   
   useEffect(() => {
-    if (bodyEl) bodyEl.scrollTop = bodyEl.scrollHeight
-  }, [trace, bodyEl])
+    if (bodyEl && trace.length > 0) {
+      const scrollDelay = requestAnimationFrame(() => {
+        bodyEl.scrollTop = bodyEl.scrollHeight
+      })
+      return () => cancelAnimationFrame(scrollDelay)
+    }
+  }, [trace.length, bodyEl])
 
   useEffect(() => {
     try { localStorage.setItem('sim8085_trace_popped_out', String(poppedOut)) } catch {}
@@ -95,13 +101,19 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
   }
 
   const content = (
-      <div className="panel-anim-body trace-body" ref={setBodyEl}>
+      <div className="panel-anim-body trace-body" ref={setBodyEl} style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
         {trace.length === 0
           ? <div className="trace-empty">Step through code to record execution</div>
-          : trace.map((e, i) => {
-            const lbl = addrToLabel.get(e.addr);
-            return <TraceRow key={`${e.addr}-${i}`} e={e} lbl={lbl} addrToLabel={addrToLabel} onJumpDisasm={onJumpDisasm} />
-          })
+          : <VirtualList
+              items={trace}
+              itemHeight={40}
+              containerHeight={300}
+              renderItem={(e, idx) => {
+                const lbl = addrToLabel.get(e.addr);
+                return <TraceRow key={`${e.addr}-${idx}`} e={e} lbl={lbl} addrToLabel={addrToLabel} onJumpDisasm={onJumpDisasm} />
+              }}
+              overscan={3}
+            />
         }
       </div>
   )
