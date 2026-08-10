@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import * as sim from './simProxy.js'
 import { getEngineMode, switchEngine } from './simProxy.js'
 import { hex4, SPEEDS, evalCondition } from './utils.js'
 
 const INITIAL_PC = 0x100
 const MEM_START_DEFAULT = 0x100
-const MEM_SIZE = 64 * 1024
+const MEM_SIZES = [16 * 1024, 32 * 1024, 64 * 1024]
 const LED_COUNT = 8
 
 let _buildAddrLineMapCache = null
@@ -59,9 +59,7 @@ export function useSimulatorEngine(srcRef) {
   const [sod, setSod] = useState(0)
   const [memStart, setMemStart] = useState(MEM_START_DEFAULT)
   const [appState, setAppState] = useState('idle')
-  const [engineMode, setEngineMode] = useState(() => {
-    try { return localStorage.getItem('sim8085_engine') || 'wasm' } catch { return 'wasm' }
-  })
+  const [engineMode, setEngineMode] = useState(() => localStorage.getItem('sim8085_engine') || 'wasm')
   const [engineSwitching, setEngineSwitching] = useState(false)
   const engineSwitchingRef = useRef(false)
   const [msg, setMsg] = useState('Load an example or write code, then click Build.')
@@ -80,9 +78,14 @@ export function useSimulatorEngine(srcRef) {
   const [histIndex, setHistIndex] = useState(0)
   const [maxHistLen, setMaxHistLen] = useState(0)
   const [addrLineMap, setAddrLineMap] = useState(new Map())
-  const memSizeRef = useRef(MEM_SIZE)
+  const [memSize, _setMemSize] = useState(() => {
+    const s = parseInt(localStorage.getItem('sim8085_memsize'), 10)
+    return MEM_SIZES.includes(s) ? s : 64 * 1024
+  })
+
+  const memSizeRef = useRef(memSize)
   const lineAddrRef = useRef(new Map())
-  const speedRef = useRef((() => { try { const s = parseInt(localStorage.getItem('sim8085_speed'), 10); return s >= 0 && s < SPEEDS.length ? s : 3 } catch { return 3 } })())
+  const speedRef = useRef((() => { const s = parseInt(localStorage.getItem('sim8085_speed'), 10); return s >= 0 && s < SPEEDS.length ? s : 3 })())
   const historyRef = useRef([])
   const prevRamRef = useRef(null)
   const bpsRef = useRef(new Map())
@@ -101,13 +104,43 @@ export function useSimulatorEngine(srcRef) {
   const refreshRafRef = useRef(null)
   const memDiffRafRef = useRef(null)
   const memVisibleRangeRef = useRef({ start: MEM_START_DEFAULT, len: 128 })
+  const programRegionRef = useRef(null)
+  const hitcntCacheRef = useRef(new Map())
+  const changedAddressesRef = useRef(new Set())
+  const ramReconstructionCacheRef = useRef(new Map())
 
   useEffect(() => { bpsRef.current = bps }, [bps])
 
   const watchesRef = useRef(watches)
   useEffect(() => { watchesRef.current = watches }, [watches])
 
-  function refresh() {
+  const refreshProfile = useCallback(() => {
+    if (!sim.simGetHitcntRange) return
+    const pr = sim.simGetProgramRegion()
+    if (pr && (programRegionRef.current?.start !== pr.start || programRegionRef.current?.end !== pr.end)) {
+      programRegionRef.current = pr
+      hitcntCacheRef.current.clear()
+    }
+    const start = pr?.start ?? 0x100
+    const end = Math.min((pr?.end ?? 0x200) + 16, 0xFFFF)
+    const len = end - start + 1
+    if (len <= 0) return
+    const counts = sim.simGetHitcntRange(start, len)
+    let mx = 0; const m = new Map()
+    for (let i = 0; i < len; i++) {
+      const addr = start + i
+      const cnt = counts[i]
+      if (cnt > 0) {
+        hitcntCacheRef.current.set(addr, cnt)
+        m.set(addr, cnt)
+        if (cnt > mx) mx = cnt
+      }
+    }
+    setHitcnts(m.size > 0 ? m : null)
+    setMaxHit(mx)
+  }, [])
+
+  const refresh = useCallback(() => {
     if (refreshRafRef.current) cancelAnimationFrame(refreshRafRef.current)
     refreshRafRef.current = requestAnimationFrame(() => {
       refreshRafRef.current = null
@@ -121,23 +154,7 @@ export function useSimulatorEngine(srcRef) {
       if (sim.simGetSOD) setSod(sim.simGetSOD())
       refreshProfile()
     })
-  }
-
-  function refreshProfile() {
-    if (!sim.simGetHitcntRange) return
-    const pr = sim.simGetProgramRegion()
-    const start = pr?.start ?? 0x100
-    const end = Math.min((pr?.end ?? 0x200) + 16, 0xFFFF)
-    const len = end - start + 1
-    if (len <= 0) return
-    const counts = sim.simGetHitcntRange(start, len)
-    let mx = 0; const m = new Map()
-    for (let i = 0; i < len; i++) {
-      if (counts[i] > 0) { m.set(start + i, counts[i]); if (counts[i] > mx) mx = counts[i] }
-    }
-    setHitcnts(m.size > 0 ? m : null)
-    setMaxHit(mx)
-  }
+  }, [refreshProfile])
 
   function refreshOutputPorts() {
     setOutputPorts(sim.simGetOutputPorts())
@@ -205,6 +222,10 @@ export function useSimulatorEngine(srcRef) {
   }
 
   function reconstructRam(hist, targetIdx) {
+    const cacheKey = `${hist.length}_${targetIdx}`
+    if (ramReconstructionCacheRef.current.has(cacheKey)) {
+      return ramReconstructionCacheRef.current.get(cacheKey)
+    }
     const base = hist[0]
     if (!base?.ram) return null
     const ram = new Uint8Array(base.ram)
@@ -212,6 +233,11 @@ export function useSimulatorEngine(srcRef) {
       const d = hist[i].ramDiff
       if (d) for (let j = 0; j < d.length; j += 2) ram[d[j]] = d[j + 1]
     }
+    if (ramReconstructionCacheRef.current.size > 20) {
+      const firstKey = ramReconstructionCacheRef.current.keys().next().value
+      ramReconstructionCacheRef.current.delete(firstKey)
+    }
+    ramReconstructionCacheRef.current.set(cacheKey, ram)
     return ram
   }
 
@@ -321,12 +347,10 @@ export function useSimulatorEngine(srcRef) {
     const retAddr = currentR.pc + (RST_OPS.has(op) ? 1 : 3)
     let stepCount = 0
     let result = null
-    let watchHit = -1
-    while (stepCount < 500000) {
+    while (true) {
       result = performStep()
       stepCount += 1
-      watchHit = sim.simGetDataWatchHit?.() ?? -1
-      if (!result.ok || watchHit >= 0) break
+      if (!result.ok) break
       if (result.afterR.pc === retAddr) break
       if (sim.simIsHaltWaiting() || !sim.simIsRunning() || sim.simGetError()) break
     }
@@ -335,10 +359,7 @@ export function useSimulatorEngine(srcRef) {
     refresh()
     updateMemDiff()
     refreshOutputPorts()
-    if (watchHit >= 0) {
-      setAppState('idle')
-      setMsg(`⏹ Watchpoint: write to ${hex4(watchHit)}H at PC=${hex4(sim.simGetRegisters().pc)}H`)
-    } else if (sim.simIsHaltWaiting()) {
+    if (sim.simIsHaltWaiting()) {
       setAppState('halted')
       setMsg('⏸ HLT — awaiting interrupt…')
       setHaltTrigger(t => t + 1)
@@ -348,8 +369,6 @@ export function useSimulatorEngine(srcRef) {
       if (!sim.simGetError()) setHaltTrigger(t => t + 1)
     } else if (result && !result.ok) {
       setAppState('idle')
-    } else if (stepCount >= 500000) {
-      setMsg('⚠ Step over limit reached — subroutine may be infinite')
     }
   }
 
@@ -360,12 +379,10 @@ export function useSimulatorEngine(srcRef) {
     const targetDepth = callStackRef.current.length - 1
     let stepCount = 0
     let result = null
-    let watchHit = -1
-    while (stepCount < 500000) {
+    while (true) {
       result = performStep()
       stepCount += 1
-      watchHit = sim.simGetDataWatchHit?.() ?? -1
-      if (!result.ok || watchHit >= 0) break
+      if (!result.ok) break
       if (callStackRef.current.length === targetDepth) break
       if (sim.simIsHaltWaiting() || !sim.simIsRunning() || sim.simGetError()) break
     }
@@ -374,10 +391,7 @@ export function useSimulatorEngine(srcRef) {
     refresh()
     updateMemDiff()
     refreshOutputPorts()
-    if (watchHit >= 0) {
-      setAppState('idle')
-      setMsg(`⏹ Watchpoint: write to ${hex4(watchHit)}H at PC=${hex4(sim.simGetRegisters().pc)}H`)
-    } else if (sim.simIsHaltWaiting()) {
+    if (sim.simIsHaltWaiting()) {
       setAppState('halted')
       setMsg('⏸ HLT — awaiting interrupt…')
       setHaltTrigger(t => t + 1)
@@ -387,8 +401,6 @@ export function useSimulatorEngine(srcRef) {
       if (!sim.simGetError()) setHaltTrigger(t => t + 1)
     } else if (result && !result.ok) {
       setAppState('idle')
-    } else if (stepCount >= 500000) {
-      setMsg('⚠ Step out limit reached — subroutine may be infinite')
     }
   }
 
@@ -401,7 +413,7 @@ export function useSimulatorEngine(srcRef) {
     setMsg(`⟲ Stepped back to index ${histIndex - 1}`)
   }
 
-  function ensureWarpWorker() {
+  const ensureWarpWorker = useCallback(() => {
     if (workerReadyPromise.current) return workerReadyPromise.current
     const worker = new Worker(import.meta.env.BASE_URL + 'sim.worker.js')
     warpWorkerRef.current = worker
@@ -414,7 +426,7 @@ export function useSimulatorEngine(srcRef) {
     })
     worker.postMessage({ cmd: 'init', baseUrl: import.meta.env.BASE_URL })
     return workerReadyPromise.current
-  }
+  }, [])
 
   // haltTrigger is a counter incremented on every HLT, used by App for challenge evaluation
   const [haltTrigger, setHaltTrigger] = useState(0)
@@ -686,7 +698,7 @@ export function useSimulatorEngine(srcRef) {
     memDiffRafRef.current = requestAnimationFrame(() => {
       memDiffRafRef.current = null
       if (!prevMemRef.current) { prevMemRef.current = new Uint8Array(sim.simGetFullMemory()); return }
-      const changed = new Set()
+      const changed = changedAddressesRef.current.size > 0 ? changedAddressesRef.current : new Set()
       const { start, len } = memVisibleRangeRef.current
       const slice = sim.simGetMemory(start, len)
       for (let i = 0; i < slice.length; i++) {
@@ -705,6 +717,7 @@ export function useSimulatorEngine(srcRef) {
           }
         }
       }
+      changedAddressesRef.current.clear()
       setChangedAddrs(changed)
     })
   }
@@ -778,17 +791,24 @@ export function useSimulatorEngine(srcRef) {
       if (!result.ok) {
         setMsg(`✗ WASM unavailable: ${result.error}`)
         setEngineMode('js')
-        try { localStorage.setItem('sim8085_engine', 'js') } catch {}
+        localStorage.setItem('sim8085_engine', 'js')
         return
       }
       setEngineMode(mode)
-      try { localStorage.setItem('sim8085_engine', mode) } catch {}
+      localStorage.setItem('sim8085_engine', mode)
       sim.simInit()
       doAssemble(srcRef.current)
     } finally {
       engineSwitchingRef.current = false
       setEngineSwitching(false)
     }
+  }
+
+  function changeMemSize(n) {
+    memSizeRef.current = n
+    _setMemSize(n)
+    localStorage.setItem('sim8085_memsize', n)
+    doAssemble(srcRef.current)
   }
 
   function assertInterrupt(type, vec) {
@@ -854,6 +874,7 @@ export function useSimulatorEngine(srcRef) {
     histLen,
     histIndex, maxHistLen,
     addrLineMap,
+    memSize,
     haltTrigger,
     // computed
     running,
@@ -873,6 +894,7 @@ export function useSimulatorEngine(srcRef) {
     setInputPort, removeInputPort,
     enqueueKeys, clearKeyQueue,
     handleEngineSwitch,
+    changeMemSize,
     changeConsolePort,
     assertInterrupt, deassertInterrupt,
     setRunSpeed,

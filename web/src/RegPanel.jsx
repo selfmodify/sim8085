@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import * as sim from './simProxy.js';
 import { useCopy, useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
@@ -6,19 +6,33 @@ import { hex4, fmtWord, fmtByte, BASE_CYCLE } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-const EditableRow = memo(function EditableRow({ name, val, prevVal, regKey, is16, regBase, onJump, onEdit, onShowDialog }) {
-  const { regBase, onRegBase, onEdit, onShowDialog } = useSimulator()
-  const [collapsed, toggleCollapsed] = useCollapsible('reg', false)
-  const [poppedOut, setPoppedOut] = useState(() => localStorage.getItem('sim8085_regs_popped_out') === 'true')
+const Bit = memo(function Bit({ bit, isOn, onToggle }) {
+  const ledColor = 'var(--accent, #4af0a0)';
+  return (
+    <div className={`reg-bit${isOn ? ' reg-bit-on' : ''}`}
+         role="button"
+         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+         aria-label={`Bit ${bit} of A: ${isOn} — click to toggle`}
+         title={`bit ${bit} — click to toggle`}
+         onClick={() => onToggle(bit)}>
+      <div style={{
+        width: '14px', height: '14px', borderRadius: '50%',
+        backgroundColor: isOn ? ledColor : 'var(--bg1)',
+        boxShadow: isOn ? `0 0 8px ${ledColor}, inset 0 -2px 4px rgba(0,0,0,0.3)` : 'inset 0 2px 4px rgba(0,0,0,0.6)',
+        border: `1px solid ${isOn ? 'transparent' : 'var(--border)'}`,
+        transition: 'all 0.1s ease-in-out'
+      }} />
+      <div className="reg-bit-val" style={{ fontSize: '13px', color: isOn ? 'var(--text)' : 'var(--text3)' }}>{isOn}</div>
+      <div className="reg-bit-lbl" style={{ fontSize: '10px', color: 'var(--text3)' }}>{bit}</div>
+    </div>
+  );
+});
 
-  useEffect(() => {
-    localStorage.setItem('sim8085_regs_popped_out', String(poppedOut))
-  }, [poppedOut])
-  const p = prev || {}
-    const [editing, setEditing] = useState(false)
-    const [buf, setBuf] = useState('')
-    const [copied, copy] = useCopy()
-    const changed = prevVal !== undefined && val !== prevVal
+const EditableRow = memo(function EditableRow({ name, val, prevVal, regKey, is16, regBase, onJump, onEdit, onShowDialog }) {
+  const [editing, setEditing] = useState(false)
+  const [buf, setBuf] = useState('')
+  const [copied, copy] = useCopy()
+  const changed = prevVal !== undefined && val !== prevVal
 
     function commit() {
       const radix = regBase === 'bin' ? 2 : regBase === 'dec' ? 10 : 16
@@ -63,42 +77,42 @@ const EditableRow = memo(function EditableRow({ name, val, prevVal, regKey, is16
     )
 })
 
-  // Paired cell: two 8-bit registers side-by-side
-  function PairCell({ name, val, prevVal, regKey }) {
-    const [editing, setEditing] = useState(false)
-    const [buf, setBuf] = useState('')
-    const [copied, copy] = useCopy()
-    const changed = prevVal !== undefined && val !== prevVal
+// Paired cell: two 8-bit registers side-by-side
+const PairCell = memo(function PairCell({ name, val, prevVal, regKey, regBase, onEdit }) {
+  const [editing, setEditing] = useState(false)
+  const [buf, setBuf] = useState('')
+  const [copied, copy] = useCopy()
+  const changed = prevVal !== undefined && val !== prevVal
 
-    function commit() {
-      const radix = regBase === 'bin' ? 2 : regBase === 'dec' ? 10 : 16
-      const n = parseInt(buf, radix)
-      if (!isNaN(n)) { sim.simSetRegisters({ [regKey]: n }); onEdit() }
-      setEditing(false)
-    }
-
-    if (editing) return (
-      <div className={`reg-pair-cell${changed ? ' changed' : ''}`}>
-        <span className="reg-name">{name}</span>
-        <input autoFocus className="reg-edit-input reg-pair-input"
-          value={buf} onChange={e => setBuf(e.target.value)}
-          onFocus={e => e.target.select()}
-          onBlur={commit}
-          onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false) }} />
-      </div>
-    )
-    const displayVal = fmtByte(val, regBase)
-    return (
-      <div className={`reg-pair-cell clickable${changed ? ' changed' : ''}`}
-           title="Click to edit, right-click to copy"
-           onClick={() => { setBuf(displayVal); setEditing(true) }}
-           onContextMenu={e => { e.preventDefault(); copy(displayVal) }}>
-        <span className="reg-name">{name}</span>
-        <span className="reg-hex">{copied !== null ? '✓' : displayVal}</span>
-        {regBase === 'hex' && copied === null && <span className="reg-dec">{val}</span>}
-      </div>
-    )
+  function commit() {
+    const radix = regBase === 'bin' ? 2 : regBase === 'dec' ? 10 : 16
+    const n = parseInt(buf, radix)
+    if (!isNaN(n)) { sim.simSetRegisters({ [regKey]: n }); onEdit() }
+    setEditing(false)
   }
+
+  if (editing) return (
+    <div className={`reg-pair-cell${changed ? ' changed' : ''}`}>
+      <span className="reg-name">{name}</span>
+      <input autoFocus className="reg-edit-input reg-pair-input"
+        value={buf} onChange={e => setBuf(e.target.value)}
+        onFocus={e => e.target.select()}
+        onBlur={commit}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false) }} />
+    </div>
+  )
+  const displayVal = fmtByte(val, regBase)
+  return (
+    <div className={`reg-pair-cell clickable${changed ? ' changed' : ''}`}
+         title="Click to edit, right-click to copy"
+         onClick={() => { setBuf(displayVal); setEditing(true) }}
+         onContextMenu={e => { e.preventDefault(); copy(displayVal) }}>
+      <span className="reg-name">{name}</span>
+      <span className="reg-hex">{copied !== null ? '✓' : displayVal}</span>
+      {regBase === 'hex' && copied === null && <span className="reg-dec">{val}</span>}
+    </div>
+  )
+})
 
 export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:0, flags:0 }, prev = {}, onJump, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit, onShowDialog } = useSimulator()
@@ -111,53 +125,40 @@ export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:
   const p = prev || {}
 
 
+  const handleBitToggle = useCallback((bit) => {
+    const v = regs.a ^ (1 << bit);
+    sim.simSetRegisters({ a: v });
+    onEdit();
+  }, [regs.a, onEdit]);
 
-  const nextBase = BASE_CYCLE[(BASE_CYCLE.indexOf(regBase || 'hex') + 1) % 3]
+  const nextBase = useMemo(() => BASE_CYCLE[(BASE_CYCLE.indexOf(regBase || 'hex') + 1) % 3], [regBase])
 
-  const content = (
+  const content = useMemo(() => (
       <div className="panel-anim-body" style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
-        <EditableRow name="A" val={regs.a} prevVal={p.a} regKey="a" />
+        <EditableRow name="A" val={regs.a} prevVal={p.a} regKey="a" regBase={regBase} onEdit={onEdit} onShowDialog={onShowDialog} />
         <div className="reg-bits">
           {[7,6,5,4,3,2,1,0].map(bit => {
             const isOn = (regs.a >> bit) & 1;
-            const ledColor = 'var(--accent, #4af0a0)';
-            return (
-              <div key={bit} className={`reg-bit${isOn ? ' reg-bit-on' : ''}`}
-                   role="button"
-                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                   aria-label={`Bit ${bit} of A: ${isOn} — click to toggle`}
-                   title={`bit ${bit} — click to toggle`}
-                   onClick={() => { const v = regs.a ^ (1<<bit); sim.simSetRegisters({a:v}); onEdit() }}>
-                <div style={{
-                  width: '14px', height: '14px', borderRadius: '50%',
-                  backgroundColor: isOn ? ledColor : 'var(--bg1)',
-                  boxShadow: isOn ? `0 0 8px ${ledColor}, inset 0 -2px 4px rgba(0,0,0,0.3)` : 'inset 0 2px 4px rgba(0,0,0,0.6)',
-                  border: `1px solid ${isOn ? 'transparent' : 'var(--border)'}`,
-                  transition: 'all 0.1s ease-in-out'
-                }} />
-                <div className="reg-bit-val" style={{ fontSize: '13px', color: isOn ? 'var(--text)' : 'var(--text3)' }}>{isOn}</div>
-                <div className="reg-bit-lbl" style={{ fontSize: '10px', color: 'var(--text3)' }}>{bit}</div>
-              </div>
-            )
+            return <Bit key={bit} bit={bit} isOn={isOn} onToggle={handleBitToggle} />;
           })}
         </div>
         <div className="reg-pair-row">
-          <PairCell name="B" val={regs.b} prevVal={p.b} regKey="b" />
-          <PairCell name="C" val={regs.c} prevVal={p.c} regKey="c" />
+          <PairCell name="B" val={regs.b} prevVal={p.b} regKey="b" regBase={regBase} onEdit={onEdit} />
+          <PairCell name="C" val={regs.c} prevVal={p.c} regKey="c" regBase={regBase} onEdit={onEdit} />
         </div>
         <div className="reg-pair-row">
-          <PairCell name="D" val={regs.d} prevVal={p.d} regKey="d" />
-          <PairCell name="E" val={regs.e} prevVal={p.e} regKey="e" />
+          <PairCell name="D" val={regs.d} prevVal={p.d} regKey="d" regBase={regBase} onEdit={onEdit} />
+          <PairCell name="E" val={regs.e} prevVal={p.e} regKey="e" regBase={regBase} onEdit={onEdit} />
         </div>
         <div className="reg-pair-row">
-          <PairCell name="H" val={regs.h} prevVal={p.h} regKey="h" />
-          <PairCell name="L" val={regs.l} prevVal={p.l} regKey="l" />
+          <PairCell name="H" val={regs.h} prevVal={p.h} regKey="h" regBase={regBase} onEdit={onEdit} />
+          <PairCell name="L" val={regs.l} prevVal={p.l} regKey="l" regBase={regBase} onEdit={onEdit} />
         </div>
         <div className="reg-sep" />
-        <EditableRow name="PC" val={regs.pc} prevVal={p.pc} regKey="pc" is16 />
-        <EditableRow name="SP" val={regs.sp} prevVal={p.sp} regKey="sp" is16 />
+        <EditableRow name="PC" val={regs.pc} prevVal={p.pc} regKey="pc" is16 regBase={regBase} onJump={onJump} onEdit={onEdit} onShowDialog={onShowDialog} />
+        <EditableRow name="SP" val={regs.sp} prevVal={p.sp} regKey="sp" is16 regBase={regBase} onJump={onJump} onEdit={onEdit} onShowDialog={onShowDialog} />
       </div>
-  )
+  ), [regs, p, regBase, onEdit, onShowDialog, onJump, handleBitToggle, poppedOut])
 
   return (
     <>
