@@ -136,16 +136,14 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   function onCenterPanelDividerDown(e) {
     e.preventDefault()
     const divider = e.currentTarget
-    const panelKey = divider.dataset.panelKey
-    const stackContainer = divider.closest('.disasm-trace-stack')
-    const panelAbove = stackContainer?.querySelector(`[data-panel-key="${panelKey}"]`)
-    if (!panelAbove) return
+    const wrapperAbove = divider.parentElement
+    if (!wrapperAbove) return
     const startY = e.clientY
-    const startH = panelAbove.getBoundingClientRect().height
+    const startH = wrapperAbove.getBoundingClientRect().height
     let newH = startH
     function onMove(ev) {
       newH = Math.max(50, startH + (ev.clientY - startY))
-      panelAbove.style.flex = `0 0 ${newH}px`
+      wrapperAbove.style.flex = `0 0 ${newH}px`
     }
     function onUp() {
       document.removeEventListener('mousemove', onMove)
