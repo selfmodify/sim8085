@@ -67,15 +67,13 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
   }, [trace.length, bodyEl])
 
   useEffect(() => {
-    const measureHeight = () => {
-      if (bodyEl) {
-        const rect = bodyEl.getBoundingClientRect()
-        setContainerHeight(Math.max(100, rect.height))
-      }
-    }
-    measureHeight()
-    window.addEventListener('resize', measureHeight)
-    return () => window.removeEventListener('resize', measureHeight)
+    if (!bodyEl) return
+    const observer = new ResizeObserver(() => {
+      const rect = bodyEl.getBoundingClientRect()
+      setContainerHeight(Math.max(100, rect.height))
+    })
+    observer.observe(bodyEl)
+    return () => observer.disconnect()
   }, [bodyEl])
 
   useEffect(() => {
