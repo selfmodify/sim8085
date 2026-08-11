@@ -290,7 +290,9 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                   return (
                     <>
                       <div key={`panel-${key}`} className="center-panel-container" style={style} data-panel-key={key}>
-                        {panel}
+                        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          {panel}
+                        </div>
                       </div>
                       {!isLast && <div key={`divider-${key}`} className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} data-panel-key={key} />}
                     </>
