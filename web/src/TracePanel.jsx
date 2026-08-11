@@ -101,7 +101,7 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
   }
 
   const content = (
-      <div className="panel-anim-body trace-body" ref={setBodyEl} style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <div className="panel-anim-body trace-body" ref={setBodyEl} style={{ display: 'flex', flexDirection: 'column', position: 'relative', flex: '1 1 0', minHeight: 0 }}>
         {trace.length === 0
           ? <div className="trace-empty">Step through code to record execution</div>
           : <VirtualList

@@ -57,8 +57,8 @@ export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver,
   }
 
   const content = (
-    <div className="panel-anim-body" style={poppedOut ? { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } : undefined}>
-      <div className="stack-body" style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}>
+    <div className="panel-anim-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+      <div className="stack-body" style={{ flex: '1 1 0', overflowY: 'auto', minHeight: 0 }}>
           {entries.length === 0
             ? <div className="stack-empty">empty</div>
             : entries.map((e, i) => (
