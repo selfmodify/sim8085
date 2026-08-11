@@ -2201,7 +2201,7 @@ button.build-chip:hover {
 .watch-brk.active { color: var(--red); border-color: var(--red); background: color-mix(in srgb, var(--red) 15%, transparent) }
 
 /* ── Stack ────────────────────────────────────────────────────────── */
-.stack-panel { padding: 4px 0 0; overflow: hidden; display: flex; flex-direction: column; min-height: 80px }
+.stack-panel { padding: 4px 0 0; overflow: hidden; display: flex; flex-direction: column; min-height: 80px; height: 100% }
 .stack-resize-handle {
   height: 5px; cursor: ns-resize; flex-shrink: 0;
   background: linear-gradient(to top, var(--border2) 1px, transparent 1px);
