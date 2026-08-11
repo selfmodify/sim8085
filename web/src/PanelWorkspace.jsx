@@ -258,16 +258,17 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                     : key === 'callstack' ? <ErrorBoundary><LazyBoundary panelName="Call Stack"><CallStackPanel callStack={engine.callStack} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
                     : key === 'trace' ? <ErrorBoundary><LazyBoundary panelName="Trace"><TracePanel trace={engine.trace} symbols={engine.symbols} onClear={() => engine.setTrace([])} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
                     : null
-                  const visibleCount = centerPanelOrder.filter(k => panels[k]).length
-                  const lastPanel = idx === visibleCount - 1
-                  const style = lastPanel ? { flex: '1 1 0', minHeight: 0 } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
+                  const visiblePanels = centerPanelOrder.filter(k => panels[k])
+                  const visibleIdx = visiblePanels.indexOf(key)
+                  const isLast = visibleIdx === visiblePanels.length - 1
+                  const style = isLast ? { flex: '1 1 0', minHeight: 0 } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
                   return (
-                    <div key={key}>
-                      <div className="center-panel-container" style={style}>
+                    <>
+                      <div key={`panel-${key}`} className="center-panel-container" style={style}>
                         {panel}
                       </div>
-                      {!lastPanel && <div className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} />}
-                    </div>
+                      {!isLast && <div key={`divider-${key}`} className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} />}
+                    </>
                   )
                 })}
               </div>
