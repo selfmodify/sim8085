@@ -158,8 +158,11 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   function onWatchConsoleDividerDown(e) {
     e.preventDefault()
     const divider = e.currentTarget
-    const watchContainer = divider.previousElementSibling
-    if (!watchContainer) return
+    const watchContainer = divider.closest('.mem-watch-watch')?.querySelector('[data-watch-container]')
+    if (!watchContainer) {
+      console.warn('Could not find watch container')
+      return
+    }
     const startY = e.clientY
     const startH = watchContainer.getBoundingClientRect().height
     let newH = startH
@@ -303,7 +306,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
           </div>
           <div className="mem-watch-divider" onMouseDown={onMemWatchDividerDown} />
           <div className="mem-watch-watch" ref={memWatchWatchRef} style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <div style={{ flex: '0 0 120px', minHeight: 0, overflow: 'hidden' }}>
+            <div style={{ flex: '0 0 120px', minHeight: 0, overflow: 'hidden' }} data-watch-container>
               <LazyBoundary panelName="Watch">
                 <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
               </LazyBoundary>
