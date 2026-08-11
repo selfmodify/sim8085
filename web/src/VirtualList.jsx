@@ -43,9 +43,7 @@ export function VirtualList({
       style={{
         height: '100%',
         overflow: 'auto',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column'
+        position: 'relative'
       }}
     >
       <div style={{ height: items.length * itemHeight, position: 'relative' }}>

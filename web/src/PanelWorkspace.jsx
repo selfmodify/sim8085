@@ -289,7 +289,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                   const style = isLast ? { flex: '1 1 0', minHeight: 0 } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
                   return (
                     <div key={key} style={{ display: 'flex', flexDirection: 'column', ...style }}>
-                      <div className="center-panel-container" data-panel-key={key}>
+                      <div className="center-panel-container" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }} data-panel-key={key}>
                         <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                           {panel}
                         </div>
