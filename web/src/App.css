@@ -2133,7 +2133,7 @@ button.build-chip:hover {
 .trace-panel { overflow: hidden; display: flex; flex-direction: column; flex: 1 1 0; min-height: 72px }
 .trace-body { flex: 1; overflow-y: auto; font-family: var(--mono); font-size: 12px; min-height: 0 }
 .trace-empty { color: var(--text3); font-size: 12px; padding: 6px 10px }
-.trace-row { display: flex; gap: 6px; align-items: baseline; padding: 0 10px; height: 100%; align-items: center }
+.trace-row { display: flex; gap: 6px; align-items: center; padding: 0 10px; height: 100%; line-height: 1 }
 .trace-row:hover { background: var(--bg2) }
 .trace-addr { color: var(--text3); flex-shrink: 0; width: 36px }
 .trace-text { color: var(--text2); flex: 1; white-space: pre }

@@ -106,7 +106,7 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
           ? <div className="trace-empty">Step through code to record execution</div>
           : <VirtualList
               items={trace}
-              itemHeight={40}
+              itemHeight={18}
               containerHeight={300}
               renderItem={(e, idx) => {
                 const lbl = addrToLabel.get(e.addr);
