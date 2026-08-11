@@ -621,11 +621,13 @@ body {
   flex-direction: column;
 }
 .center-panel-divider {
-  flex: 0 0 4px;
+  flex: 0 0 6px;
   cursor: ns-resize;
   background: var(--bg3);
   transition: background 0.2s;
   user-select: none;
+  pointer-events: auto;
+  display: flex;
 }
 .center-panel-divider:hover {
   background: var(--border2);
