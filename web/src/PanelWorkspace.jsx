@@ -168,7 +168,8 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     let newH = startH
     function onMove(ev) {
       newH = Math.max(50, startH + (ev.clientY - startY))
-      watchContainer.style.flex = `0 0 ${newH}px`
+      watchContainer.style.height = `${newH}px`
+      watchContainer.style.flex = '0 0 auto'
     }
     function onUp() {
       document.removeEventListener('mousemove', onMove)
