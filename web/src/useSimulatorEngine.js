@@ -154,11 +154,13 @@ export function useSimulatorEngine(srcRef) {
       setCycles(sim.simGetCycles())
       setIntState(sim.simGetIntState())
       setKeyQueue(sim.simGetKeyQueue())
-      setConsoleOutput(sim.simGetConsoleOutput())
       if (sim.simGetSOD) setSod(sim.simGetSOD())
       refreshProfile()
+      startTransition(() => {
+        setConsoleOutput(sim.simGetConsoleOutput())
+      })
     })
-  }, [refreshProfile])
+  }, [refreshProfile, startTransition])
 
   function refreshOutputPorts() {
     setOutputPorts(sim.simGetOutputPorts())

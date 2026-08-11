@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
 import * as sim from './simProxy.js';
 import { PanelHelp } from './PanelHelp.jsx';
 import { hex2, hex4 } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
+import { useDebounce } from './useDebounce.jsx';
 
 const PAIR_KEYS = { bc: ['b','c'], de: ['d','e'], hl: ['h','l'] };
 const REG_NAMES = new Set(['a','b','c','d','e','h','l','pc','sp','flags','bc','de','hl']);
@@ -164,6 +165,8 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
 
   const isScrolling = useRef(false)
   const scrollTimeout = useRef(null)
+
+  const debouncedSearch = useDebounce(runSearch, 300)
 
   function handleScroll(e) {
     isScrolling.current = true
@@ -438,7 +441,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
           <input className="mem-toolbar-input" placeholder="FF" maxLength={2} style={{width:36}}
             autoFocus
             value={searchVal}
-            onChange={e => { setSearchVal(e.target.value.toUpperCase()); setSearchRan(false) }}
+            onChange={e => { setSearchVal(e.target.value.toUpperCase()); setSearchRan(false); debouncedSearch() }}
             onKeyDown={e => { if (e.key === 'Enter') runSearch() }}
           />
           <button className="mem-btn" onClick={runSearch}>Search</button>
