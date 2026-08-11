@@ -1146,6 +1146,8 @@ input:focus-visible, select:focus-visible { outline: 1px solid var(--accent); bo
 .btn-stop:hover { background: #2a1010; }
 .btn-reset  { color: var(--amber) }
 .btn-back   { color: var(--text2) }
+.btn-session { border-color: #405080; color: #a0c8ff }
+.btn-session:hover:not(:disabled) { background: #1a2540; border-color: #6080ff }
 
 /* Topbar filename chip */
 .topbar-filename {

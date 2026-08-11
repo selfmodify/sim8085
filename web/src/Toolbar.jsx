@@ -77,13 +77,16 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
 export function Toolbar({
   onLoadExample, panels, onTogglePanel, fileInputRef, onImportFile,
   isDirty, onBuild, running, appState, mhz, onStep, onStepOver, onStepOut,
-  onStepBack, histLen, onRun, runSpeed, onSpeedChange, onReset
+  onStepBack, histLen, onRun, runSpeed, onSpeedChange, onReset, onSessionManager
 }) {
   return (
     <div className="toolbar">
       <ExampleMenu onLoad={onLoadExample} />
       <PanelsMenu panels={panels} onToggle={onTogglePanel} />
       <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".asm,.85,.s,.txt,.hex,.bin" onChange={onImportFile} />
+      <button className="btn btn-session" onClick={onSessionManager} title="Open session manager">
+        💾 Sessions
+      </button>
       <button className={`btn btn-asm${isDirty ? ' btn-asm-dirty' : ''}`} onClick={onBuild} title={isDirty ? "Unsaved changes — click to rebuild" : "Code is up to date"}>
         ⚙ Build{isDirty ? ' •' : ''}  <kbd>F5</kbd>
       </button>
