@@ -312,7 +312,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                 <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
               </LazyBoundary>
             </div>
-            <div className="center-panel-divider" onMouseDown={onWatchConsoleDividerDown} />
+            <div className="center-panel-divider" onMouseDown={onWatchConsoleDividerDown} style={{ background: 'var(--border2)', minHeight: '6px' }} />
             <div style={{ flex: '1 1 0', minHeight: 0, overflow: 'hidden' }}>
               <ConsolePanel output={engine.consoleOutput} port={engine.consolePort} onSetPort={engine.changeConsolePort} onClear={() => { sim.simClearConsoleOutput(); engine.setConsoleOutput('') }} theme={theme} popoutCrtProps={popoutCrtProps} />
             </div>
