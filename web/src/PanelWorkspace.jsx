@@ -136,7 +136,9 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   function onCenterPanelDividerDown(e) {
     e.preventDefault()
     const divider = e.currentTarget
-    const panelAbove = divider.previousElementSibling?.querySelector('.center-panel-container')
+    const panelKey = divider.dataset.panelKey
+    const stackContainer = divider.closest('.disasm-trace-stack')
+    const panelAbove = stackContainer?.querySelector(`[data-panel-key="${panelKey}"]`)
     if (!panelAbove) return
     const startY = e.clientY
     const startH = panelAbove.getBoundingClientRect().height
@@ -264,10 +266,10 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                   const style = isLast ? { flex: '1 1 0', minHeight: 0 } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
                   return (
                     <>
-                      <div key={`panel-${key}`} className="center-panel-container" style={style}>
+                      <div key={`panel-${key}`} className="center-panel-container" style={style} data-panel-key={key}>
                         {panel}
                       </div>
-                      {!isLast && <div key={`divider-${key}`} className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} />}
+                      {!isLast && <div key={`divider-${key}`} className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} data-panel-key={key} />}
                     </>
                   )
                 })}
