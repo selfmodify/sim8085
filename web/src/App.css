@@ -1283,7 +1283,8 @@ button.build-chip:hover {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .panel.drag-over {
