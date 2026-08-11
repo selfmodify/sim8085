@@ -55,6 +55,7 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
   const [collapsed, toggleCollapsed] = useCollapsible('trace', true)
   const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_trace_popped_out') === 'true' } catch { return false } })
   const [bodyEl, setBodyEl] = useState(null)
+  const [containerHeight, setContainerHeight] = useState(300)
   
   useEffect(() => {
     if (bodyEl && trace.length > 0) {
@@ -64,6 +65,18 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
       return () => cancelAnimationFrame(scrollDelay)
     }
   }, [trace.length, bodyEl])
+
+  useEffect(() => {
+    const measureHeight = () => {
+      if (bodyEl) {
+        const rect = bodyEl.getBoundingClientRect()
+        setContainerHeight(Math.max(100, rect.height))
+      }
+    }
+    measureHeight()
+    window.addEventListener('resize', measureHeight)
+    return () => window.removeEventListener('resize', measureHeight)
+  }, [bodyEl])
 
   useEffect(() => {
     try { localStorage.setItem('sim8085_trace_popped_out', String(poppedOut)) } catch {}
@@ -107,7 +120,7 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
           : <VirtualList
               items={trace}
               itemHeight={18}
-              containerHeight={300}
+              containerHeight={containerHeight}
               renderItem={(e, idx) => {
                 const lbl = addrToLabel.get(e.addr);
                 return <TraceRow key={`${e.addr}-${idx}`} e={e} lbl={lbl} addrToLabel={addrToLabel} onJumpDisasm={onJumpDisasm} />
