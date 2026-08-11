@@ -213,7 +213,7 @@ export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onA
           onKeyDown={e => e.key === 'Enter' && addWatch()} />
         <button className="btn btn-xs" onClick={addWatch}>+</button>
       </div>
-      <div className="watch-body" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <div className="watch-body" style={{ flex: '1 1 0', overflowY: 'auto', minHeight: 0 }}>
         {watches.length === 0
           ? <div className="watch-empty">Type a register or address above</div>
           : watches.map((watch, i) => {

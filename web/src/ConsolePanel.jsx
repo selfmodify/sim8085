@@ -111,7 +111,7 @@ export function ConsolePanel({ output = '', port = 0, onSetPort, onClear, theme,
   )
 
   const content = (
-      <div className="console-body" ref={setBodyEl} style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <div className="console-body" ref={setBodyEl} style={{ flex: '1 1 0', overflowY: 'auto', minHeight: 0 }}>
         {safeOutput === ''
           ? <span className="console-empty">No output yet — use OUT {portBuf}H to print ASCII characters</span>
           : lines.map((line, i) => (
