@@ -155,6 +155,26 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     document.addEventListener('mouseup', onUp)
   }
 
+  function onWatchConsoleDividerDown(e) {
+    e.preventDefault()
+    const divider = e.currentTarget
+    const watchContainer = divider.previousElementSibling
+    if (!watchContainer) return
+    const startY = e.clientY
+    const startH = watchContainer.getBoundingClientRect().height
+    let newH = startH
+    function onMove(ev) {
+      newH = Math.max(50, startH + (ev.clientY - startY))
+      watchContainer.style.flex = `0 0 ${newH}px`
+    }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }
+
   function onEditorResizeDown(e) {
     e.preventDefault(); const startX = e.clientX; const startW = editorColRef.current.getBoundingClientRect().width
     let newW = startW
@@ -282,11 +302,16 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
             <MemPanel memStart={engine.memStart} onJump={engine.setMemStart} regs={engine.regs} buildId={engine.buildId} changedAddrs={engine.changedAddrs} programRegion={engine.programRegion} presetAddrs={engine.presetAddrs} onMemoryEdited={() => engine.setBuildId(id => id + 1)} memVisibleRangeRef={engine.memVisibleRangeRef} flashReq={memFlashReq} theme={theme} popoutCrtProps={popoutCrtProps} />
           </div>
           <div className="mem-watch-divider" onMouseDown={onMemWatchDividerDown} />
-          <div className="mem-watch-watch" ref={memWatchWatchRef}>
-            <LazyBoundary panelName="Watch">
-              <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
-            </LazyBoundary>
-            <ConsolePanel output={engine.consoleOutput} port={engine.consolePort} onSetPort={engine.changeConsolePort} onClear={() => { sim.simClearConsoleOutput(); engine.setConsoleOutput('') }} theme={theme} popoutCrtProps={popoutCrtProps} />
+          <div className="mem-watch-watch" ref={memWatchWatchRef} style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <div style={{ flex: '0 0 120px', minHeight: 0, overflow: 'hidden' }}>
+              <LazyBoundary panelName="Watch">
+                <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
+              </LazyBoundary>
+            </div>
+            <div className="center-panel-divider" onMouseDown={onWatchConsoleDividerDown} />
+            <div style={{ flex: '1 1 0', minHeight: 0, overflow: 'hidden' }}>
+              <ConsolePanel output={engine.consoleOutput} port={engine.consolePort} onSetPort={engine.changeConsolePort} onClear={() => { sim.simClearConsoleOutput(); engine.setConsoleOutput('') }} theme={theme} popoutCrtProps={popoutCrtProps} />
+            </div>
           </div>
         </div>
       </div>
