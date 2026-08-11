@@ -288,14 +288,14 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                   const isLast = visibleIdx === visiblePanels.length - 1
                   const style = isLast ? { flex: '1 1 0', minHeight: 0 } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
                   return (
-                    <>
-                      <div key={`panel-${key}`} className="center-panel-container" style={style} data-panel-key={key}>
+                    <div key={key}>
+                      <div className="center-panel-container" style={style} data-panel-key={key}>
                         <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                           {panel}
                         </div>
                       </div>
-                      {!isLast && <div key={`divider-${key}`} className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} data-panel-key={key} />}
-                    </>
+                      {!isLast && <div className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} data-panel-key={key} />}
+                    </div>
                   )
                 })}
               </div>
