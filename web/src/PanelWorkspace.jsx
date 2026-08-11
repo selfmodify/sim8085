@@ -118,9 +118,6 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   const memWatchMemRef   = useRef(null)
   const memWatchWatchRef = useRef(null)
   const disasmStackRef   = useRef(null)
-  const stackPanelRef = useRef(null)
-  const callstackPanelRef = useRef(null)
-  const tracePanelRef = useRef(null)
 
   const initialWidths = useMemo(() => {
     const getWidth = (key) => { try { return localStorage.getItem(key) } catch { return undefined } }
@@ -136,14 +133,24 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     }
   }, [])
 
-  function onCenterPanelDividerDown(e, panelRef) {
-    e.preventDefault(); const startY = e.clientY; const startH = panelRef.current?.getBoundingClientRect().height || 0
+  function onCenterPanelDividerDown(e) {
+    e.preventDefault()
+    const divider = e.currentTarget
+    const panelAbove = divider.previousElementSibling?.querySelector('.center-panel-container')
+    if (!panelAbove) return
+    const startY = e.clientY
+    const startH = panelAbove.getBoundingClientRect().height
     let newH = startH
-    function onMove(ev) { newH = Math.max(50, startH + (ev.clientY - startY)); if(panelRef.current) panelRef.current.style.flex = `0 0 ${newH}px` }
-    function onUp() {
-      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp)
+    function onMove(ev) {
+      newH = Math.max(50, startH + (ev.clientY - startY))
+      panelAbove.style.flex = `0 0 ${newH}px`
     }
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
+    function onUp() {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
   }
 
   function onEditorResizeDown(e) {
@@ -246,7 +253,6 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                 {centerPanelOrder.map((key, idx) => {
                   if (!panels[key]) return null;
                   const dp = getDragProps(key, centerPanelOrder, setCenterPanelOrder, 'sim8085_center_panels')
-                  const panelRef = key === 'stack' ? stackPanelRef : key === 'callstack' ? callstackPanelRef : tracePanelRef
                   const heightKey = `${key}Height`
                   const panel = key === 'stack' ? <ErrorBoundary><LazyBoundary panelName="Stack"><StackPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
                     : key === 'callstack' ? <ErrorBoundary><LazyBoundary panelName="Call Stack"><CallStackPanel callStack={engine.callStack} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
@@ -254,13 +260,13 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                     : null
                   const visibleCount = centerPanelOrder.filter(k => panels[k]).length
                   const lastPanel = idx === visibleCount - 1
-                  const style = lastPanel ? { flex: '1 1 0' } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
+                  const style = lastPanel ? { flex: '1 1 0', minHeight: 0 } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
                   return (
                     <div key={key}>
-                      <div className="center-panel-container" ref={panelRef} style={style}>
+                      <div className="center-panel-container" style={style}>
                         {panel}
                       </div>
-                      {!lastPanel && <div className="center-panel-divider" onMouseDown={(e) => onCenterPanelDividerDown(e, panelRef)} />}
+                      {!lastPanel && <div className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} />}
                     </div>
                   )
                 })}
