@@ -167,7 +167,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     const startH = watchContainer.getBoundingClientRect().height
     let newH = startH
     function onMove(ev) {
-      newH = Math.max(50, startH - (ev.clientY - startY))
+      newH = Math.max(50, startH + (ev.clientY - startY))
       watchContainer.style.flex = `0 0 ${newH}px`
     }
     function onUp() {
