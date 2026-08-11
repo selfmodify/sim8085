@@ -3,6 +3,7 @@ import { ErrorBoundary } from './ErrorBoundary.jsx'
 import * as sim from './simProxy.js'
 import { PanelHelp } from './PanelHelp.jsx'
 import { useCollapsible } from './hooks.js'
+import { LazyBoundary } from './useLazyPanel.js'
 import { RegPanel } from './RegPanel.jsx'
 import { PairPanel } from './PairPanel.jsx'
 import { FlagPanel } from './FlagPanel.jsx'
@@ -229,9 +230,9 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                 {centerPanelOrder.map(key => {
                   if (!panels[key]) return null;
                   const dp = getDragProps(key, centerPanelOrder, setCenterPanelOrder, 'sim8085_center_panels')
-                  if (key === 'stack') return <ErrorBoundary key={key}><StackPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-                  if (key === 'callstack') return <ErrorBoundary key={key}><CallStackPanel callStack={engine.callStack} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-                  if (key === 'trace') return <ErrorBoundary key={key}><TracePanel trace={engine.trace} symbols={engine.symbols} onClear={() => engine.setTrace([])} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
+                  if (key === 'stack') return <ErrorBoundary key={key}><LazyBoundary panelName="Stack"><StackPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+                  if (key === 'callstack') return <ErrorBoundary key={key}><LazyBoundary panelName="Call Stack"><CallStackPanel callStack={engine.callStack} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+                  if (key === 'trace') return <ErrorBoundary key={key}><LazyBoundary panelName="Trace"><TracePanel trace={engine.trace} symbols={engine.symbols} onClear={() => engine.setTrace([])} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
                   return null
                 })}
               </div>
@@ -244,7 +245,9 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
           </div>
           <div className="mem-watch-divider" onMouseDown={onMemWatchDividerDown} />
           <div className="mem-watch-watch" ref={memWatchWatchRef}>
-            <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
+            <LazyBoundary panelName="Watch">
+              <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
+            </LazyBoundary>
             <ConsolePanel output={engine.consoleOutput} port={engine.consolePort} onSetPort={engine.changeConsolePort} onClear={() => { sim.simClearConsoleOutput(); engine.setConsoleOutput('') }} theme={theme} popoutCrtProps={popoutCrtProps} />
           </div>
         </div>
@@ -257,12 +260,12 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
           if (!panels[key]) return null;
           const dp = getDragProps(key, rightPanelOrder, setRightPanelOrder, 'sim8085_right_panels')
           if (key === 'regs')   return <ErrorBoundary key={key}><RegPanel regs={engine.regs} prev={engine.prevRegs} symbols={engine.symbols} onJump={engine.setMemStart} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-          if (key === 'pairs')  return <ErrorBoundary key={key}><PairPanel regs={engine.regs} prev={engine.prevRegs} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onMemoryEdited={() => engine.setBuildId(id => id + 1)} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-          if (key === 'flags')  return <ErrorBoundary key={key}><FlagPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-          if (key === 'ints')   return <ErrorBoundary key={key}><InterruptPanel intState={engine.intState} onAssert={engine.assertInterrupt} onDeassert={engine.deassertInterrupt} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-          if (key === 'io')     return <ErrorBoundary key={key}><IOPortPanel outputPorts={engine.outputPorts} inputPresets={engine.inputPresets} onSetInput={engine.setInputPort} onRemoveInput={engine.removeInputPort} keyQueue={engine.keyQueue} onEnqueueKeys={engine.enqueueKeys} onClearKeyQueue={engine.clearKeyQueue} sid={engine.sid} sod={engine.sod} onSetSID={v => { sim.simSetSID(v); engine.setSid(v); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-          if (key === 'memmap') return <ErrorBoundary key={key}><MemMapPanel regs={engine.regs} programRegion={engine.programRegion} presetAddrs={engine.presetAddrs} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
-          if (key === 'audio')  return <ErrorBoundary key={key}><AudioPanel outputPorts={engine.outputPorts} running={engine.running} onShowDialog={setAppDialog} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></ErrorBoundary>
+          if (key === 'pairs')  return <ErrorBoundary key={key}><LazyBoundary panelName="Pairs"><PairPanel regs={engine.regs} prev={engine.prevRegs} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onMemoryEdited={() => engine.setBuildId(id => id + 1)} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+          if (key === 'flags')  return <ErrorBoundary key={key}><LazyBoundary panelName="Flags"><FlagPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+          if (key === 'ints')   return <ErrorBoundary key={key}><LazyBoundary panelName="Interrupts"><InterruptPanel intState={engine.intState} onAssert={engine.assertInterrupt} onDeassert={engine.deassertInterrupt} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+          if (key === 'io')     return <ErrorBoundary key={key}><LazyBoundary panelName="I/O"><IOPortPanel outputPorts={engine.outputPorts} inputPresets={engine.inputPresets} onSetInput={engine.setInputPort} onRemoveInput={engine.removeInputPort} keyQueue={engine.keyQueue} onEnqueueKeys={engine.enqueueKeys} onClearKeyQueue={engine.clearKeyQueue} sid={engine.sid} sod={engine.sod} onSetSID={v => { sim.simSetSID(v); engine.setSid(v); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+          if (key === 'memmap') return <ErrorBoundary key={key}><LazyBoundary panelName="Memory Map"><MemMapPanel regs={engine.regs} programRegion={engine.programRegion} presetAddrs={engine.presetAddrs} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+          if (key === 'audio')  return <ErrorBoundary key={key}><LazyBoundary panelName="Audio"><AudioPanel outputPorts={engine.outputPorts} running={engine.running} onShowDialog={setAppDialog} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
           return null
         })}
       </div>

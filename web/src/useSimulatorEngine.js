@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, useTransition } from
 import * as sim from './simProxy.js'
 import { getEngineMode, switchEngine } from './simProxy.js'
 import { hex4, SPEEDS, evalCondition } from './utils.js'
+import { useDeferredUpdate } from './useDeferredUpdate.js'
 
 const INITIAL_PC = 0x100
 const MEM_START_DEFAULT = 0x100
