@@ -118,6 +118,9 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   const memWatchMemRef   = useRef(null)
   const memWatchWatchRef = useRef(null)
   const disasmStackRef   = useRef(null)
+  const stackPanelRef = useRef(null)
+  const callstackPanelRef = useRef(null)
+  const tracePanelRef = useRef(null)
 
   const initialWidths = useMemo(() => {
     const getWidth = (key) => { try { return localStorage.getItem(key) } catch { return undefined } }
@@ -126,9 +129,22 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
       right: getWidth('sim8085_col_right'),
       memWatch: getWidth('sim8085_memwatch_width'),
       stack: getWidth('sim8085_stack_width'),
-      memRow: getWidth('sim8085_mem_row_height')
+      memRow: getWidth('sim8085_mem_row_height'),
+      stackHeight: getWidth('sim8085_stack_height'),
+      callstackHeight: getWidth('sim8085_callstack_height'),
+      traceHeight: getWidth('sim8085_trace_height')
     }
   }, [])
+
+  function onCenterPanelDividerDown(e, panelRef) {
+    e.preventDefault(); const startY = e.clientY; const startH = panelRef.current?.getBoundingClientRect().height || 0
+    let newH = startH
+    function onMove(ev) { newH = Math.max(50, startH + (ev.clientY - startY)); if(panelRef.current) panelRef.current.style.flex = `0 0 ${newH}px` }
+    function onUp() {
+      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
+  }
 
   function onEditorResizeDown(e) {
     e.preventDefault(); const startX = e.clientX; const startW = editorColRef.current.getBoundingClientRect().width
@@ -227,13 +243,26 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
             <>
               <div className="mem-watch-divider" onMouseDown={onDisasmStackDividerDown} />
               <div className="disasm-trace-stack" ref={disasmStackRef} style={initialWidths.stack ? { flex: `0 0 ${initialWidths.stack}` } : undefined}>
-                {centerPanelOrder.map(key => {
+                {centerPanelOrder.map((key, idx) => {
                   if (!panels[key]) return null;
                   const dp = getDragProps(key, centerPanelOrder, setCenterPanelOrder, 'sim8085_center_panels')
-                  if (key === 'stack') return <ErrorBoundary key={key}><LazyBoundary panelName="Stack"><StackPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
-                  if (key === 'callstack') return <ErrorBoundary key={key}><LazyBoundary panelName="Call Stack"><CallStackPanel callStack={engine.callStack} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
-                  if (key === 'trace') return <ErrorBoundary key={key}><LazyBoundary panelName="Trace"><TracePanel trace={engine.trace} symbols={engine.symbols} onClear={() => engine.setTrace([])} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
-                  return null
+                  const panelRef = key === 'stack' ? stackPanelRef : key === 'callstack' ? callstackPanelRef : tracePanelRef
+                  const heightKey = `${key}Height`
+                  const panel = key === 'stack' ? <ErrorBoundary><LazyBoundary panelName="Stack"><StackPanel regs={engine.regs} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+                    : key === 'callstack' ? <ErrorBoundary><LazyBoundary panelName="Call Stack"><CallStackPanel callStack={engine.callStack} symbols={engine.symbols} onJump={engine.setMemStart} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} onGotoLine={(addr) => { const ln = engine.addrLineMap?.get(addr); if (ln) gotoLineRef.current?.(ln); }} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+                    : key === 'trace' ? <ErrorBoundary><LazyBoundary panelName="Trace"><TracePanel trace={engine.trace} symbols={engine.symbols} onClear={() => engine.setTrace([])} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
+                    : null
+                  const visibleCount = centerPanelOrder.filter(k => panels[k]).length
+                  const lastPanel = idx === visibleCount - 1
+                  const style = lastPanel ? { flex: '1 1 0' } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
+                  return (
+                    <div key={key}>
+                      <div className="center-panel-container" ref={panelRef} style={style}>
+                        {panel}
+                      </div>
+                      {!lastPanel && <div className="center-panel-divider" onMouseDown={(e) => onCenterPanelDividerDown(e, panelRef)} />}
+                    </div>
+                  )
                 })}
               </div>
             </>
