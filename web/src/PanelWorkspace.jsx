@@ -307,14 +307,18 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
           </div>
           <div className="mem-watch-divider" onMouseDown={onMemWatchDividerDown} />
           <div className="mem-watch-watch" ref={memWatchWatchRef} style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <div style={{ flex: '0 0 120px', minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }} data-watch-container>
+            <div style={{ flex: '0 0 120px', minHeight: 0, display: 'flex', flexDirection: 'column' }} data-watch-container>
               <LazyBoundary panelName="Watch">
-                <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
+                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
+                </div>
               </LazyBoundary>
             </div>
             <div className="center-panel-divider" onMouseDown={onWatchConsoleDividerDown} style={{ background: 'var(--border2)', minHeight: '6px' }} />
-            <div style={{ flex: '1 1 0', minHeight: 0, overflow: 'hidden' }}>
-              <ConsolePanel output={engine.consoleOutput} port={engine.consolePort} onSetPort={engine.changeConsolePort} onClear={() => { sim.simClearConsoleOutput(); engine.setConsoleOutput('') }} theme={theme} popoutCrtProps={popoutCrtProps} />
+            <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <ConsolePanel output={engine.consoleOutput} port={engine.consolePort} onSetPort={engine.changeConsolePort} onClear={() => { sim.simClearConsoleOutput(); engine.setConsoleOutput('') }} theme={theme} popoutCrtProps={popoutCrtProps} />
+              </div>
             </div>
           </div>
         </div>
