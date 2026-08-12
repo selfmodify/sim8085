@@ -155,6 +155,36 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
     return lo
   }, [])
 
+  // Native wheel listener: React's onWheel is passive, so preventDefault
+  // (needed to stop scroll chaining when paging past the list edges) must
+  // be registered with { passive: false }.
+  const onListWheel = useCallback((e) => {
+    const list = listRef.current
+    if (!list) return
+    const idx = addrIdxRef.current
+    if (idx.length === 0) return
+
+    setFollowPC(false)
+    ignorePcScrollRef.current = true
+
+    const { scrollTop, scrollHeight, clientHeight } = list
+    if (e.deltaY < 0 && scrollTop <= 1) {
+      e.preventDefault()
+      setViewStart(vs => idx[Math.max(0, findIdx(vs) - 3)])
+    } else if (e.deltaY > 0 && scrollTop + clientHeight >= scrollHeight - 1) {
+      e.preventDefault()
+      setViewStart(vs => idx[Math.min(idx.length - 1, findIdx(vs) + 3)])
+    }
+  }, [findIdx])
+
+  // Callback ref keeps the non-passive listener attached across remounts
+  // (e.g. when the panel moves into or out of the popout window).
+  const setListRef = useCallback((node) => {
+    if (listRef.current) listRef.current.removeEventListener('wheel', onListWheel)
+    listRef.current = node
+    if (node) node.addEventListener('wheel', onListWheel, { passive: false })
+  }, [onListWheel])
+
   useEffect(() => {
     setViewStart(regs.pc)
     setFollowPC(true)
@@ -291,24 +321,7 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
 
   const content = (
     <>
-      <div className="disasm-list" ref={listRef} style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}
-        onWheel={e => {
-          if (!listRef.current) return
-          const idx = addrIdxRef.current
-          if (idx.length === 0) return
-          
-          setFollowPC(false)
-          ignorePcScrollRef.current = true
-
-          const { scrollTop, scrollHeight, clientHeight } = listRef.current
-          if (e.deltaY < 0 && scrollTop <= 1) {
-            e.preventDefault()
-            setViewStart(vs => idx[Math.max(0, findIdx(vs) - 3)])
-          } else if (e.deltaY > 0 && scrollTop + clientHeight >= scrollHeight - 1) {
-            e.preventDefault()
-            setViewStart(vs => idx[Math.min(idx.length - 1, findIdx(vs) + 3)])
-          }
-        }}
+      <div className="disasm-list" ref={setListRef} style={poppedOut ? { flex: 1, overflowY: 'auto' } : undefined}
         onMouseEnter={() => { hoveredRef.current = true }}
         onMouseLeave={() => { hoveredRef.current = false }}>
         {lines.map(row => {
