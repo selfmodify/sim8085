@@ -26,7 +26,7 @@ const CallStackRow = memo(function CallStackRow({ frame, isTop, targetLbl, callL
 });
 
 export function CallStackPanel({ callStack, symbols, onJump, onJumpDisasm, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
-  const [collapsed, toggleCollapsed] = useCollapsible('callstack', true)
+  const [collapsed, toggleCollapsed] = useCollapsible('callstack', false)
   const [poppedOut, setPoppedOut] = useState(() => { try { return localStorage.getItem('sim8085_callstack_popped_out') === 'true' } catch { return false } })
 
   useEffect(() => {

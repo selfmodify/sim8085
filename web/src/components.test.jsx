@@ -200,16 +200,14 @@ describe('TracePanel', () => {
 import { CallStackPanel } from './CallStackPanel.jsx';
 
 describe('CallStackPanel', () => {
-  it('shows empty message when call stack is empty (after expand)', () => {
+  it('shows empty message when call stack is empty (expanded by default)', () => {
     render(<CallStackPanel callStack={[]} onJump={vi.fn()} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
-    fireEvent.click(screen.getByText('CALL STACK'));
     expect(screen.getByText(/empty/)).toBeInTheDocument();
   });
 
   it('renders a call stack frame', () => {
     const stack = [{ targetAddr: 0x0200, callAddr: 0x0103, retAddr: 0x0106 }];
     render(<CallStackPanel callStack={stack} onJump={vi.fn()} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
-    fireEvent.click(screen.getByText('CALL STACK'));
     const targets = document.querySelectorAll('.callstack-target');
     const sites = document.querySelectorAll('.callstack-site');
     expect(targets[0].textContent).toBe('0200H');
@@ -229,9 +227,16 @@ describe('CallStackPanel', () => {
     const onJump = vi.fn();
     const stack = [{ targetAddr: 0x0200, callAddr: 0x0103, retAddr: 0x0106 }];
     render(<CallStackPanel callStack={stack} onJump={onJump} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
-    fireEvent.click(screen.getByText('CALL STACK'));
     fireEvent.click(screen.getByTitle('Target address — click to jump memory and disassembly'));
     expect(onJump).toHaveBeenCalledWith(0x0200);
+  });
+
+  it('collapses when header is clicked', () => {
+    const stack = [{ targetAddr: 0x0200, callAddr: 0x0103, retAddr: 0x0106 }];
+    render(<CallStackPanel callStack={stack} onJump={vi.fn()} dragHandleProps={{}} dropTargetProps={{}} isDragOver={false} />);
+    expect(document.querySelector('.callstack-target')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('CALL STACK'));
+    expect(document.querySelector('.callstack-target')).not.toBeInTheDocument();
   });
 });
 
