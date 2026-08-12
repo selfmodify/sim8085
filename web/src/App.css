@@ -620,6 +620,11 @@ body {
   display: flex;
   flex-direction: column;
 }
+/* Panels docked in the center stack fill their container exactly */
+.center-panel-container > .panel {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 .center-panel-divider {
   flex: 0 0 6px;
   cursor: ns-resize;
@@ -1283,8 +1288,7 @@ button.build-chip:hover {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  flex: 1 1 0;
-  min-height: 0;
+  flex-shrink: 0;
 }
 
 .panel.drag-over {
@@ -2201,13 +2205,13 @@ button.build-chip:hover {
 .watch-brk.active { color: var(--red); border-color: var(--red); background: color-mix(in srgb, var(--red) 15%, transparent) }
 
 /* ── Stack ────────────────────────────────────────────────────────── */
-.stack-panel { padding: 4px 0 0; overflow: hidden; display: flex; flex-direction: column; min-height: 80px; height: 100% }
+.stack-panel { padding: 4px 0 0; min-height: 80px; display: flex; flex-direction: column; }
 .stack-resize-handle {
   height: 5px; cursor: ns-resize; flex-shrink: 0;
   background: linear-gradient(to top, var(--border2) 1px, transparent 1px);
 }
 .stack-resize-handle:hover { background: linear-gradient(to top, var(--accent) 1px, transparent 1px) }
-.stack-body { flex: 1 1 0; overflow-y: auto; min-height: 0 }
+.stack-body { flex: 1; overflow-y: auto; min-height: 0; }
 .sp-val { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--amber) }
 .stack-empty { color: var(--text3); font-family: var(--mono); font-size: 13px; padding: 6px 10px }
 .stack-row {
@@ -2581,10 +2585,10 @@ button.build-chip:hover {
 .ioport-serial-val { font-family: var(--mono); font-size: 11px; color: var(--text3); padding: 1px 4px; border: 1px solid var(--border); border-radius: 3px; min-width: 20px; text-align: center }
 .ioport-serial-val.active { color: var(--accent); border-color: var(--accent) }
 
-.callstack-panel { min-height: 80px }
-.callstack-empty { padding: 4px 8px; font-size: 11px; color: var(--text3); font-style: italic }
+.callstack-panel { min-height: 80px; display: flex; flex-direction: column; }
+.callstack-empty { padding: 4px 8px; font-size: 11px; color: var(--text3); font-style: italic; }
 .callstack-depth { margin-left: auto; font-size: 10px; color: var(--text3); font-weight: 400; font-family: var(--mono) }
-.callstack-list { max-height: 120px; overflow-y: auto }
+.callstack-list { flex: 1; min-height: 0; overflow-y: auto; }
 .callstack-row { display: flex; align-items: center; gap: 4px; padding: 2px 8px; font-family: var(--mono); font-size: 11px }
 .callstack-row:hover { background: var(--bg2) }
 .callstack-top { background: color-mix(in srgb, var(--accent) 8%, transparent) }

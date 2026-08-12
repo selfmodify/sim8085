@@ -32,9 +32,13 @@ export function useLazyPanel() {
 export function LazyBoundary({ children, fallback = null, panelName }) {
   const { isVisible, ref } = useLazyPanel();
 
+  // Once visible, render children directly — a wrapper div here would sit
+  // between flex containers and their panels, breaking height propagation.
+  if (isVisible) return children;
+
   return (
-    <div ref={ref}>
-      {isVisible ? children : fallback || <div style={{ minHeight: '200px', opacity: 0.3 }}>Loading {panelName}...</div>}
+    <div ref={ref} style={{ minHeight: '120px', opacity: 0.3 }}>
+      {fallback || `Loading ${panelName}...`}
     </div>
   );
 }

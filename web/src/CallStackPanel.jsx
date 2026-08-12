@@ -40,7 +40,7 @@ export function CallStackPanel({ callStack, symbols, onJump, onJumpDisasm, dragH
   }, [symbols])
 
   const content = (
-    <div className="panel-anim-body" style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', overflowY: 'auto', minHeight: 0, height: '100%' }}>
+    <div className="panel-anim-body" style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
           {callStack.length === 0
             ? <div className="callstack-empty">— empty (step to populate) —</div>
             : <div className="callstack-list" style={poppedOut ? { maxHeight: 'none' } : undefined}>

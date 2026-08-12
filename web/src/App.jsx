@@ -829,7 +829,7 @@ export default function App() {
 
   const simCtxValue = useMemo(
     () => ({ regBase, onRegBase: setRegBase, onEdit: engine.refresh, onShowDialog: setAppDialog }),
-    [regBase, setRegBase, engine.refresh, setAppDialog]
+    [regBase, setRegBase, engine.refresh, setAppDialog] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   return (

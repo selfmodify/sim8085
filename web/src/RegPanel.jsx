@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import * as sim from './simProxy.js';
 import { useCopy, useCollapsible } from './hooks.js';
 import { PanelHelp } from './PanelHelp.jsx';
@@ -82,7 +82,7 @@ const PairCell = memo(function PairCell({ name, val, prevVal, regKey, regBase, o
   const [editing, setEditing] = useState(false)
   const [buf, setBuf] = useState('')
   const [copied, copy] = useCopy()
-  const changed = prevVal !== undefined && val !== prevVal
+  const changed = prevVal !== undefined && val !== prevVal;
 
   function commit() {
     const radix = regBase === 'bin' ? 2 : regBase === 'dec' ? 10 : 16
@@ -125,11 +125,11 @@ export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:
   const p = prev || {}
 
 
-  const handleBitToggle = useCallback((bit) => {
+  const handleBitToggle = useCallback(bit => {
     const v = regs.a ^ (1 << bit);
     sim.simSetRegisters({ a: v });
     onEdit();
-  }, [regs.a, onEdit]);
+  }, [regs.a, onEdit])
 
   const nextBase = useMemo(() => BASE_CYCLE[(BASE_CYCLE.indexOf(regBase || 'hex') + 1) % 3], [regBase])
 

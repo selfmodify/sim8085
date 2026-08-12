@@ -43,29 +43,15 @@ export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver,
     return out
   }, [regs])
 
-  function onResizeDown(e) {
-    e.preventDefault()
-    const startY = e.clientY, startH = panelRef.current.getBoundingClientRect().height
-    const onMove = ev => {
-      const colBottom = panelRef.current.parentElement.getBoundingClientRect().bottom
-      const panelTop = panelRef.current.getBoundingClientRect().top
-      const maxH = Math.max(72, colBottom - panelTop - 32)
-      panelRef.current.style.height = Math.max(72, Math.min(maxH, startH + (ev.clientY - startY))) + 'px'
-    }
-    const onUp   = ()  => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp) }
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp)
-  }
-
   const content = (
-    <div className="panel-anim-body" style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0, height: '100%' }}>
-      <div className="stack-body" style={{ flex: '1 1 0', overflowY: 'auto', minHeight: 0, height: '100%' }}>
+    <div className="panel-anim-body" style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+      <div className="stack-body">
           {entries.length === 0
             ? <div className="stack-empty">empty</div>
             : entries.map((e, i) => (
                 <StackRow key={e.addr} addr={e.addr} val={e.val} isTop={i === 0} regBase={regBase} />
               ))}
         </div>
-      {!poppedOut && <div className="stack-resize-handle" onMouseDown={onResizeDown} />}
     </div>
   )
 

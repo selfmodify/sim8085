@@ -136,22 +136,29 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
   function onCenterPanelDividerDown(e) {
     e.preventDefault()
     const divider = e.currentTarget
-    const wrapperAbove = divider.parentElement
-    if (!wrapperAbove) return
+    const container = divider.previousElementSibling // .center-panel-container above this divider
+    const stackCol = divider.parentElement           // .disasm-trace-stack (vertical column)
+    if (!container || !stackCol) return
     const startY = e.clientY
-    const startH = wrapperAbove.getBoundingClientRect().height
+    const startH = container.getBoundingClientRect().height
+    // Reserve minimum room for every other child in the column (80px per panel, 6px per divider)
+    let reserved = 0
+    for (const el of stackCol.children) {
+      if (el === container) continue
+      reserved += el.classList.contains('center-panel-divider') ? 6 : 80
+    }
     let newH = startH
     function onMove(ev) {
-      newH = Math.max(50, startH + (ev.clientY - startY))
-      wrapperAbove.style.flex = `0 0 ${newH}px`
+      const maxH = Math.max(80, stackCol.getBoundingClientRect().height - reserved)
+      newH = Math.min(maxH, Math.max(80, startH + (ev.clientY - startY)))
+      container.style.flex = `0 0 ${newH}px`
     }
     function onUp() {
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseup', onUp)
-      const panelContainer = wrapperAbove.querySelector('[data-panel-key]')
-      const key = panelContainer?.dataset.panelKey
+      const key = container.dataset.panelKey
       if (key) {
-        try { localStorage.setItem(`sim8085_${key}Height`, newH + 'px') } catch {}
+        try { localStorage.setItem(`sim8085_${key}_height`, newH + 'px') } catch {}
       }
     }
     document.addEventListener('mousemove', onMove)
