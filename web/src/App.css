@@ -625,6 +625,14 @@ body {
   flex: 1 1 auto;
   min-height: 0;
 }
+/* A collapsed center panel shrinks its slot to header height instead of
+   reserving its assigned flex space and leaving a blank gap below the header. */
+.center-panel-container:has(> .panel[data-collapsed="true"]) {
+  flex: 0 0 auto !important;
+}
+.center-panel-container > .panel[data-collapsed="true"] {
+  min-height: 0 !important;
+}
 .center-panel-divider {
   flex: 0 0 6px;
   cursor: ns-resize;

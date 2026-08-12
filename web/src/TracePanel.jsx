@@ -120,7 +120,7 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
 
   return (
     <>
-      <div className={`panel trace-panel${!poppedOut && isDragOver ? ' drag-over' : ''}`} {...(!poppedOut ? dropTargetProps : {})}>
+      <div className={`panel trace-panel${!poppedOut && isDragOver ? ' drag-over' : ''}`} data-collapsed={!poppedOut && collapsed} {...(!poppedOut ? dropTargetProps : {})}>
         {poppedOut ? (
           <>
             <div className="panel-hd" {...dragHandleProps}>

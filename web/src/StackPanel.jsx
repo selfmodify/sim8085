@@ -57,7 +57,7 @@ export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver,
 
   return (
     <>
-      <div className={`panel stack-panel${!poppedOut && isDragOver ? ' drag-over' : ''}`} ref={!poppedOut ? panelRef : null} {...(!poppedOut ? dropTargetProps : {})}>
+      <div className={`panel stack-panel${!poppedOut && isDragOver ? ' drag-over' : ''}`} ref={!poppedOut ? panelRef : null} data-collapsed={!poppedOut && collapsed} {...(!poppedOut ? dropTargetProps : {})}>
         {poppedOut ? (
           <>
             <div className="panel-hd" {...dragHandleProps}>

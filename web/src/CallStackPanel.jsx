@@ -58,7 +58,7 @@ export function CallStackPanel({ callStack, symbols, onJump, onJumpDisasm, dragH
 
   return (
     <>
-      <div className={`panel callstack-panel${!poppedOut && isDragOver ? ' drag-over' : ''}`} {...(!poppedOut ? dropTargetProps : {})}>
+      <div className={`panel callstack-panel${!poppedOut && isDragOver ? ' drag-over' : ''}`} data-collapsed={!poppedOut && collapsed} {...(!poppedOut ? dropTargetProps : {})}>
         {poppedOut ? (
           <>
             <div className="panel-hd" {...dragHandleProps}>
