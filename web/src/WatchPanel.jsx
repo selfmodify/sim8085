@@ -116,7 +116,6 @@ const WatchRow = memo(function WatchRow({ watch, info, changed, isBrk, isEditing
 
 export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onAdd, onRemove, dataBps, onToggleBreak, theme, popoutCrtProps }) {
   const { regBase, onRegBase, onEdit } = useSimulator()
-  const panelRef = useRef(null)
   const [poppedOut, setPoppedOut] = useState(() => {
     try {
       return localStorage.getItem('sim8085_watch_popped_out') === 'true'
@@ -186,25 +185,6 @@ export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onA
     setInput('')
   }
 
-  function onResizeDown(e) {
-    e.preventDefault()
-    const startY = e.clientY
-    const targetEl = panelRef.current.closest('.mem-watch-row') || panelRef.current
-    const startH = targetEl.getBoundingClientRect().height
-    function onMove(ev) {
-      targetEl.style.height = Math.max(80, startH + (startY - ev.clientY)) + 'px'
-    }
-    function onUp() {
-      document.removeEventListener('mousemove', onMove)
-      document.removeEventListener('mouseup', onUp)
-      try {
-        localStorage.setItem('sim8085_mem_row_height', targetEl.style.height)
-      } catch {}
-    }
-    document.addEventListener('mousemove', onMove)
-    document.addEventListener('mouseup', onUp)
-  }
-
   const content = (
     <>
       <div className="watch-add-row">
@@ -249,7 +229,7 @@ export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onA
 
   return (
     <>
-      <div className="panel watch-panel" ref={!poppedOut ? panelRef : null}>
+      <div className="panel watch-panel">
         {poppedOut ? (
           <>
             <div className="panel-hd">
@@ -266,7 +246,6 @@ export function WatchPanel({ watches, symbols, regs, prevRegs, changedAddrs, onA
           </>
         ) : (
           <>
-            {!poppedOut && <div className="watch-resize-handle" onMouseDown={onResizeDown} />}
             <div className="panel-hd">
               <span><span className="panel-icon">👁</span>WATCH</span>
               <div className="panel-hd-right">
