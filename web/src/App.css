@@ -2125,7 +2125,7 @@ button.build-chip:hover {
 .memmap-legend-item:hover { color: var(--text); }
 
 /* ── Console panel ───────────────────────────────────────────────── */
-.console-panel { overflow: hidden; display: flex; flex-direction: column; min-height: 80px; max-height: 220px }
+.console-panel { overflow: hidden; display: flex; flex-direction: column; flex: 1; min-height: 80px }
 .console-port-label { font-family: var(--mono); font-size: 11px; color: var(--text3) }
 .console-port-input {
   width: 26px; background: var(--bg3); border: 1px solid var(--border);
