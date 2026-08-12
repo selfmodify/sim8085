@@ -129,7 +129,8 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
       memRow: getWidth('sim8085_mem_row_height'),
       stackHeight: getWidth('sim8085_stack_height'),
       callstackHeight: getWidth('sim8085_callstack_height'),
-      traceHeight: getWidth('sim8085_trace_height')
+      traceHeight: getWidth('sim8085_trace_height'),
+      watchHeight: getWidth('sim8085_watch_height')
     }
   }, [])
 
@@ -183,6 +184,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     function onUp() {
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseup', onUp)
+      try { localStorage.setItem('sim8085_watch_height', newH + 'px') } catch {}
     }
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)
@@ -313,7 +315,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
           </div>
           <div className="mem-watch-divider" onMouseDown={onMemWatchDividerDown} />
           <div className="mem-watch-watch" ref={memWatchWatchRef} style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <div style={{ flex: '0 0 120px', minHeight: 0, display: 'flex', flexDirection: 'column' }} data-watch-container>
+            <div style={{ flex: `0 0 ${initialWidths.watchHeight || '120px'}`, minHeight: 0, display: 'flex', flexDirection: 'column' }} data-watch-container>
               <LazyBoundary panelName="Watch">
                 <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                   <WatchPanel watches={engine.watches} symbols={engine.symbols} regs={engine.regs} prevRegs={engine.prevRegs} changedAddrs={engine.changedAddrs} onAdd={w => engine.setWatches(ws => [...ws, w])} onRemove={i => { const w = engine.watches[i]; if (w.type === 'mem' && engine.dataBps.has(w.addr)) { sim.simClearDataBreakpoint(w.addr); engine.setDataBps(prev => { const n = new Set(prev); n.delete(w.addr); return n }) }; engine.setWatches(ws => ws.filter((_,j) => j !== i)) }} dataBps={engine.dataBps} onToggleBreak={engine.toggleDataBp} theme={theme} popoutCrtProps={popoutCrtProps} />
