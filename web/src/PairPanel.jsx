@@ -123,7 +123,7 @@ export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, 
           <>
             <div className="panel-hd collapsible" onClick={toggleCollapsed} {...dragHandleProps}>
               <span><span className="panel-icon">🔗</span>REGISTER PAIRS</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 <button className="reg-base-btn" onClick={() => onRegBase(BASE_CYCLE[(BASE_CYCLE.indexOf(regBase)+1)%3])}
                   title="Toggle display: hex / dec / bin">{(regBase||'hex').toUpperCase()}</button>

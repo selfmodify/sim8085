@@ -247,7 +247,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
         <div className="panel editor-panel" style={editorCollapsed ? { flex: 'none' } : undefined}>
           <div className="panel-hd collapsible" onClick={toggleEditorCollapsed}>
             <span><span className="panel-icon">✏️</span>EDITOR</span>
-            <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+            <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
               {!editorPoppedOut && <button className="reg-base-btn" onClick={() => setEditorPoppedOut(true)} title="Open in separate window">⧉</button>}
               <button className="reg-base-btn" onClick={() => editorActionsRef.current?.undo()} disabled={!canUndo} title="Undo typing (Ctrl+Z)">Undo</button>
               <button className="reg-base-btn" onClick={() => editorActionsRef.current?.redo()} disabled={!canRedo} title="Redo typing (Ctrl+Y)">Redo</button>

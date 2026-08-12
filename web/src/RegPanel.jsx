@@ -181,7 +181,7 @@ export function RegPanel({ regs = { a:0, b:0, c:0, d:0, e:0, h:0, l:0, pc:0, sp:
           <>
             <div className="panel-hd collapsible" onClick={toggleCollapsed} {...dragHandleProps}>
               <span><span className="panel-icon">🧠</span>REGISTERS</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 <button className="reg-base-btn" onClick={() => onRegBase(nextBase)}
                   title="Toggle display: hex / dec / bin">{(regBase || 'hex').toUpperCase()}</button>

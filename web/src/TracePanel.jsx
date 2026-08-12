@@ -140,7 +140,7 @@ export function TracePanel({ trace, symbols, onClear, onJumpDisasm, dragHandlePr
           <>
             <div className="panel-hd collapsible" onClick={toggleCollapsed} {...dragHandleProps}>
               <span><span className="panel-icon">📜</span>TRACE</span>
-              <div className="panel-hd-right" onClick={e => e.stopPropagation()}>
+              <div className="panel-hd-right" onClick={e => e.stopPropagation()} style={{ marginLeft: 'auto' }}>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={() => setPoppedOut(true)} title="Open in separate window">⧉</button>
                 <button className="reg-base-btn" style={{ marginRight: 6 }} onClick={exportTrace} disabled={trace.length === 0} title="Export trace to CSV">⬇ CSV</button>
                 <button className="reg-base-btn" onClick={onClear} title="Clear trace">✕</button>
