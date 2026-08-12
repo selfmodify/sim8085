@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import React, { useState, useRef, useMemo, useEffect } from 'react'
 import { ErrorBoundary } from './ErrorBoundary.jsx'
 import * as sim from './simProxy.js'
 import { PanelHelp } from './PanelHelp.jsx'
@@ -148,6 +148,11 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     function onUp() {
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseup', onUp)
+      const panelContainer = wrapperAbove.querySelector('[data-panel-key]')
+      const key = panelContainer?.dataset.panelKey
+      if (key) {
+        try { localStorage.setItem(`sim8085_${key}Height`, newH + 'px') } catch {}
+      }
     }
     document.addEventListener('mousemove', onMove)
     document.addEventListener('mouseup', onUp)
@@ -270,10 +275,10 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
             onGotoLine={(addr, labelName) => { const ln = engine.addrLineMap.get(addr); if (ln) gotoLineRef.current?.(ln, labelName) }}
             theme={theme} popoutCrtProps={popoutCrtProps} />
           {(panels.stack || panels.callstack || panels.trace) && (
-            <>
+            <React.Fragment>
               <div className="mem-watch-divider" onMouseDown={onDisasmStackDividerDown} />
               <div className="disasm-trace-stack" ref={disasmStackRef} style={initialWidths.stack ? { flex: `0 0 ${initialWidths.stack}` } : undefined}>
-                {centerPanelOrder.map((key, idx) => {
+                {centerPanelOrder.map((key) => {
                   if (!panels[key]) return null;
                   const dp = getDragProps(key, centerPanelOrder, setCenterPanelOrder, 'sim8085_center_panels')
                   const heightKey = `${key}Height`
@@ -282,22 +287,17 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
                     : key === 'trace' ? <ErrorBoundary><LazyBoundary panelName="Trace"><TracePanel trace={engine.trace} symbols={engine.symbols} onClear={() => engine.setTrace([])} onJumpDisasm={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })} theme={theme} popoutCrtProps={popoutCrtProps} {...dp} /></LazyBoundary></ErrorBoundary>
                     : null
                   const visiblePanels = centerPanelOrder.filter(k => panels[k])
-                  const visibleIdx = visiblePanels.indexOf(key)
-                  const isLast = visibleIdx === visiblePanels.length - 1
+                  const isLast = visiblePanels.indexOf(key) === visiblePanels.length - 1
                   const style = isLast ? { flex: '1 1 0', minHeight: 0 } : initialWidths[heightKey] ? { flex: `0 0 ${initialWidths[heightKey]}` } : { flex: '0 0 100px' }
                   return (
-                    <div key={key} style={{ display: 'flex', flexDirection: 'column', ...style }}>
-                      <div className="center-panel-container" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }} data-panel-key={key}>
-                        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                          {panel}
-                        </div>
-                      </div>
-                      {!isLast && <div className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} data-panel-key={key} />}
-                    </div>
-                  )
+                    <React.Fragment key={key}>
+                      <div className="center-panel-container" style={style} data-panel-key={key}>{panel}</div>
+                      {!isLast && <div className="center-panel-divider" onMouseDown={onCenterPanelDividerDown} />}
+                    </React.Fragment>
+                  );
                 })}
               </div>
-            </>
+            </React.Fragment>
           )}
         </div>
         <div className="mem-watch-row" style={{ height: initialWidths.memRow || '280px' }}>
