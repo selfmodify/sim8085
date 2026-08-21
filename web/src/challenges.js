@@ -69,7 +69,7 @@ export const CHALLENGES = [
       return expected.every((v, i) => sim.simReadByte(0x0200 + i) === v)
     },
     successMsg: '0200H–0207H correctly reversed.',
-    solution: '    LXI H, 0200H  ; HL = left pointer\n    LXI D, 0207H  ; DE = right pointer\n    MVI C, 04H    ; 4 swaps for 8 elements\nREVLOOP:\n    MOV A, M      ; A = left element\n    LDAX D        ; B via XCHG trick: load right\n    MOV B, A      ; B = right element\n    MOV A, M\n    STAX D        ; store left into right slot\n    MOV M, B      ; store right into left slot\n    INX H         ; advance left pointer\n    DCX D         ; retreat right pointer\n    DCR C\n    JNZ REVLOOP\n    HLT',
+    solution: '    LXI H, 0200H  ; HL = left pointer\n    LXI D, 0207H  ; DE = right pointer\n    MVI C, 04H    ; 4 swaps for 8 elements\nREVLOOP:\n    MOV B, M      ; B = left element ([HL])\n    LDAX D        ; A = right element ([DE])\n    MOV M, A      ; [HL] = right element\n    MOV A, B      ; A = left element\n    STAX D        ; [DE] = left element\n    INX H         ; advance left pointer\n    DCX D         ; retreat right pointer\n    DCR C\n    JNZ REVLOOP\n    HLT',
   },
   {
     id: 'c9', title: '9. Division',
@@ -103,7 +103,7 @@ export const CHALLENGES = [
     desc: 'Create an audible siren by alternating a high pitch and low pitch to the Audio Panel (Port 40H) in a continuous loop.',
     setup: '    ; Note: Turn ON the Audio Panel and set Speed to Fast!',
     test: () => true, // Open-ended interactive challenge
-    successMsg: 'Awesome! Did you hear the beautiful siren sound?',
+    successMsg: 'Audio output generated on Port 40H.',
     solution: 'SIREN:\n    MVI A, 30H    ; High pitch\n    OUT 40H       ; Send to audio port\n    CALL DELAY    ; Wait a moment\n    MVI A, 10H    ; Low pitch\n    OUT 40H       ; Send to audio port\n    CALL DELAY    ; Wait a moment\n    JMP SIREN     ; Repeat forever\n\nDELAY:\n    LXI B, 0FFFH  ; Load delay counter\nWAIT:\n    DCX B         ; Decrement counter\n    MOV A, B\n    ORA C         ; Check if zero\n    JNZ WAIT\n    RET',
   },
 ];

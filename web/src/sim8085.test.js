@@ -9,8 +9,8 @@ import {
   simInit, simAssemble, simStep, simRun, simGetRegisters, simSetRegisters,
   simGetMemory, simReadByte, simWriteByte,
   simIsHalted, simIsRunning, simIsHaltWaiting,
-  simSetBreakpoint, simClearAllBreakpoints,
-  simGetOutputPorts, simSetInputPort,
+  simSetBreakpoint, simClearAllBreakpoints, simGetAllInputPorts,
+  simGetOutputPorts, simSetInputPort, 
   simGetConsoleOutput, simSetConsolePort,
   simGetCycles, simGetAllLeds, simGetIntState,
 } from './sim8085Bridge.js';
@@ -615,6 +615,28 @@ describe('IN / OUT', () => {
     simAssemble('ORG 100H\nIN 02H\nHLT');
     while (simIsRunning()) simStep();
     expect(simGetRegisters().a).toBe(0xAA);
+  });
+
+  it('simGetAllInputPorts returns all set input ports', () => {
+    simInit();
+    simSetInputPort(10, 0xAA);
+    simSetInputPort(20, 0xBB);
+    const allPorts = simGetAllInputPorts();
+    expect(allPorts[10]).toBe(0xAA);
+    expect(allPorts[20]).toBe(0xBB);
+    expect(allPorts[30]).toBe(0); // check an unset port
+    expect(allPorts.length).toBe(256);
+  });
+
+  it('simGetAllInputPorts returns all set input ports', () => {
+    simInit();
+    simSetInputPort(10, 0xAA);
+    simSetInputPort(20, 0xBB);
+    const allPorts = simGetAllInputPorts();
+    expect(allPorts[10]).toBe(0xAA);
+    expect(allPorts[20]).toBe(0xBB);
+    expect(allPorts[30]).toBe(0); // check an unset port
+    expect(allPorts.length).toBe(256);
   });
 
   it('OUT to console port writes ASCII to console buffer', () => {

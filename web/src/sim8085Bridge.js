@@ -969,6 +969,7 @@ export function simInit() {
 
 export function simSetInputPort(port, val) { ioIn[port & 0xFF] = val & 0xFF; }
 export function simClearInputPort(port)    { ioIn[port & 0xFF] = 0; }
+export function simGetAllInputPorts()      { return ioIn.slice(); }
 export function simGetOutputPorts() {
   return [...ioOutTouched].sort((a,b)=>a-b).map(p => ({ port: p, val: ioOut[p] }))
 }
