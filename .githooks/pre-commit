@@ -10,14 +10,16 @@ echo "[pre-commit] Running tests..."
 if command -v wsl.exe >/dev/null 2>&1 && ! grep -qEi "(Microsoft|WSL)" /proc/version &>/dev/null; then
   echo "[pre-commit] On Windows, executing tests inside WSL..."
 
-  # Convert the Git Bash POSIX path (/f/code/...) to a WSL path (/mnt/f/code/...).
-  # wslpath inside WSL doesn't understand Git Bash paths, so we do it with string ops.
+  # Convert the Git root to a WSL path (/mnt/f/code/...). git rev-parse can
+  # report either the Git Bash POSIX form (/f/code/...) or the drive-letter
+  # form (F:/code/...) depending on the Git for Windows build, so accept both.
+  # wslpath inside WSL doesn't understand either Git Bash form, so we do it with string ops.
   GIT_ROOT=$(git rev-parse --show-toplevel)
   if echo "$GIT_ROOT" | grep -q "^/mnt/"; then
     WSL_PATH="$GIT_ROOT"
   else
-    DRIVE=$(echo "$GIT_ROOT" | sed 's|^/\([A-Za-z]\)/.*|\1|' | tr '[:upper:]' '[:lower:]')
-    REST=$(echo "$GIT_ROOT" | sed 's|^/[A-Za-z]/||')
+    DRIVE=$(echo "$GIT_ROOT" | sed -E 's|^/?([A-Za-z]):?/.*|\1|' | tr '[:upper:]' '[:lower:]')
+    REST=$(echo "$GIT_ROOT" | sed -E 's|^/?[A-Za-z]:?/||')
     WSL_PATH="/mnt/${DRIVE}/${REST}"
   fi
   WSL_CMD="cd \"$WSL_PATH\" && . ~/.nvm/nvm.sh && nvm use 22 && npm --prefix web test -- --run"
