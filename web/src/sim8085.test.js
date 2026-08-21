@@ -10,9 +10,10 @@ import {
   simGetMemory, simReadByte, simWriteByte,
   simIsHalted, simIsRunning, simIsHaltWaiting,
   simSetBreakpoint, simClearAllBreakpoints, simGetAllInputPorts,
-  simGetOutputPorts, simSetInputPort, 
+  simGetOutputPorts, simSetInputPort,
   simGetConsoleOutput, simSetConsolePort,
   simGetCycles, simGetAllLeds, simGetIntState,
+  simAssertInterrupt, simDeassertInterrupt, simSetSID, simGetSOD,
 } from './sim8085Bridge.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -1023,5 +1024,283 @@ describe('LED display via CALL 5', () => {
     while (simIsRunning()) simStep();
     const leds = simGetAllLeds();
     expect(leds[0]).not.toBe(0); // LED 0 was written via syscall
+  });
+});
+
+// ── CPE / CPO / RPE / RPO — parity conditional call/return ───────────────────
+describe('CPE / CPO / RPE / RPO — parity conditional call/return', () => {
+  it('CPE calls when parity is even (P=1)', () => {
+    const r = run('ORG 100H\nLXI SP, 2000H\nMVI A, 0FFH\nADI 00H\nCPE SUB\nHLT\nSUB: MVI B, 42H\nRET');
+    expect(r.b).toBe(0x42);
+  });
+  it('CPE does not call when parity is odd (P=0)', () => {
+    const r = run('ORG 100H\nLXI SP, 2000H\nMVI A, 01H\nADI 00H\nCPE SUB\nHLT\nSUB: MVI B, 42H\nRET');
+    expect(r.b).toBe(0x00);
+  });
+  it('CPO calls when parity is odd (P=0)', () => {
+    const r = run('ORG 100H\nLXI SP, 2000H\nMVI A, 01H\nADI 00H\nCPO SUB\nHLT\nSUB: MVI B, 42H\nRET');
+    expect(r.b).toBe(0x42);
+  });
+  it('RPE returns when parity is even (P=1)', () => {
+    const r = run(`ORG 100H
+      LXI SP, 2000H
+      CALL SUB
+      HLT
+      SUB: MVI A, 0FFH
+           ADI 00H
+           RPE
+           MVI A, 00H
+           RET`);
+    expect(r.a).toBe(0xFF); // RPE fired; the MVI A,00H after it never runs
+  });
+  it('RPO returns when parity is odd (P=0)', () => {
+    const r = run(`ORG 100H
+      LXI SP, 2000H
+      CALL SUB
+      HLT
+      SUB: MVI A, 01H
+           ADI 00H
+           RPO
+           MVI A, 00H
+           RET`);
+    expect(r.a).toBe(0x01); // RPO fired
+  });
+});
+
+// ── RIM / SIM — interrupt mask / serial I/O ───────────────────────────────────
+describe('RIM / SIM — read/set interrupt mask', () => {
+  it('RIM reads IE (bit3) and pending RST flags (bits 4-6) into A', () => {
+    simInit();
+    simAssemble('ORG 100H\nEI\nRIM\nHLT');
+    simAssertInterrupt('RST55');
+    simAssertInterrupt('RST65');
+    simAssertInterrupt('RST75');
+    simStep(); // EI
+    simStep(); // RIM
+    const r = simGetRegisters();
+    expect(r.a & 0x08).toBe(0x08); // IE
+    expect(r.a & 0x10).toBe(0x10); // RST 5.5 pending
+    expect(r.a & 0x20).toBe(0x20); // RST 6.5 pending
+    expect(r.a & 0x40).toBe(0x40); // RST 7.5 pending
+  });
+  it('RIM reads SID into bit 7', () => {
+    simInit();
+    simAssemble('ORG 100H\nRIM\nHLT');
+    simSetSID(1);
+    simStep();
+    expect(simGetRegisters().a & 0x80).toBe(0x80);
+  });
+  it('SIM sets the interrupt mask only when MSE (bit3) is set', () => {
+    const r = run('ORG 100H\nMVI A, 0FH\nSIM\nRIM\nHLT'); // MSE + all 3 masks
+    expect(r.a & 0x07).toBe(0x07);
+  });
+  it('SIM leaves the mask unchanged when MSE (bit3) is clear', () => {
+    // First set mask bits with MSE, then try (and fail) to clear them without MSE
+    const r = run('ORG 100H\nMVI A, 0FH\nSIM\nMVI A, 00H\nSIM\nRIM\nHLT');
+    expect(r.a & 0x07).toBe(0x07); // mask untouched by the second SIM (MSE=0)
+  });
+  it('SIM resets the RST 7.5 pending flip-flop when bit4 is set', () => {
+    simInit();
+    simAssemble('ORG 100H\nMVI A, 10H\nSIM\nRIM\nHLT'); // bit4 set, MSE clear
+    simAssertInterrupt('RST75');
+    simStep(); // MVI
+    simStep(); // SIM — clears the pending RST7.5 latch
+    simStep(); // RIM
+    expect(simGetRegisters().a & 0x40).toBe(0x00);
+  });
+  it('SIM sets SOD only when SODE (bit6) is set', () => {
+    run('ORG 100H\nMVI A, 0C0H\nSIM\nHLT'); // bit7=1 (SOD value), bit6=1 (SODE)
+    expect(simGetSOD()).toBe(1);
+  });
+  it('SIM leaves SOD unchanged when SODE (bit6) is clear', () => {
+    run('ORG 100H\nMVI A, 080H\nSIM\nHLT'); // bit7=1 but SODE=0
+    expect(simGetSOD()).toBe(0);
+  });
+});
+
+// ── Hardware interrupts — TRAP / RST7.5 / RST6.5 / RST5.5 ─────────────────────
+describe('Hardware interrupts', () => {
+  it('TRAP fires even with interrupts disabled (non-maskable)', () => {
+    simInit();
+    simAssemble('ORG 0024H\nMVI A, 42H\nHLT\nORG 100H\nDI\nNOP\nHLT');
+    simStep(); // DI
+    simAssertInterrupt('TRAP');
+    simStep(); // NOP — checkInterrupts after this sees TRAP pending regardless of DI
+    expect(simGetRegisters().pc).toBe(0x0024);
+  });
+  it('RST 7.5 vectors to 003CH when unmasked and enabled', () => {
+    simInit();
+    simAssemble('ORG 003CH\nMVI A, 42H\nHLT\nORG 100H\nEI\nNOP\nHLT');
+    simStep(); // EI (iff becomes true, but the pending check this cycle is skipped)
+    simAssertInterrupt('RST75');
+    simStep(); // NOP — checkInterrupts now services RST 7.5
+    expect(simGetRegisters().pc).toBe(0x003C);
+  });
+  it('RST 7.5 is blocked while masked, even though asserted', () => {
+    simInit();
+    simAssemble('ORG 003CH\nMVI A, 42H\nHLT\nORG 100H\nMVI A, 0CH\nSIM\nEI\nNOP\nHLT'); // MSE+mask RST7.5
+    simAssertInterrupt('RST75');
+    simStep(); // MVI
+    simStep(); // SIM — masks RST 7.5
+    simStep(); // EI
+    simStep(); // NOP — RST 7.5 still pending but masked, must not fire
+    expect(simGetRegisters().pc).not.toBe(0x003C);
+    expect(simIsRunning()).toBe(true);
+  });
+  it('RST 6.5 vectors to 0034H and is level-sensitive (deassert stops it firing)', () => {
+    simInit();
+    simAssemble('ORG 0034H\nMVI A, 42H\nHLT\nORG 100H\nEI\nNOP\nHLT');
+    simStep(); // EI
+    simAssertInterrupt('RST65');
+    simDeassertInterrupt('RST65'); // line dropped before it was serviced
+    simStep(); // NOP — nothing pending now
+    expect(simGetRegisters().pc).not.toBe(0x0034);
+  });
+  it('RST 5.5 vectors to 002CH when unmasked and enabled', () => {
+    simInit();
+    simAssemble('ORG 002CH\nMVI A, 42H\nHLT\nORG 100H\nEI\nNOP\nHLT');
+    simStep(); // EI
+    simAssertInterrupt('RST55');
+    simStep(); // NOP — checkInterrupts now services RST 5.5
+    expect(simGetRegisters().pc).toBe(0x002C);
+  });
+  it('EI has a one-instruction delay before a pending interrupt is serviced', () => {
+    simInit();
+    simAssemble('ORG 002CH\nMVI A, 42H\nHLT\nORG 100H\nEI\nNOP\nHLT');
+    simAssertInterrupt('RST55'); // pending before EI even runs
+    simStep(); // EI — must NOT service the pending interrupt on this same step
+    expect(simGetRegisters().pc).not.toBe(0x002C);
+    simStep(); // NOP — now it fires
+    expect(simGetRegisters().pc).toBe(0x002C);
+  });
+  it('an unmasked interrupt wakes the CPU from HLT', () => {
+    simInit();
+    simAssemble('ORG 002CH\nMVI A, 42H\nHLT\nORG 100H\nEI\nHLT');
+    simStep(); // EI
+    simStep(); // HLT — enters halt-wait
+    expect(simIsHaltWaiting()).toBe(true);
+    simAssertInterrupt('RST55');
+    simStep(); // still halted, but checkInterrupts now services the pending line
+    expect(simIsHaltWaiting()).toBe(false);
+    expect(simGetRegisters().pc).toBe(0x002C);
+  });
+});
+
+// ── Undocumented 8085 instructions ────────────────────────────────────────────
+describe('Undocumented instructions — DSUB / ARHL / RDEL / LDHI / LDSI / SHLX / LHLX', () => {
+  it('DSUB subtracts BC from HL with no borrow', () => {
+    const r = run('ORG 100H\nLXI H, 0010H\nLXI B, 0005H\nDSUB\nHLT');
+    expect(r.h).toBe(0x00); expect(r.l).toBe(0x0B);
+    expect(CY(r)).toBe(0);
+  });
+  it('DSUB sets carry (borrow) when BC > HL', () => {
+    const r = run('ORG 100H\nLXI H, 0005H\nLXI B, 0010H\nDSUB\nHLT');
+    expect(r.h).toBe(0xFF); expect(r.l).toBe(0xF5); // 0x0005 - 0x0010 wraps to 0xFFF5
+    expect(CY(r)).toBe(1);
+  });
+  it('ARHL shifts HL right, sign-extending bit 15 from the old bit 7 of H', () => {
+    const r = run('ORG 100H\nLXI H, 8002H\nARHL\nHLT');
+    expect(r.h).toBe(0xC0); expect(r.l).toBe(0x01); // 8002H >> 1 = C001H (sign-extended)
+    expect(CY(r)).toBe(0); // old L bit 0 was 0
+  });
+  it('ARHL sets carry from the old bit 0 of L', () => {
+    const r = run('ORG 100H\nLXI H, 0003H\nARHL\nHLT');
+    expect(r.h).toBe(0x00); expect(r.l).toBe(0x01);
+    expect(CY(r)).toBe(1); // old L bit 0 was 1
+  });
+  it('RDEL rotates DE left through carry', () => {
+    const r = run('ORG 100H\nSTC\nLXI D, 4000H\nRDEL\nHLT');
+    expect(r.d).toBe(0x80); expect(r.e).toBe(0x01); // 4000H << 1 | CY(1) = 8001H
+    expect(CY(r)).toBe(0); // old bit 15 of DE was 0
+  });
+  it('RDEL sets carry from the old bit 15 of DE', () => {
+    const r = run('ORG 100H\nLXI D, 8000H\nRDEL\nHLT');
+    expect(r.d).toBe(0x00); expect(r.e).toBe(0x00); // 8000H << 1 wraps to 0000H
+    expect(CY(r)).toBe(1);
+  });
+  it('LDHI loads DE with HL + immediate byte', () => {
+    const r = run('ORG 100H\nLXI H, 1000H\nLDHI 05H\nHLT');
+    expect(r.d).toBe(0x10); expect(r.e).toBe(0x05);
+  });
+  it('LDHI wraps at 0xFFFF', () => {
+    const r = run('ORG 100H\nLXI H, 0FFFFH\nLDHI 02H\nHLT');
+    expect(r.d).toBe(0x00); expect(r.e).toBe(0x01);
+  });
+  it('LDSI loads DE with SP + immediate byte', () => {
+    const r = run('ORG 100H\nLXI SP, 2000H\nLDSI 10H\nHLT');
+    expect(r.d).toBe(0x20); expect(r.e).toBe(0x10);
+  });
+  it('SHLX stores HL indirect through DE (L at [DE], H at [DE+1])', () => {
+    simInit();
+    simAssemble('ORG 100H\nLXI D, 3000H\nLXI H, 1234H\nSHLX\nHLT');
+    while (simIsRunning()) simStep();
+    expect(simReadByte(0x3000)).toBe(0x34);
+    expect(simReadByte(0x3001)).toBe(0x12);
+  });
+  it('LHLX loads HL indirect through DE (L from [DE], H from [DE+1])', () => {
+    simInit();
+    simAssemble('ORG 100H\nLXI D, 3000H\nLHLX\nHLT');
+    simWriteByte(0x3000, 0x34);
+    simWriteByte(0x3001, 0x12);
+    while (simIsRunning()) simStep();
+    const r = simGetRegisters();
+    expect(r.l).toBe(0x34); expect(r.h).toBe(0x12);
+  });
+});
+
+// ── RSTV / JK — undocumented V/K-flag branches ────────────────────────────────
+// Nothing in this implementation ever sets flag bits 1 (V) or 5 (K) through
+// normal instruction execution (only DAD/DSUB/etc. touch CY), so the only way
+// to exercise the taken branch is to inject the flag byte directly.
+describe('RSTV / JK — undocumented flag-conditional branches', () => {
+  it('RSTV calls 0040H when the V flag (bit1) is set', () => {
+    simInit();
+    simAssemble('ORG 0040H\nMVI A, 42H\nHLT\nORG 100H\nLXI SP, 2000H\nRSTV\nHLT');
+    simStep(); // LXI SP
+    simSetRegisters({ flags: 0x02 }); // V flag set
+    simStep(); // RSTV
+    expect(simGetRegisters().pc).toBe(0x0040);
+  });
+  it('RSTV is a no-op when the V flag is clear', () => {
+    const r = run('ORG 100H\nLXI SP, 2000H\nRSTV\nMVI A, 42H\nHLT');
+    expect(r.a).toBe(0x42); // fell through to the next instruction
+  });
+  it('JK jumps when the K flag (bit5) is set', () => {
+    simInit();
+    simAssemble('ORG 100H\nJK TARGET\nMVI B, 00H\nHLT\nTARGET: MVI B, 42H\nHLT');
+    simSetRegisters({ flags: 0x20 }); // K flag set
+    simStep(); // JK
+    while (simIsRunning()) simStep();
+    expect(simGetRegisters().b).toBe(0x42);
+  });
+  it('JK does not jump when the K flag is clear', () => {
+    const r = run('ORG 100H\nJK TARGET\nMVI B, 00H\nHLT\nTARGET: MVI B, 42H\nHLT');
+    expect(r.b).toBe(0x00);
+  });
+});
+
+// ── Additional flag edge cases ────────────────────────────────────────────────
+describe('Additional flag edge cases', () => {
+  it('DCR does NOT affect carry flag', () => {
+    const r = run('ORG 100H\nMVI A, 0FFH\nADI 01H\nMVI B, 05H\nDCR B\nHLT');
+    expect(CY(r)).toBe(1); // carry preserved from the ADI, unaffected by DCR
+  });
+  it('ANA/ANI set AC from the OR of bit 3 of both operands (not from a borrow)', () => {
+    const r1 = run('ORG 100H\nMVI A, 08H\nANI 08H\nHLT');
+    expect(AC(r1)).toBe(1); // (08|08) & 08 != 0
+    const r2 = run('ORG 100H\nMVI A, 00H\nANI 00H\nHLT');
+    expect(AC(r2)).toBe(0); // (00|00) & 08 == 0
+  });
+  it('DAA applies the low-nibble +6 correction from AC alone, without a low nibble > 9', () => {
+    // 08H + 08H = 10H: low nibble is 0 (not > 9) but AC is set by the nibble carry
+    const r = run('ORG 100H\nMVI A, 08H\nADI 08H\nDAA\nHLT');
+    expect(r.a).toBe(0x16);
+    expect(CY(r)).toBe(0);
+  });
+  it('DAA applies the high-nibble +60H correction from a pre-existing carry alone', () => {
+    // STC sets CY without touching AC or the high nibble of A
+    const r = run('ORG 100H\nSTC\nMVI A, 05H\nDAA\nHLT');
+    expect(r.a).toBe(0x65);
+    expect(CY(r)).toBe(1); // DAA never clears an already-set carry
   });
 });
