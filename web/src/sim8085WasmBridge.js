@@ -326,7 +326,6 @@ export function simGetKeyQueue() {
 
 // ── Memory size ───────────────────────────────────────────────────────────
 export function simSetMemorySize(n) { if (M) M._sim_set_memory_size(n); }
-export function simGetMemorySize()  { return M ? M._sim_get_memory_size() : 64 * 1024; }
 
 // ── Full memory / step-back snapshots ─────────────────────────────────────
 export function simGetFullMemory() {
