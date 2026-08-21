@@ -167,7 +167,14 @@ export function simSetRegisters(r) {
 
 // ── Memory ────────────────────────────────────────────────────────────────
 export function simGetMemory(start, length) {
-  if (!M) return new Uint8Array(length);
+  if (!M) return new Uint8Array(Math.max(0, length));
+  // Clamp to the 16-bit address space: start/length reach here as plain JS
+  // numbers (e.g. panel geometry * columns) with no guarantee they fit in
+  // the uint16_t params sim_get_memory expects, and an unclamped length
+  // both over-allocates and can desync from what the C loop actually
+  // writes, walking past the allocated buffer inside WASM linear memory.
+  start = start & 0xFFFF;
+  length = Math.max(0, Math.min(length, 0x10000 - start, 0xFFFF));
   const ptr = alloc(length);
   M._sim_get_memory(start, length, ptr);
   const out = heapRead(ptr, length);

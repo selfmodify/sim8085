@@ -323,7 +323,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
     const v = parseInt(searchVal, 16)
     if (isNaN(v)) return
     if (!memCacheRef.current || memCacheRef.current.buildId !== buildId) {
-      memCacheRef.current = { buildId, data: sim.simGetMemory(0, 0x10000) }
+      memCacheRef.current = { buildId, data: sim.simGetFullMemory() }
     }
     const allMem = memCacheRef.current.data
     const byte = v & 0xFF
