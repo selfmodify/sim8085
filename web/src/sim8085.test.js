@@ -628,17 +628,6 @@ describe('IN / OUT', () => {
     expect(allPorts.length).toBe(256);
   });
 
-  it('simGetAllInputPorts returns all set input ports', () => {
-    simInit();
-    simSetInputPort(10, 0xAA);
-    simSetInputPort(20, 0xBB);
-    const allPorts = simGetAllInputPorts();
-    expect(allPorts[10]).toBe(0xAA);
-    expect(allPorts[20]).toBe(0xBB);
-    expect(allPorts[30]).toBe(0); // check an unset port
-    expect(allPorts.length).toBe(256);
-  });
-
   it('OUT to console port writes ASCII to console buffer', () => {
     simInit();
     simSetConsolePort(0x01);
