@@ -184,8 +184,6 @@ export function simGetMemory(start, length) {
 
 export function simReadByte(addr)      { return M ? M._sim_read_byte(addr) : 0; }
 export function simWriteByte(addr, v)  { if (M) M._sim_write_byte(addr, v); }
-export function simGetPC()             { return M ? M._sim_get_pc() : 0x100; }
-export function simGetSP()             { return M ? M._sim_get_sp() : 0; }
 
 // ── Breakpoints ───────────────────────────────────────────────────────────
 export function simSetBreakpoint(addr) {
@@ -194,11 +192,6 @@ export function simSetBreakpoint(addr) {
   if (r === 1) jsBP.add(addr);
   else if (r === 2) jsBP.delete(addr);
   return r;
-}
-export function simClearBreakpoint(addr) {
-  if (!M) return;
-  M._sim_clear_breakpoint(addr);
-  jsBP.delete(addr);
 }
 export function simClearAllBreakpoints() {
   if (M) M._sim_clear_all_breakpoints();
@@ -381,7 +374,6 @@ export function simSetConsolePort(n)   { if (M) M._sim_set_console_port(n & 0xFF
 export function simGetConsolePort()    { return M ? M._sim_get_console_port() : 0x01; }
 
 // ── SID/SOD serial pins ───────────────────────────────────────────────────
-export function simGetSID()   { return M ? M._sim_get_sid_api() : 0; }
 export function simSetSID(v)  { if (M) M._sim_set_sid_api(v & 1); }
 export function simGetSOD()   { return M ? M._sim_get_sod_api() : 0; }
 
