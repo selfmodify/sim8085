@@ -92,7 +92,9 @@ export function useSimulatorEngine(srcRef) {
   const timerRef = useRef(null)
   const warpActiveRef = useRef(false)
   const warpWorkerRef = useRef(null)
+  const jsWarpWorkerRef = useRef(null)
   const workerReadyPromise = useRef(null)
+  const jsWorkerReadyPromise = useRef(null)
   const warpWorkerActiveRef = useRef(false)
   const lastUiRef = useRef(0)
   const wasHaltWaitingRef = useRef(false)
@@ -414,19 +416,27 @@ export function useSimulatorEngine(srcRef) {
     setMsg(`⟲ Stepped back to index ${histIndex - 1}`)
   }
 
-  const ensureWarpWorker = useCallback(() => {
-    if (workerReadyPromise.current) return workerReadyPromise.current
-    const worker = new Worker(import.meta.env.BASE_URL + 'sim.worker.js')
-    warpWorkerRef.current = worker
-    workerReadyPromise.current = new Promise((resolve, reject) => {
-      const onReady = ({ data }) => {
-        if (data.type === 'ready') { worker.removeEventListener('message', onReady); resolve() }
-        if (data.type === 'error') { worker.removeEventListener('message', onReady); reject(new Error(data.error)) }
-      }
-      worker.addEventListener('message', onReady)
-    })
-    worker.postMessage({ cmd: 'init', baseUrl: import.meta.env.BASE_URL })
-    return workerReadyPromise.current
+  const ensureWarpWorker = useCallback((mode) => {
+    if (mode === 'js') {
+      if (jsWorkerReadyPromise.current) return jsWorkerReadyPromise.current
+      const worker = new Worker(new URL('./simJs.worker.js', import.meta.url), { type: 'module' })
+      jsWarpWorkerRef.current = worker
+      jsWorkerReadyPromise.current = Promise.resolve()
+      return jsWorkerReadyPromise.current
+    } else {
+      if (workerReadyPromise.current) return workerReadyPromise.current
+      const worker = new Worker(import.meta.env.BASE_URL + 'sim.worker.js')
+      warpWorkerRef.current = worker
+      workerReadyPromise.current = new Promise((resolve, reject) => {
+        const onReady = ({ data }) => {
+          if (data.type === 'ready') { worker.removeEventListener('message', onReady); resolve() }
+          if (data.type === 'error') { worker.removeEventListener('message', onReady); reject(new Error(data.error)) }
+        }
+        worker.addEventListener('message', onReady)
+      })
+      worker.postMessage({ cmd: 'init', baseUrl: import.meta.env.BASE_URL })
+      return workerReadyPromise.current
+    }
   }, [])
 
   // haltTrigger is a counter incremented on every HLT, used by App for challenge evaluation
@@ -471,7 +481,7 @@ export function useSimulatorEngine(srcRef) {
       throughputRef.current = { steps: 0, ms: 0, mhz: 0, pendingSteps: 0, _last: performance.now() }
 
       if (getEngineMode() === 'wasm') {
-        ensureWarpWorker().then(() => {
+        ensureWarpWorker('wasm').then(() => {
           if (!warpActiveRef.current) return
           const ram = sim.simGetFullMemory()
           const snap = {
@@ -539,66 +549,74 @@ export function useSimulatorEngine(srcRef) {
         return
       }
 
-      const channel = new MessageChannel()
-      const tick = () => {
-        if (!warpActiveRef.current) return
-        let n = 0
-        const startTick = performance.now()
-        while (performance.now() - startTick < 100) {
-          const chunk = sim.simRun(2000000)
-          n += chunk
-          if (chunk < 2000000) break
-        }
-        const execMs = performance.now() - startTick
-        const tp = throughputRef.current
-        tp.steps += n; tp.ms += execMs; tp.pendingSteps = (tp.pendingSteps || 0) + n
-        if (tp.ms >= 250) { tp.mhz = tp.steps / tp.ms / 1000; tp.steps = 0; tp.ms = 0 }
-        const now = Date.now()
-        const isHaltWaiting = sim.simIsHaltWaiting()
-        const doUi = (now - lastUiRef.current >= 1000) || (isHaltWaiting && !wasHaltWaitingRef.current)
-        if (doUi) {
-          if (tp.pendingSteps > 0) { setSteps(s => s + tp.pendingSteps); tp.pendingSteps = 0 }
-          setMhz(tp.mhz || 0)
-          refresh()
-          refreshOutputPorts()
-          lastUiRef.current = now
-        }
-        const justHalted = isHaltWaiting && !wasHaltWaitingRef.current
-        wasHaltWaitingRef.current = isHaltWaiting
-        if (justHalted) setHaltTrigger(t => t + 1)
-        if (isHaltWaiting) {
-          setMsg('⏸ HLT — awaiting interrupt…')
-          timerRef.current = setTimeout(tick, 16)
-          return
-        }
-        const r = sim.simGetRegisters()
-        const atBp = bpsRef.current.has(r.pc)
-        const watchHit = sim.simGetDataWatchHit ? sim.simGetDataWatchHit() : -1
-        if (!sim.simIsRunning() || atBp || watchHit >= 0) {
-          const cond = bpsRef.current.get(r.pc)
-          if (atBp && watchHit < 0 && cond != null && !evalCondition(cond, r)) {
-            sim.simStep()
-            timerRef.current = -1
-            channel.port2.postMessage(null)
-            return
+      if (getEngineMode() === 'js') {
+        ensureWarpWorker('js').then(() => {
+          if (!warpActiveRef.current) return
+          const ram = sim.simGetFullMemory()
+          const snap = {
+            regs: sim.simGetRegisters(),
+            ram,
+            memSize: memSizeRef.current,
+            breakpoints: [...bpsRef.current.entries()],
+            dataBps: [...dataBps],
+            inputPorts: sim.simGetAllInputPorts(),
+            consolePort: sim.simGetConsolePort(),
+            keyQueue: sim.simGetKeyQueue(),
           }
-          if (tp.pendingSteps > 0) { setSteps(s => s + tp.pendingSteps); tp.pendingSteps = 0 }
-          refresh(); refreshOutputPorts()
-          warpActiveRef.current = false; timerRef.current = null
-          finalizeTick(atBp)
-          return
-        }
-        if (doUi) {
-          timerRef.current = setTimeout(tick, 16)
-        } else {
-          timerRef.current = -1
-          channel.port2.postMessage(null)
-        }
+          warpWorkerActiveRef.current = true
+          jsWarpWorkerRef.current.onmessage = ({ data: d }) => {
+            if (!warpWorkerActiveRef.current && d.type !== 'stopped') return
+            if (d.type === 'stateUpdate') {
+              if (d.pendingSteps > 0) setSteps(s => s + d.pendingSteps)
+              setMhz(d.mhz || 0)
+              setRegs(old => { setPrev(old); return d.regs })
+              setLeds(d.leds)
+              setCycles(d.cycles)
+              setIntState(d.intState)
+              setKeyQueue(d.keyQueue)
+              setConsoleOutput(d.consoleOutput)
+              setSod(d.sod)
+              setOutputPorts(d.outputPorts)
+            } else if (d.type === 'haltWaiting') {
+              setMsg('⏸ HLT — awaiting interrupt…')
+            } else if (d.type === 'stopped') {
+              warpWorkerActiveRef.current = false
+              sim.simRestoreSnapshot({ regs: d.regs, ram: d.ram })
+
+              const atBp = d.reason === 'breakpoint';
+              if (atBp) {
+                const addr = d.regs.pc;
+                const currentHits = (bpHitsRef.current.get(addr) || 0) + 1;
+                bpHitsRef.current.set(addr, currentHits);
+                let cond = bpsRef.current.get(addr);
+                if (cond != null) {
+                  cond = cond.replace(/\bHIT\b/gi, String(currentHits));
+                  if (!evalCondition(cond, d.regs)) {
+                    sim.simStep();
+                    startRun();
+                    return;
+                  }
+                }
+              }
+
+              if (d.reason === 'stopped') {
+                refresh(); refreshOutputPorts()
+              } else {
+                finalizeTick(atBp, { watchHit: d.watchHit, isHalted: d.isHalted, errorMsg: d.errorMsg })
+              }
+              setCycles(d.cycles)
+              setLeds(d.leds)
+              setConsoleOutput(d.consoleOutput)
+              setIntState(d.intState)
+              setSod(d.sod)
+              setOutputPorts(d.outputPorts)
+              setKeyQueue(d.keyQueue)
+            }
+          }
+          jsWarpWorkerRef.current.postMessage({ cmd: 'startWarp', snap }, [ram.buffer])
+        })
+        return
       }
-      channel.port1.onmessage = tick
-      timerRef.current = -1
-      channel.port2.postMessage(null)
-      return
     }
 
     setMsg('▶ Running…')
@@ -655,6 +673,7 @@ export function useSimulatorEngine(srcRef) {
     warpActiveRef.current = false
     if (warpWorkerActiveRef.current) {
       warpWorkerRef.current?.postMessage({ cmd: 'stop' })
+      jsWarpWorkerRef.current?.postMessage({ cmd: 'stop' })
       wasHaltWaitingRef.current = false
       setAppState(s => s === 'running' ? 'idle' : s)
       return
@@ -761,6 +780,10 @@ export function useSimulatorEngine(srcRef) {
   }
 
   function setInputPort(port, val) {
+    if (warpWorkerActiveRef.current) {
+      warpWorkerRef.current?.postMessage({ cmd: 'setInputPort', port, val })
+      jsWarpWorkerRef.current?.postMessage({ cmd: 'setInputPort', port, val })
+    }
     sim.simSetInputPort(port, val)
     setInputPresets(ps => {
       const next = ps.filter(p => p.port !== port)
@@ -774,6 +797,10 @@ export function useSimulatorEngine(srcRef) {
   }
 
   function enqueueKeys(str) {
+    if (warpWorkerActiveRef.current) {
+      warpWorkerRef.current?.postMessage({ cmd: 'enqueueKeys', keys: str })
+      jsWarpWorkerRef.current?.postMessage({ cmd: 'enqueueKeys', keys: str })
+    }
     sim.simEnqueueKeys(str)
     setKeyQueue(sim.simGetKeyQueue())
   }
@@ -810,6 +837,7 @@ export function useSimulatorEngine(srcRef) {
   function assertInterrupt(type, vec) {
     if (warpWorkerActiveRef.current) {
       warpWorkerRef.current?.postMessage({ cmd: 'assertInterrupt', intType: type })
+      jsWarpWorkerRef.current?.postMessage({ cmd: 'assertInterrupt', intType: type })
       return
     }
     sim.simAssertInterrupt(type, vec)
@@ -819,6 +847,7 @@ export function useSimulatorEngine(srcRef) {
   function deassertInterrupt(type) {
     if (warpWorkerActiveRef.current) {
       warpWorkerRef.current?.postMessage({ cmd: 'deassertInterrupt', intType: type })
+      jsWarpWorkerRef.current?.postMessage({ cmd: 'deassertInterrupt', intType: type })
       return
     }
     sim.simDeassertInterrupt(type)
