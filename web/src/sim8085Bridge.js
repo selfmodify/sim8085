@@ -716,6 +716,46 @@ function assemble(source) {
       if (!t) return -1;
       return REGS[t.val] ?? -1;
     }
+    function getReg8() {
+      const t = next();
+      if (!t) { errors.push(`Line ${lineNo+1}: expected register`); return -1; }
+      const r = REGS[t.val];
+      if (r === undefined || r < 0 || r > 7) {
+        errors.push(`Line ${lineNo+1}: invalid 8-bit register '${t.val || ''}'`);
+        return -1;
+      }
+      return r;
+    }
+    function getRegPair() {
+      const t = next();
+      if (!t) { errors.push(`Line ${lineNo+1}: expected register pair`); return -1; }
+      const r = REGS[t.val];
+      if (r !== 0 && r !== 2 && r !== 4 && r !== 8) {
+        errors.push(`Line ${lineNo+1}: invalid register pair '${t.val || ''}'`);
+        return -1;
+      }
+      return r;
+    }
+    function getRegPushPop() {
+      const t = next();
+      if (!t) { errors.push(`Line ${lineNo+1}: expected register or PSW`); return -1; }
+      const r = REGS[t.val];
+      if (r !== 0 && r !== 2 && r !== 4 && r !== 11) {
+        errors.push(`Line ${lineNo+1}: invalid register or PSW '${t.val || ''}'`);
+        return -1;
+      }
+      return r;
+    }
+    function getRegLdStAx() {
+      const t = next();
+      if (!t) { errors.push(`Line ${lineNo+1}: expected B or D`); return -1; }
+      const r = REGS[t.val];
+      if (r !== 0 && r !== 2) {
+        errors.push(`Line ${lineNo+1}: invalid register '${t.val || ''}' (must be B or D)`);
+        return -1;
+      }
+      return r;
+    }
     function getImm8() {
       const expr = getExpr();
       if (!expr.length) { errors.push(`Line ${lineNo+1}: expected expression`); return 0; }
@@ -741,35 +781,40 @@ function assemble(source) {
 
     switch(mnem) {
       // MOV
-      case 'MOV': { const r1=getReg(); expect('comma'); const r2=getReg(); emit(0x40|(r1<<3)|r2); break; }
+      case 'MOV': { const r1=getReg8(); expect('comma'); const r2=getReg8(); if (r1 !== -1 && r2 !== -1) { if (r1 === 6 && r2 === 6) errors.push(`Line ${lineNo+1}: MOV M,M is invalid`); else emit(0x40|(r1<<3)|r2); } break; }
       // MVI
-      case 'MVI': { const r=getReg(); expect('comma'); emit(0x06|(r<<3)); emit(getImm8()); break; }
+      case 'MVI': { const r=getReg8(); expect('comma'); const imm = getImm8(); if (r !== -1) emit(0x06|(r<<3)); emit(imm); break; }
       // LXI
       case 'LXI': {
-        const r=getReg(); expect('comma');
-        const op = {8:0x31,0:0x01,2:0x11,4:0x21}[r] ?? 0x01;
-        emit(op); emit16(getImm16()); break;
+        const r=getRegPair(); expect('comma');
+        const imm = getImm16();
+        if (r !== -1) {
+          const op = {8:0x31,0:0x01,2:0x11,4:0x21}[r];
+          emit(op);
+        }
+        emit16(imm);
+        break;
       }
       case 'LDA': { emit(0x3A); emit16(getAddr()); break; }
       case 'STA': { emit(0x32); emit16(getAddr()); break; }
       case 'LHLD': { emit(0x2A); emit16(getAddr()); break; }
       case 'SHLD': { emit(0x22); emit16(getAddr()); break; }
-      case 'LDAX': { const r=getReg(); emit(r===0?0x0A:0x1A); break; }
-      case 'STAX': { const r=getReg(); emit(r===0?0x02:0x12); break; }
+      case 'LDAX': { const r=getRegLdStAx(); if (r !== -1) emit(r===0?0x0A:0x1A); break; }
+      case 'STAX': { const r=getRegLdStAx(); if (r !== -1) emit(r===0?0x02:0x12); break; }
       case 'XCHG': emit(0xEB); break;
       case 'XTHL': emit(0xE3); break;
       case 'SPHL': emit(0xF9); break;
       case 'PCHL': emit(0xE9); break;
-      case 'PUSH': { const r=getReg(); const idx={0:0,2:1,4:2,11:3}[r]??0; emit(0xC5|(idx<<4)); break; }
-      case 'POP':  { const r=getReg(); const idx={0:0,2:1,4:2,11:3}[r]??0; emit(0xC1|(idx<<4)); break; }
-      case 'ADD': { const r=getReg(); emit(0x80|r); break; }
-      case 'ADC': { const r=getReg(); emit(0x88|r); break; }
-      case 'SUB': { const r=getReg(); emit(0x90|r); break; }
-      case 'SBB': { const r=getReg(); emit(0x98|r); break; }
-      case 'ANA': { const r=getReg(); emit(0xA0|r); break; }
-      case 'XRA': { const r=getReg(); emit(0xA8|r); break; }
-      case 'ORA': { const r=getReg(); emit(0xB0|r); break; }
-      case 'CMP': { const r=getReg(); emit(0xB8|r); break; }
+      case 'PUSH': { const r=getRegPushPop(); if (r !== -1) { const idx={0:0,2:1,4:2,11:3}[r]; emit(0xC5|(idx<<4)); } break; }
+      case 'POP':  { const r=getRegPushPop(); if (r !== -1) { const idx={0:0,2:1,4:2,11:3}[r]; emit(0xC1|(idx<<4)); } break; }
+      case 'ADD': { const r=getReg8(); if (r !== -1) emit(0x80|r); break; }
+      case 'ADC': { const r=getReg8(); if (r !== -1) emit(0x88|r); break; }
+      case 'SUB': { const r=getReg8(); if (r !== -1) emit(0x90|r); break; }
+      case 'SBB': { const r=getReg8(); if (r !== -1) emit(0x98|r); break; }
+      case 'ANA': { const r=getReg8(); if (r !== -1) emit(0xA0|r); break; }
+      case 'XRA': { const r=getReg8(); if (r !== -1) emit(0xA8|r); break; }
+      case 'ORA': { const r=getReg8(); if (r !== -1) emit(0xB0|r); break; }
+      case 'CMP': { const r=getReg8(); if (r !== -1) emit(0xB8|r); break; }
       case 'ADI': { emit(0xC6); emit(getImm8()); break; }
       case 'ACI': { emit(0xCE); emit(getImm8()); break; }
       case 'SUI': { emit(0xD6); emit(getImm8()); break; }
@@ -778,11 +823,11 @@ function assemble(source) {
       case 'XRI': { emit(0xEE); emit(getImm8()); break; }
       case 'ORI': { emit(0xF6); emit(getImm8()); break; }
       case 'CPI': { emit(0xFE); emit(getImm8()); break; }
-      case 'INR': { const r=getReg(); emit(0x04|(r<<3)); break; }
-      case 'DCR': { const r=getReg(); emit(0x05|(r<<3)); break; }
-      case 'INX': { const r=getReg(); emit([0x03,0,0x13,0,0x23,0,0,0,0x33][r]??0x03); break; }
-      case 'DCX': { const r=getReg(); emit([0x0B,0,0x1B,0,0x2B,0,0,0,0x3B][r]??0x0B); break; }
-      case 'DAD': { const r=getReg(); emit([0x09,0,0x19,0,0x29,0,0,0,0x39][r]??0x09); break; }
+      case 'INR': { const r=getReg8(); if (r !== -1) emit(0x04|(r<<3)); break; }
+      case 'DCR': { const r=getReg8(); if (r !== -1) emit(0x05|(r<<3)); break; }
+      case 'INX': { const r=getRegPair(); if (r !== -1) { const op = [0x03,0,0x13,0,0x23,0,0,0,0x33][r]; emit(op); } break; }
+      case 'DCX': { const r=getRegPair(); if (r !== -1) { const op = [0x0B,0,0x1B,0,0x2B,0,0,0,0x3B][r]; emit(op); } break; }
+      case 'DAD': { const r=getRegPair(); if (r !== -1) { const op = [0x09,0,0x19,0,0x29,0,0,0,0x39][r]; emit(op); } break; }
       case 'DSUB': emit(0x08); break;
       case 'ARHL': emit(0x10); break;
       case 'RDEL': emit(0x18); break;
