@@ -7,6 +7,7 @@ import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
 import { INST_HELP } from './instHelp.js';
 import { hex4 } from './utils.js';
 import { asm8085Lang, asm8085Highlighting } from './lang.js';
+import { linter } from '@codemirror/lint';
 
 // ── CM6 error-line decoration + gutter marker ─────────────────────────────
 const setErrorLineEff = StateEffect.define()
@@ -15,6 +16,30 @@ const setAddressesEff = StateEffect.define()
 const setWatchedWordsEff = StateEffect.define()
 const setSymbolsEff = StateEffect.define()
 const flashLineEff = StateEffect.define()
+const setDiagnosticsEff = StateEffect.define()
+
+const diagnosticsField = StateField.define({
+  create: () => [],
+  update(value, tr) {
+    for (const e of tr.effects) {
+      if (e.is(setDiagnosticsEff)) return e.value
+    }
+    if (tr.docChanged) {
+      return value.map(diag => {
+        try {
+          const from = tr.changes.mapPos(diag.from)
+          const to = tr.changes.mapPos(diag.to)
+          return { ...diag, from, to }
+        } catch { return diag }
+      })
+    }
+    return value
+  }
+})
+
+const asmOfflineLinter = linter(view => {
+  return view.state.field(diagnosticsField)
+})
 
 const watchMark = Decoration.mark({ class: 'cm-watched-word' })
 const watchHighlightPlugin = ViewPlugin.fromClass(class {
@@ -344,7 +369,7 @@ const asmCompletionSource = (context) => {
   }
 }
 
-export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionDetail, errorLine, activeLine, gotoRef, editorActionsRef, onRunTo, onJumpMem, buildId, lineAddrRef, theme, watchedWords, bps, onToggleBp, onAddressClick, onFormat, onHistoryChange, symbols }) {
+export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionDetail, errorLine, errors, activeLine, gotoRef, editorActionsRef, onRunTo, onJumpMem, buildId, lineAddrRef, theme, watchedWords, bps, onToggleBp, onAddressClick, onFormat, onHistoryChange, symbols }) {
   const elRef      = useRef(null)
   const viewRef    = useRef(null)
   const syncing    = useRef(false)
@@ -402,6 +427,33 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
 
   useEffect(() => {
     if (!viewRef.current) return
+    const diagnostics = []
+    if (errors && errors.length > 0) {
+      for (const err of errors) {
+        const match = err.match(/^Line (\d+): (.*)$/i)
+        if (match) {
+          const lineNum = parseInt(match[1], 10)
+          const msg = match[2]
+          try {
+            const line = viewRef.current.state.doc.line(lineNum)
+            const text = line.text
+            const trimmedStart = text.length - text.trimStart().length
+            const trimmedEnd = text.length - text.trimEnd().length
+            diagnostics.push({
+              from: line.from + trimmedStart,
+              to: line.to - trimmedEnd,
+              severity: 'error',
+              message: msg
+            })
+          } catch (e) {}
+        }
+      }
+    }
+    viewRef.current.dispatch({ effects: setDiagnosticsEff.of(diagnostics) })
+  }, [errors])
+
+  useEffect(() => {
+    if (!viewRef.current) return
     const effects = [setActiveLineEff.of(activeLine ?? null)]
     if (activeLine != null) {
       try {
@@ -443,6 +495,8 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
           hexHoverTooltip,
           watchHighlightPlugin,
           undocHighlightPlugin,
+          diagnosticsField,
+          asmOfflineLinter,
           EditorView.theme({
             '&': { height:'100%', fontFamily:'"JetBrains Mono","Fira Code",monospace', fontSize:'15px', color:'var(--text)', backgroundColor:'transparent' },
             '.cm-scroller': { overflow:'auto' },

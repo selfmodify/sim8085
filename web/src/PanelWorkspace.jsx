@@ -235,7 +235,7 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
     <AsmEditor value={src} onChange={v => { srcRef.current = v; setSrc(v) }} gotoRef={gotoLineRef} editorActionsRef={editorActionsRef}
       onHistoryChange={onHistoryChange}
       onCursorInstruction={setCursorInst} onInstructionDetail={setHelpInst}
-      errorLine={engine.errorLine} activeLine={engine.addrLineMap?.get(engine.regs?.pc)} onRunTo={engine.runToAddr} onJumpMem={(addr) => { engine.setMemStart(addr & 0xFFF0); setMemFlashReq({ addr, ts: Date.now() }) }} buildId={engine.buildId} lineAddrRef={engine.lineAddrRef} theme={theme} watchedWords={watchedWords}
+      errorLine={engine.errorLine} errors={engine.errors} activeLine={engine.addrLineMap?.get(engine.regs?.pc)} onRunTo={engine.runToAddr} onJumpMem={(addr) => { engine.setMemStart(addr & 0xFFF0); setMemFlashReq({ addr, ts: Date.now() }) }} buildId={engine.buildId} lineAddrRef={engine.lineAddrRef} theme={theme} watchedWords={watchedWords}
       bps={engine.bps} onToggleBp={engine.toggleBp}
       onAddressClick={(addr) => setDisasmFlashReq({ addr, ts: Date.now() })}
         onFormat={formatCode}

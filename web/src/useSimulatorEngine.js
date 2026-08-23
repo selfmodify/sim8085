@@ -74,6 +74,7 @@ export function useSimulatorEngine(srcRef) {
   const [programRegion, setProgramRegion] = useState(null)
   const [presetAddrs, setPresetAddrs] = useState(new Set())
   const [errorLine, setErrorLine] = useState(null)
+  const [errors, setErrors] = useState([])
   const [consoleOutput, setConsoleOutput] = useState('')
   const [consolePort, setConsolePort] = useState(() => sim.simGetConsolePort())
   const [histLen, setHistLen] = useState(0)
@@ -198,6 +199,7 @@ export function useSimulatorEngine(srcRef) {
       if (!res.ok) {
         const m = res.errorMsg?.match(/^Line (\d+)/)
         setErrorLine(m ? parseInt(m[1]) : null)
+        setErrors(res.errors || [res.errorMsg])
         setAddrLineMap(new Map())
         lineAddrRef.current = new Map()
         setSymbols({})
@@ -207,6 +209,7 @@ export function useSimulatorEngine(srcRef) {
         setMsg(`✗ ${res.errorMsg}`)
       } else {
         setErrorLine(null)
+        setErrors([])
         setAppState('idle')
         const alm = buildAddrLineMap(code)
         setAddrLineMap(alm)
@@ -894,6 +897,7 @@ export function useSimulatorEngine(srcRef) {
     symbols,
     programRegion, presetAddrs,
     errorLine,
+    errors,
     consoleOutput, setConsoleOutput,
     consolePort,
     histLen,
