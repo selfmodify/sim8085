@@ -33,7 +33,6 @@ function Topbar({ status, onBuild, onStep, onRun, onReset, running, speed, onSpe
           <input className="speed-slider" type="range" min="0" max="100" value={speed} onChange={e=>onSpeed(+e.target.value)} />
           <span className="speed-val">{speed >= 100 ? 'Turbo' : speed + '%'}</span>
         </span>
-        <Btn kind="reset" kbd="F6" onClick={onReset}>↻ Reset</Btn>
       </div>
     </div>
   );

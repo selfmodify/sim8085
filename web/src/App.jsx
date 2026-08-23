@@ -394,7 +394,6 @@ export default function App() {
       if (!hotkeysRef.current) return;
       const h = hotkeysRef.current
       if (e.key === 'F5') { e.preventDefault(); h.handleBuild() }
-      if (e.key === 'F6') { e.preventDefault(); if (!h.running) h.handleReset() }
       if (e.key === 'F7') { e.preventDefault(); if (!h.running && h.appState !== 'error') h.doStep() }
       if (e.key === 'F8') { e.preventDefault(); if (!h.running && h.appState !== 'error') h.doStepOver() }
       if (e.key === 'F10') { e.preventDefault(); if (!h.running && h.appState !== 'error') h.doStepOut() }
@@ -480,12 +479,8 @@ export default function App() {
     }
   }
 
-  const handleReset = useCallback(() => {
-    if (!engine.running) engine.doAssemble(srcRef.current)
-  }, [engine])
-  
   const hotkeysRef = useRef(null)
-  useEffect(() => { hotkeysRef.current = { handleBuild, handleReset, doStep: engine.doStep, doStepOver: engine.doStepOver, doStepOut: engine.doStepOut, handleRun: engine.handleRun, running: engine.running, appState: engine.appState, saveToDrive, driveToken, setMsg: engine.setMsg } }, [handleBuild, handleReset, engine.doStep, engine.doStepOver, engine.doStepOut, engine.handleRun, engine.running, engine.appState, saveToDrive, driveToken, engine.setMsg])
+  useEffect(() => { hotkeysRef.current = { handleBuild, doStep: engine.doStep, doStepOver: engine.doStepOver, doStepOut: engine.doStepOut, handleRun: engine.handleRun, running: engine.running, appState: engine.appState, saveToDrive, driveToken, setMsg: engine.setMsg } }, [handleBuild, engine.doStep, engine.doStepOver, engine.doStepOut, engine.handleRun, engine.running, engine.appState, saveToDrive, driveToken, engine.setMsg])
 
   function openConditionDialog(addr) {
     if (!engine.bps.has(addr)) return
@@ -933,7 +928,6 @@ export default function App() {
               onRun={engine.handleRun}
               runSpeed={runSpeed}
               onSpeedChange={e => { const v = +e.target.value; setRunSpeed(v); localStorage.setItem('sim8085_speed', v); engine.setRunSpeed?.(v); }}
-              onReset={handleReset}
               onSessionManager={() => setShowSessionManager(true)}
             />
           </div>
@@ -1069,7 +1063,7 @@ export default function App() {
 
       {showChat && !chatPoppedOut && (
         <ChatPanel regs={engine.regs} src={src} symbols={engine.symbols} breakpoints={engine.bps} callStack={engine.callStack}
-          engine={engine} onReset={handleReset}
+          engine={engine}
           onClose={() => setShowChat(false)}
           onPopout={() => setChatPoppedOut(true)} />
       )}
@@ -1078,7 +1072,7 @@ export default function App() {
           {...popoutCrtProps}
           onClose={() => { setChatPoppedOut(false); setShowChat(false) }}>
           <ChatPanel regs={engine.regs} src={src} symbols={engine.symbols} breakpoints={engine.bps} callStack={engine.callStack}
-            engine={engine} onReset={handleReset}
+            engine={engine}
             isPoppedOut
             onClose={() => { setChatPoppedOut(false); setShowChat(false) }} />
         </PopoutWindow>

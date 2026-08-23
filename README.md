@@ -195,7 +195,7 @@ This 2026 port preserves the complete instruction set, memory assembler, and LED
 
 | Key | Action |
 | ----- | -------- |
-| `F5` / `F6` | Assemble (Build) / Reset |
+| `F5` | Assemble (Build / Reset) |
 | `F7` / `F8` | Step one instruction / Step over subroutine |
 | `F9` / `F10` | Run/Stop / Step out of subroutine |
 | `Ctrl + F` | Find / Replace in editor |

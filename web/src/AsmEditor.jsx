@@ -481,7 +481,7 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
           highlightActiveLine(),
           search({ top: true }),
           autocompletion({ override: [asmCompletionSource] }),
-          placeholder('; Write 8085 assembly here...\n;\n; Quick Shortcuts:\n;   F5   Build / Assemble\n;   F6   Reset\n;   F7   Step one instruction\n;   F8   Step over\n;   F9   Run / Pause\n;   F10  Step out\n;   ?    Show all shortcuts'),
+          placeholder('; Write 8085 assembly here...\n;\n; Quick Shortcuts:\n;   F5   Build / Assemble\n;   F7   Step one instruction\n;   F8   Step over\n;   F9   Run / Pause\n;   F10  Step out\n;   ?    Show all shortcuts'),
           keymap.of([
             ...defaultKeymap, ...historyKeymap, ...searchKeymap, ...completionKeymap, indentWithTab,
             { key: 'Shift-Alt-f', run: () => { onFormatRef.current?.(); return true; } }

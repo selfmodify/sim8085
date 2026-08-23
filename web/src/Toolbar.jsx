@@ -77,7 +77,7 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
 export function Toolbar({
   onLoadExample, panels, onTogglePanel, fileInputRef, onImportFile,
   isDirty, onBuild, running, appState, mhz, onStep, onStepOver, onStepOut,
-  onStepBack, histLen, onRun, runSpeed, onSpeedChange, onReset, onSessionManager
+  onStepBack, histLen, onRun, runSpeed, onSpeedChange, onSessionManager
 }) {
   return (
     <div className="toolbar">
@@ -103,7 +103,6 @@ export function Toolbar({
           onChange={onSpeedChange} />
         <span className="speed-val">{SPEEDS[runSpeed].label}</span>
       </label>
-      <button className="btn btn-reset" onClick={onReset} disabled={running}>↺ Reset  <kbd>F6</kbd></button>
       
       <div className="mobile-only" style={{ borderLeft: '1px solid var(--border)', paddingLeft: '8px', marginLeft: 'auto' }}>
         <Speedometer mhz={mhz} running={running} size="sm" />
