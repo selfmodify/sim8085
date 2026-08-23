@@ -282,7 +282,8 @@ export function PanelWorkspace({ mobileTab, theme, src, setSrc, srcRef, engine, 
             onSetCondition={openConditionDialog} onRunTo={engine.runToAddr} symbols={engine.symbols} onJumpMem={(addr) => { engine.setMemStart(addr & 0xFFF0); setMemFlashReq({ addr, ts: Date.now() }) }} hitcnts={engine.hitcnts} maxHit={engine.maxHit} flashReq={disasmFlashReq}
             addrLineMap={engine.addrLineMap}
             onGotoLine={(addr, labelName) => { const ln = engine.addrLineMap.get(addr); if (ln) gotoLineRef.current?.(ln, labelName) }}
-            theme={theme} popoutCrtProps={popoutCrtProps} />
+            theme={theme} popoutCrtProps={popoutCrtProps}
+            maxHistLen={engine.maxHistLen} histIndex={engine.histIndex} seekHistory={engine.seekHistory} />
           {(panels.stack || panels.callstack || panels.trace) && (
             <React.Fragment>
               <div className="mem-watch-divider" onMouseDown={onDisasmStackDividerDown} />

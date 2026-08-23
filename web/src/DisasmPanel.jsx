@@ -102,7 +102,7 @@ const DisasmRow = memo(function DisasmRow({
   return true;
 });
 
-export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSetCondition, onGotoLine, buildId, pcFlash, onRunTo, symbols, onJumpMem, hitcnts, maxHit, flashReq, addrLineMap, theme, popoutCrtProps }) {
+export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSetCondition, onGotoLine, buildId, pcFlash, onRunTo, symbols, onJumpMem, hitcnts, maxHit, flashReq, addrLineMap, theme, popoutCrtProps, maxHistLen, histIndex, seekHistory }) {
   const [viewStart, setViewStart] = useState(() => regs.pc)
   const [ctxMenu, setCtxMenu]     = useState(null)   // {addr, x, y}
   const [followPC, setFollowPC]   = useState(true)
@@ -374,6 +374,16 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
         <button className="mem-btn" style={viewStart === 0x0100 ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(0x0100)}>100H</button>
         <button className="mem-btn" style={viewStart === 0x0200 ? { borderColor: 'var(--amber)', color: 'var(--amber)' } : undefined} onClick={() => manualJump(0x0200)}>200H</button>
       </div>
+
+      {maxHistLen > 0 && (
+        <div className="time-travel-bar" style={{ padding: '6px 8px', background: 'var(--bg2)', display: 'flex', flexDirection: 'column', gap: '4px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text2)', cursor: 'help' }} title="Drag to travel through instruction history. Each step captures a full snapshot — registers, flags, and memory are all restored exactly as they were.">⏳ TIME TRAVEL</span>
+            <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--text2)', minWidth: 60, textAlign: 'right' }}>{histIndex} / {maxHistLen}</span>
+          </div>
+          <input type="range" min="0" max={maxHistLen} value={histIndex} onChange={(e) => seekHistory && seekHistory(parseInt(e.target.value))} style={{ width: '100%', cursor: 'pointer', accentColor: 'var(--accent)' }} />
+        </div>
+      )}
 
       {bpList.length > 0 && (
         <div className="bp-list-wrap">
