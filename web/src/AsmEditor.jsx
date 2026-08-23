@@ -7,7 +7,7 @@ import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
 import { INST_HELP } from './instHelp.js';
 import { hex4 } from './utils.js';
 import { asm8085Lang, asm8085Highlighting } from './lang.js';
-import { linter } from '@codemirror/lint';
+import { setDiagnostics } from '@codemirror/lint';
 
 // ── CM6 error-line decoration + gutter marker ─────────────────────────────
 const setErrorLineEff = StateEffect.define()
@@ -16,30 +16,6 @@ const setAddressesEff = StateEffect.define()
 const setWatchedWordsEff = StateEffect.define()
 const setSymbolsEff = StateEffect.define()
 const flashLineEff = StateEffect.define()
-const setDiagnosticsEff = StateEffect.define()
-
-const diagnosticsField = StateField.define({
-  create: () => [],
-  update(value, tr) {
-    for (const e of tr.effects) {
-      if (e.is(setDiagnosticsEff)) return e.value
-    }
-    if (tr.docChanged) {
-      return value.map(diag => {
-        try {
-          const from = tr.changes.mapPos(diag.from)
-          const to = tr.changes.mapPos(diag.to)
-          return { ...diag, from, to }
-        } catch { return diag }
-      })
-    }
-    return value
-  }
-})
-
-const asmOfflineLinter = linter(view => {
-  return view.state.field(diagnosticsField)
-})
 
 const watchMark = Decoration.mark({ class: 'cm-watched-word' })
 const watchHighlightPlugin = ViewPlugin.fromClass(class {
@@ -449,7 +425,7 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
         }
       }
     }
-    viewRef.current.dispatch({ effects: setDiagnosticsEff.of(diagnostics) })
+    viewRef.current.dispatch(setDiagnostics(viewRef.current.state, diagnostics))
   }, [errors])
 
   useEffect(() => {
@@ -495,8 +471,6 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
           hexHoverTooltip,
           watchHighlightPlugin,
           undocHighlightPlugin,
-          diagnosticsField,
-          asmOfflineLinter,
           EditorView.theme({
             '&': { height:'100%', fontFamily:'"JetBrains Mono","Fira Code",monospace', fontSize:'15px', color:'var(--text)', backgroundColor:'transparent' },
             '.cm-scroller': { overflow:'auto' },

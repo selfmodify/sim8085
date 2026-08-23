@@ -81,6 +81,7 @@ describe('Assembler Register Validation', () => {
 
   it('rejects invalid register pairs for PUSH and POP', () => {
     expect(simAssemble('PUSH PSH\nHLT').ok).toBe(false);
+    expect(simAssemble('PUSH BC\nHLT').ok).toBe(false);
     expect(simAssemble('PUSH A\nHLT').ok).toBe(false);
     expect(simAssemble('POP SP\nHLT').ok).toBe(false);
   });
