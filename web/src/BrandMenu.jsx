@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { RETRO_THEMES } from './utils.js';
 
-export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, onExport, onExportHex, onExportBin, onSaveToDrive, onSaveAsToDrive, onSaveToGist, onShare, onCalc, onChat, theme, onTheme, onSetTheme, crtBrightness, onCrtBrightness, crtContrast, onCrtContrast, crtGlitch, onCrtGlitch, crtVignette, onCrtVignette, panels, onTogglePanel, driveToken, onConnectDrive, onDriveDisconnect, onBrewCoffee, autoStopHlt, onAutoStopHlt }) {
+export function BrandMenu({ onImport, onLoadFromDrive, onLoadFromGist, onExport, onExportHex, onExportBin, onSaveToDrive, onSaveAsToDrive, onSaveToGist, onShare, onCalc, onChat, theme, onTheme, onSetTheme, crtBrightness, onCrtBrightness, crtContrast, onCrtContrast, crtGlitch, onCrtGlitch, crtVignette, onCrtVignette, panels, onTogglePanel, driveToken, onConnectDrive, onDriveDisconnect, onBrewCoffee, autoStopHlt, onAutoStopHlt }) {
   const [open, setOpen] = useState(false);
   const [activeSub, setActiveSub] = useState(null);
   const wrapRef = useRef(null)
@@ -51,8 +51,6 @@ export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, on
             <span className="exmenu-arrow">▶</span>
             {activeSub === 'import' && (
               <div className="exmenu-sub" onClick={e => e.stopPropagation()}>
-            <button className="exmenu-sub-item" onClick={() => { onNew(); setOpen(false); setActiveSub(null); }}>📄 New file</button>
-                <hr className="exmenu-sep" />
                 <button className="exmenu-sub-item" onClick={() => { onImport(); setOpen(false); setActiveSub(null); }}>.asm / .85 source</button>
                 <button className="exmenu-sub-item" onClick={() => { onImport(); setOpen(false); setActiveSub(null); }}>.hex / .bin image</button>
                 <button className="exmenu-sub-item" onClick={() => { onLoadFromDrive(); setOpen(false); setActiveSub(null); }}>☁ Load from Google Drive</button>

@@ -74,7 +74,7 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
 }
 
 export function Toolbar({
-  onLoadExample, fileInputRef, onImportFile,
+  onLoadExample, onNew, fileInputRef, onImportFile,
   isDirty, onBuild, running, appState, mhz, onStep, onStepOver, onStepOut,
   onStepBack, histLen, onRun, runSpeed, onSpeedChange
 }) {
@@ -82,6 +82,8 @@ export function Toolbar({
     <div className="toolbar">
       <ExampleMenu onLoad={onLoadExample} />
       <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".asm,.85,.s,.txt,.hex,.bin" onChange={onImportFile} />
+
+      <button className="btn" onClick={onNew} title="Start a new blank program">✚ New</button>
 
       <button className={`btn btn-asm${isDirty ? ' btn-asm-dirty' : ''}`} onClick={onBuild} title={isDirty ? "Unsaved changes — click to rebuild" : "Code is up to date"}>
         ⚙ Build{isDirty ? ' •' : ''}  <kbd>F5</kbd>

@@ -847,7 +847,6 @@ export default function App() {
           <div className="topbar">
             <div className="brand">
               <BrandMenu
-                onNew={newFile}
                 onImport={() => fileInputRef.current.click()}
                 onLoadFromDrive={loadFromDrive}
                 onLoadFromGist={loadFromGist}
@@ -901,6 +900,7 @@ export default function App() {
           <div style={{ display: (activeView === 'simulator' || activeView === 'breadboard') ? 'block' : 'none', zIndex: 9, position: 'relative' }}>
             <Toolbar
               onLoadExample={loadExample}
+              onNew={newFile}
               fileInputRef={fileInputRef}
               onImportFile={importFile}
               isDirty={engine.isDirty}
