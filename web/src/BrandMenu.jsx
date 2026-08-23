@@ -107,6 +107,26 @@ export function BrandMenu({ onNew, onImport, onLoadFromDrive, onLoadFromGist, on
             )}
           </div>
 
+          <div className={`bmenu-item exmenu-cat ${activeSub === 'panels' ? 'exmenu-cat-active' : ''}`} onMouseEnter={() => setActiveSub('panels')} onClick={() => setActiveSub(activeSub === 'panels' ? null : 'panels')}>
+            <span>🪟  Panels</span>
+            <span className="exmenu-arrow">▶</span>
+            {activeSub === 'panels' && (
+              <div className="exmenu-sub" onClick={e => e.stopPropagation()}>
+                {[
+                  ['regs','Registers'],['pairs','Reg Pairs'],['flags','Flags'],
+                  ['ints','Interrupts'],['io','I/O Ports'],['memmap','Mem Map'],
+                  ['audio','Audio'],['ppi','8255 PPI'],['pit','8253 PIT'],
+                  ['stack','Stack'],['callstack','Call Stack'],['trace','Trace'],
+                ].map(([k, l]) => (
+                  <button key={k} className="exmenu-sub-item" onClick={() => onTogglePanel(k)}>
+                    <span style={{ display: 'inline-block', width: 16 }}>{panels[k] ? '✓' : ''}</span>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="bmenu-sep" />
           <div className={`bmenu-item exmenu-cat ${activeSub === 'theme' ? 'exmenu-cat-active' : ''}`} onMouseEnter={() => setActiveSub('theme')} onClick={() => setActiveSub(activeSub === 'theme' ? null : 'theme')}>
             <span>🎨  Theme</span>

@@ -901,8 +901,6 @@ export default function App() {
           <div style={{ display: (activeView === 'simulator' || activeView === 'breadboard') ? 'block' : 'none', zIndex: 9, position: 'relative' }}>
             <Toolbar
               onLoadExample={loadExample}
-              panels={panels}
-              onTogglePanel={togglePanel}
               fileInputRef={fileInputRef}
               onImportFile={importFile}
               isDirty={engine.isDirty}

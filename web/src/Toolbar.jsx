@@ -1,5 +1,4 @@
 import { ExampleMenu } from './ExampleMenu.jsx';
-import { PanelsMenu } from './PanelsMenu.jsx';
 import { SPEEDS } from './utils.js';
 
 export function Speedometer({ mhz, running, size = 'lg', className, style }) {
@@ -75,14 +74,13 @@ export function Speedometer({ mhz, running, size = 'lg', className, style }) {
 }
 
 export function Toolbar({
-  onLoadExample, panels, onTogglePanel, fileInputRef, onImportFile,
+  onLoadExample, fileInputRef, onImportFile,
   isDirty, onBuild, running, appState, mhz, onStep, onStepOver, onStepOut,
-  onStepBack, histLen, onRun, runSpeed, onSpeedChange, onSessionManager
+  onStepBack, histLen, onRun, runSpeed, onSpeedChange
 }) {
   return (
     <div className="toolbar">
       <ExampleMenu onLoad={onLoadExample} />
-      <PanelsMenu panels={panels} onToggle={onTogglePanel} />
       <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".asm,.85,.s,.txt,.hex,.bin" onChange={onImportFile} />
 
       <button className={`btn btn-asm${isDirty ? ' btn-asm-dirty' : ''}`} onClick={onBuild} title={isDirty ? "Unsaved changes — click to rebuild" : "Code is up to date"}>
