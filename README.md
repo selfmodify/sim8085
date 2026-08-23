@@ -380,14 +380,27 @@ them requires changing only the import in `App.jsx`.
 
 ---
 
-## Original Project
+## History & Nostalgia (1995)
 
-Based on **sim8085** by Vijay Kumar, originally distributed via Simtel.Net (1995).
-The original was a 16-bit DOS application using Borland C++ with direct video
-RAM writes, BIOS interrupts, and CP437 box-drawing characters.
+This simulator is based on **sim8085**, originally created in 1995 as a 16-bit DOS application built using **Borland C++**. 
 
-This port preserves the complete instruction set, assembler, and LED
-display system while replacing the DOS UI layer with a modern web interface.
+### The Problem It Solved
+In the mid-1990s, physical Intel 8085 microprocessor trainer kits in university laboratory classes were expensive, fragile, and frequently non-functional. Because of this hardware bottleneck, entire groups of students had to crowd around a single working board, leaving many without enough hands-on time to actually program and understand registers, accumulator manipulations, and CPU flag behaviors.
+
+The DOS simulator resolved this by emulating the physical microprocessor board directly on lab PCs. It democratized low-level systems education, providing each student with their own virtual trainer kit to assemble code, set breakpoints, step through instructions, and watch the LED display update in real-time.
+
+<table>
+<tr>
+<td><img src="docs/screenshots/DOS/8085-hardware-kit.webp" alt="Intel 8085 Microprocessor Laboratory Kit" width="380"></td>
+<td><img src="docs/screenshots/DOS/main-screen-1.png" alt="Original Borland C++ DOS Simulator (1995)" width="380"></td>
+</tr>
+<tr>
+<td align="center"><sub>The physical trainer kits used in 1990s university labs</sub></td>
+<td align="center"><sub>The original 16-bit Borland C++ DOS simulator interface</sub></td>
+</tr>
+</table>
+
+This 2026 port preserves the complete instruction set, memory assembler, and LED/keyboard system call hooks of the original 1995 engine, while modernizing the interface using React, WebAssembly, and background Web Workers.
 
 ---
 
