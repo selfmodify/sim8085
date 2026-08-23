@@ -11,13 +11,13 @@
 This system was reverse-engineered from a single GitHub repository:
 
 - **Repo:** [`selfmodify/sim8085`](https://github.com/selfmodify/sim8085) @ `main`
-- **Imported files** (kept under `web/` and `screenshots/` for reference):
+- **Imported files** (kept under `web/` and `docs/screenshots/` for reference):
   - `web/src/App.css` — full component CSS (1297 lines)
   - `web/src/App.jsx` — full React app (2595 lines, single-file)
   - `web/src/lang.js` — CodeMirror assembly highlighter
   - `web/public/favicon.svg`, `favicon.ico`, `icons.svg` (social symbols)
   - `web/src/assets/hero.png`, `web/index.html`, `web/package.json`
-  - `screenshots/01–07-*.png` — reference UI captures
+  - `docs/screenshots/01–07-*.png` — reference UI captures
 
 There is **only one product** in this system: the sim8085 web simulator. There is no marketing site, docs site, or mobile app — the entire surface is the in-app experience.
 
@@ -43,7 +43,7 @@ sim8085-design/
 │       ├── index.html        # interactive simulator recreation
 │       ├── components.jsx    # Button, Panel, Reg, Flag, MemCell, etc.
 │       └── seven-seg.jsx     # the iconic LED digit
-└── web/, screenshots/        # source artifacts kept for reference
+└── web/, docs/screenshots/  # source artifacts kept for reference
 ```
 
 ---

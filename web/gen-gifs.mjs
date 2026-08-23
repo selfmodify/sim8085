@@ -2,7 +2,7 @@
  * gen-gifs.mjs
  * Captures animated GIFs of the simulator using Puppeteer.
  * Usage:  npm run gifs
- * Output: ../screenshots/
+ * Output: ../docs/screenshots/
  */
 import puppeteer    from 'puppeteer'
 import GifEncoder   from 'gif-encoder-2'
@@ -16,7 +16,7 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = 4176
 const BASE = `http://localhost:${PORT}`
-const OUT  = path.join(__dirname, '..', 'screenshots')
+const OUT  = path.join(__dirname, '..', 'docs', 'screenshots')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 

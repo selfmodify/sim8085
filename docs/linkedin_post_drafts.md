@@ -6,7 +6,7 @@ This folder contains the historical background, modernization details, and Linke
 
 ## Visual Assets
 The screenshot of the laboratory hardware kit to attach to your LinkedIn post is located at:
-`screenshots/DOS/8085-hardware-kit.webp`
+`docs/screenshots/DOS/8085-hardware-kit.webp`
 
 ---
 

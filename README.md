@@ -11,13 +11,13 @@ by Vijay Kumar (1995) to a modern web platform.
 
 ### Overview
 
-![sim8085 — LED counter running at turbo speed](screenshots/gif-01-turbo-led.gif)
+![sim8085 — LED counter running at turbo speed](docs/screenshots/gif-01-turbo-led.gif)
 
 <table>
 <tr>
-<td><img src="screenshots/02-editor-panel.png" alt="Editor — write 8085 assembly with syntax highlighting and 20+ built-in examples"></td>
-<td><img src="screenshots/03-center-panel.png" alt="Center — live disassembly, execution trace, and stack viewer"></td>
-<td><img src="screenshots/04-right-panel.png" alt="Right — registers, pairs, flags, interrupts, I/O ports, and audio"></td>
+<td><img src="docs/screenshots/02-editor-panel.png" alt="Editor — write 8085 assembly with syntax highlighting and 20+ built-in examples"></td>
+<td><img src="docs/screenshots/03-center-panel.png" alt="Center — live disassembly, execution trace, and stack viewer"></td>
+<td><img src="docs/screenshots/04-right-panel.png" alt="Right — registers, pairs, flags, interrupts, I/O ports, and audio"></td>
 </tr>
 <tr>
 <td align="center"><sub>Editor · 20+ built-in examples</sub></td>
@@ -32,16 +32,16 @@ by Vijay Kumar (1995) to a modern web platform.
 
 <table>
 <tr>
-<td><img src="screenshots/gif-02-step-debug.gif" alt="Single-step debugging — registers highlight green on each step"></td>
-<td><img src="screenshots/gif-04-breakpoint.gif" alt="Breakpoints — click any instruction in the disassembly to set one"></td>
+<td><img src="docs/screenshots/gif-02-step-debug.gif" alt="Single-step debugging — registers highlight green on each step"></td>
+<td><img src="docs/screenshots/gif-04-breakpoint.gif" alt="Breakpoints — click any instruction in the disassembly to set one"></td>
 </tr>
 <tr>
 <td align="center"><sub>Single-step · registers highlight on change</sub></td>
 <td align="center"><sub>Breakpoints · click any disassembly row</sub></td>
 </tr>
 <tr>
-<td><img src="screenshots/gif-03-step-over.gif" alt="Step-over — skips subroutines and system calls atomically"></td>
-<td><img src="screenshots/gif-05-step-back.gif" alt="Step-back — time-travel through execution history"></td>
+<td><img src="docs/screenshots/gif-03-step-over.gif" alt="Step-over — skips subroutines and system calls atomically"></td>
+<td><img src="docs/screenshots/gif-05-step-back.gif" alt="Step-back — time-travel through execution history"></td>
 </tr>
 <tr>
 <td align="center"><sub>Step-over · skips subroutines atomically</sub></td>
@@ -55,9 +55,9 @@ by Vijay Kumar (1995) to a modern web platform.
 
 <table>
 <tr>
-<td><img src="screenshots/05-breakpoint.png" alt="Breakpoint paused in disassembly view"></td>
-<td><img src="screenshots/06-interrupt.png" alt="TRAP interrupt fired mid-program"></td>
-<td><img src="screenshots/07-keyboard.png" alt="Keyboard queue — keystrokes dequeued via CALL 5"></td>
+<td><img src="docs/screenshots/05-breakpoint.png" alt="Breakpoint paused in disassembly view"></td>
+<td><img src="docs/screenshots/06-interrupt.png" alt="TRAP interrupt fired mid-program"></td>
+<td><img src="docs/screenshots/07-keyboard.png" alt="Keyboard queue — keystrokes dequeued via CALL 5"></td>
 </tr>
 <tr>
 <td align="center"><sub>Breakpoint paused · inspect state</sub></td>
@@ -72,7 +72,7 @@ by Vijay Kumar (1995) to a modern web platform.
 
 <table>
 <tr>
-<td><img src="screenshots/08-watch-console.png" alt="Watch expressions, console output, and hex memory editor"></td>
+<td><img src="docs/screenshots/08-watch-console.png" alt="Watch expressions, console output, and hex memory editor"></td>
 </tr>
 <tr>
 <td align="center"><sub>Watch panel · console output · hex memory editor</sub></td>
@@ -85,8 +85,8 @@ by Vijay Kumar (1995) to a modern web platform.
 
 <table>
 <tr>
-<td><img src="screenshots/09-challenges.png" alt="Coding challenges — auto-verified programming exercises"></td>
-<td><img src="screenshots/10-instructions.png" alt="Instruction set reference — searchable 8085 opcode guide"></td>
+<td><img src="docs/screenshots/09-challenges.png" alt="Coding challenges — auto-verified programming exercises"></td>
+<td><img src="docs/screenshots/10-instructions.png" alt="Instruction set reference — searchable 8085 opcode guide"></td>
 </tr>
 <tr>
 <td align="center"><sub>Coding challenges · auto-verified</sub></td>
@@ -100,10 +100,10 @@ by Vijay Kumar (1995) to a modern web platform.
 
 <table>
 <tr>
-<td><img src="screenshots/theme-dracula.png"    alt="Dracula theme"></td>
-<td><img src="screenshots/theme-green.png"      alt="Green CRT theme"></td>
-<td><img src="screenshots/theme-dim.png"        alt="Dim theme"></td>
-<td><img src="screenshots/theme-light.png"      alt="Light theme"></td>
+<td><img src="docs/screenshots/theme-dracula.png"    alt="Dracula theme"></td>
+<td><img src="docs/screenshots/theme-green.png"      alt="Green CRT theme"></td>
+<td><img src="docs/screenshots/theme-dim.png"        alt="Dim theme"></td>
+<td><img src="docs/screenshots/theme-light.png"      alt="Light theme"></td>
 </tr>
 <tr>
 <td align="center"><sub>🧛 Dracula</sub></td>
@@ -112,10 +112,10 @@ by Vijay Kumar (1995) to a modern web platform.
 <td align="center"><sub>☀︎ Light</sub></td>
 </tr>
 <tr>
-<td><img src="screenshots/theme-amber-mono.png" alt="Amber monochrome CRT theme"></td>
-<td><img src="screenshots/theme-gray-crt.png"   alt="Gray CRT theme"></td>
-<td><img src="screenshots/theme-blue-crt.png"   alt="Blue CRT theme"></td>
-<td><img src="screenshots/theme-plasma.png"     alt="Plasma theme"></td>
+<td><img src="docs/screenshots/theme-amber-mono.png" alt="Amber monochrome CRT theme"></td>
+<td><img src="docs/screenshots/theme-gray-crt.png"   alt="Gray CRT theme"></td>
+<td><img src="docs/screenshots/theme-blue-crt.png"   alt="Blue CRT theme"></td>
+<td><img src="docs/screenshots/theme-plasma.png"     alt="Plasma theme"></td>
 </tr>
 <tr>
 <td align="center"><sub>🟡 Amber mono</sub></td>
@@ -124,8 +124,8 @@ by Vijay Kumar (1995) to a modern web platform.
 <td align="center"><sub>🟣 Plasma</sub></td>
 </tr>
 <tr>
-<td><img src="screenshots/theme-turbo-c.png"    alt="Turbo C theme"></td>
-<td><img src="screenshots/theme-cp437.png"      alt="DOS CP437 theme"></td>
+<td><img src="docs/screenshots/theme-turbo-c.png"    alt="Turbo C theme"></td>
+<td><img src="docs/screenshots/theme-cp437.png"      alt="DOS CP437 theme"></td>
 <td></td>
 <td></td>
 </tr>

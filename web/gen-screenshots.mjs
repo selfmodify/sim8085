@@ -2,7 +2,7 @@
  * gen-screenshots.mjs
  * Captures annotated screenshots of the simulator using Puppeteer.
  * Usage:  npm run screenshots
- * Output: ../screenshots/
+ * Output: ../docs/screenshots/
  */
 import puppeteer from 'puppeteer'
 import { spawn }  from 'child_process'
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PORT = 4174
 const BASE = `http://localhost:${PORT}`
-const OUT  = path.join(__dirname, '..', 'screenshots')
+const OUT  = path.join(__dirname, '..', 'docs', 'screenshots')
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
