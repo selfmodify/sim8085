@@ -30,6 +30,7 @@ export async function switchEngine(mode) {
 // ── Proxied API ──────────────────────────────────────────────────────────────
 export const simInit                = (...a) => _impl.simInit(...a)
 export const simAssemble            = (...a) => _impl.simAssemble(...a)
+export const simAssembleDryRun      = (source) => jsImpl.simAssembleDryRun(source)
 export const simStep                = (...a) => _impl.simStep(...a)
 export const simRun                 = (...a) => _impl.simRun(...a)
 export const simGetRegisters        = (...a) => _impl.simGetRegisters(...a)

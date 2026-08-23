@@ -7,7 +7,8 @@ import { autocompletion, completionKeymap } from '@codemirror/autocomplete';
 import { INST_HELP } from './instHelp.js';
 import { hex4 } from './utils.js';
 import { asm8085Lang, asm8085Highlighting } from './lang.js';
-import { setDiagnostics } from '@codemirror/lint';
+import { setDiagnostics, linter } from '@codemirror/lint';
+import { simAssembleDryRun } from './simProxy.js';
 
 // ── CM6 error-line decoration + gutter marker ─────────────────────────────
 const setErrorLineEff = StateEffect.define()
@@ -16,6 +17,34 @@ const setAddressesEff = StateEffect.define()
 const setWatchedWordsEff = StateEffect.define()
 const setSymbolsEff = StateEffect.define()
 const flashLineEff = StateEffect.define()
+
+const asmLinter = linter(view => {
+  const code = view.state.doc.toString();
+  const res = simAssembleDryRun(code);
+  const diagnostics = [];
+  if (!res.ok && res.errors) {
+    for (const err of res.errors) {
+      const match = err.match(/^Line (\d+): (.*)$/i);
+      if (match) {
+        const lineNum = parseInt(match[1], 10);
+        const msg = match[2];
+        try {
+          const line = view.state.doc.line(lineNum);
+          const text = line.text;
+          const trimmedStart = text.length - text.trimStart().length;
+          const trimmedEnd = text.length - text.trimEnd().length;
+          diagnostics.push({
+            from: Math.max(line.from, line.from + trimmedStart),
+            to: Math.min(line.to, line.to - trimmedEnd),
+            severity: 'error',
+            message: msg
+          });
+        } catch (e) {}
+      }
+    }
+  }
+  return diagnostics;
+});
 
 const watchMark = Decoration.mark({ class: 'cm-watched-word' })
 const watchHighlightPlugin = ViewPlugin.fromClass(class {
@@ -471,6 +500,7 @@ export function AsmEditor({ value, onChange, onCursorInstruction, onInstructionD
           hexHoverTooltip,
           watchHighlightPlugin,
           undocHighlightPlugin,
+          asmLinter,
           EditorView.theme({
             '&': { height:'100%', fontFamily:'"JetBrains Mono","Fira Code",monospace', fontSize:'15px', color:'var(--text)', backgroundColor:'transparent' },
             '.cm-scroller': { overflow:'auto' },

@@ -1023,6 +1023,30 @@ export function simAssemble(source) {
   return assemble(source);
 }
 
+export function simAssembleDryRun(source) {
+  const savedRam = ram.slice();
+  const savedRegs = { ...regs };
+  const savedStatus = status;
+  const savedLastError = lastError;
+  const savedSymbols = { ...lastSymbols };
+  const savedProgStart = lastProgStart;
+  const savedProgEnd = lastProgEnd;
+  const savedPresetAddrs = new Set(lastPresetAddrs);
+
+  try {
+    return assemble(source);
+  } finally {
+    ram.set(savedRam);
+    regs = savedRegs;
+    status = savedStatus;
+    lastError = savedLastError;
+    lastSymbols = savedSymbols;
+    lastProgStart = savedProgStart;
+    lastProgEnd = savedProgEnd;
+    lastPresetAddrs = savedPresetAddrs;
+  }
+}
+
 export function simStep() {
   dataWatchHit = -1;
   const r = stepOne()
