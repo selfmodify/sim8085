@@ -21,7 +21,6 @@ import { GithubSetupModal } from './GithubSetupModal.jsx'
 import { UIDialog } from './UIDialog.jsx'
 import { ChallengesView, CHALLENGES } from './ChallengesView.jsx'
 import { InstructionsView } from './InstructionsView.jsx'
-import { SessionManagerModal } from './SessionManagerModal.jsx'
 import { useSimulatorEngine } from './useSimulatorEngine.js'
 import { useGoogleDrive } from './useGoogleDrive.js'
 import { useThemeManager } from './useThemeManager.js'
@@ -264,20 +263,11 @@ export default function App() {
   const [showChat,       setShowChat]       = useState(false)
   const [chatPoppedOut,  setChatPoppedOut]  = useState(false)
   const [showShortcuts,  setShowShortcuts]  = useState(false)
-  const [showSessionManager, setShowSessionManager] = useState(false)
-  
+
   const dismissWelcome = useCallback(() => {
     localStorage.setItem('sim8085_welcomed', '1');
     setShowWelcome(false);
   }, []);
-
-  const handleLoadSession = useCallback((session) => {
-    setSrc(session.source);
-    setFileName(session.filename || '');
-    setReadOnlySource(null);
-    srcRef.current = session.source;
-    engine.doAssemble(session.source);
-  }, [engine]);
 
   const [runSpeed, setRunSpeed]     = useState(() => {
     try {
@@ -928,7 +918,6 @@ export default function App() {
               onRun={engine.handleRun}
               runSpeed={runSpeed}
               onSpeedChange={e => { const v = +e.target.value; setRunSpeed(v); localStorage.setItem('sim8085_speed', v); engine.setRunSpeed?.(v); }}
-              onSessionManager={() => setShowSessionManager(true)}
             />
           </div>
         </div>
@@ -1042,13 +1031,7 @@ export default function App() {
       )}
       {showWelcome && <WelcomeModal onClose={dismissWelcome} onBrewCoffee={onBrewCoffee} />}
       {helpInst && <HelpModal instruction={helpInst} onClose={() => setHelpInst(null)} />}
-      <SessionManagerModal
-        isOpen={showSessionManager}
-        onClose={() => setShowSessionManager(false)}
-        onLoad={handleLoadSession}
-        currentSource={src}
-        currentFilename={fileName}
-      />
+
 
       {(activeView === 'simulator' || activeView === 'breadboard') && showCalc && !calcPoppedOut && (
         <CalcFloat onClose={() => setShowCalc(false)} onPopout={() => setCalcPoppedOut(true)} />
