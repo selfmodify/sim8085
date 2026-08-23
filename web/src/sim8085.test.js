@@ -70,6 +70,91 @@ describe('Assembler', () => {
   });
 });
 
+describe('Assembler Register Validation', () => {
+  it('allows valid register pairs for PUSH and POP', () => {
+    expect(simAssemble('PUSH B\nHLT').ok).toBe(true);
+    expect(simAssemble('PUSH D\nHLT').ok).toBe(true);
+    expect(simAssemble('PUSH H\nHLT').ok).toBe(true);
+    expect(simAssemble('PUSH PSW\nHLT').ok).toBe(true);
+    expect(simAssemble('POP B\nHLT').ok).toBe(true);
+  });
+
+  it('rejects invalid register pairs for PUSH and POP', () => {
+    expect(simAssemble('PUSH PSH\nHLT').ok).toBe(false);
+    expect(simAssemble('PUSH A\nHLT').ok).toBe(false);
+    expect(simAssemble('POP SP\nHLT').ok).toBe(false);
+  });
+
+  it('allows valid registers for MOV', () => {
+    expect(simAssemble('MOV A, B\nHLT').ok).toBe(true);
+    expect(simAssemble('MOV M, A\nHLT').ok).toBe(true);
+    expect(simAssemble('MOV B, M\nHLT').ok).toBe(true);
+  });
+
+  it('rejects invalid registers/combinations for MOV', () => {
+    expect(simAssemble('MOV SP, A\nHLT').ok).toBe(false);
+    expect(simAssemble('MOV A, PSW\nHLT').ok).toBe(false);
+    expect(simAssemble('MOV M, M\nHLT').ok).toBe(false);
+  });
+
+  it('allows valid registers for MVI', () => {
+    expect(simAssemble('MVI A, 42H\nHLT').ok).toBe(true);
+    expect(simAssemble('MVI M, 00H\nHLT').ok).toBe(true);
+  });
+
+  it('rejects invalid registers for MVI', () => {
+    expect(simAssemble('MVI SP, 1234H\nHLT').ok).toBe(false);
+    expect(simAssemble('MVI PSW, 00H\nHLT').ok).toBe(false);
+  });
+
+  it('allows valid register pairs for LXI', () => {
+    expect(simAssemble('LXI B, 1234H\nHLT').ok).toBe(true);
+    expect(simAssemble('LXI D, 1234H\nHLT').ok).toBe(true);
+    expect(simAssemble('LXI H, 1234H\nHLT').ok).toBe(true);
+    expect(simAssemble('LXI SP, 1234H\nHLT').ok).toBe(true);
+  });
+
+  it('rejects invalid register pairs for LXI', () => {
+    expect(simAssemble('LXI A, 1234H\nHLT').ok).toBe(false);
+    expect(simAssemble('LXI PSW, 1234H\nHLT').ok).toBe(false);
+  });
+
+  it('allows valid register pairs for LDAX and STAX', () => {
+    expect(simAssemble('LDAX B\nHLT').ok).toBe(true);
+    expect(simAssemble('LDAX D\nHLT').ok).toBe(true);
+    expect(simAssemble('STAX B\nHLT').ok).toBe(true);
+    expect(simAssemble('STAX D\nHLT').ok).toBe(true);
+  });
+
+  it('rejects invalid register pairs for LDAX and STAX', () => {
+    expect(simAssemble('LDAX H\nHLT').ok).toBe(false);
+    expect(simAssemble('LDAX SP\nHLT').ok).toBe(false);
+    expect(simAssemble('STAX A\nHLT').ok).toBe(false);
+  });
+
+  it('allows valid registers for single register operations (ADD/SUB/INR/etc.)', () => {
+    expect(simAssemble('ADD A\nHLT').ok).toBe(true);
+    expect(simAssemble('ADD M\nHLT').ok).toBe(true);
+    expect(simAssemble('INR B\nHLT').ok).toBe(true);
+  });
+
+  it('rejects invalid registers for single register operations', () => {
+    expect(simAssemble('ADD SP\nHLT').ok).toBe(false);
+    expect(simAssemble('INR PSW\nHLT').ok).toBe(false);
+  });
+
+  it('allows valid register pairs for INX, DCX, DAD', () => {
+    expect(simAssemble('INX B\nHLT').ok).toBe(true);
+    expect(simAssemble('INX SP\nHLT').ok).toBe(true);
+    expect(simAssemble('DAD D\nHLT').ok).toBe(true);
+  });
+
+  it('rejects invalid register pairs for INX, DCX, DAD', () => {
+    expect(simAssemble('INX A\nHLT').ok).toBe(false);
+    expect(simAssemble('DAD PSW\nHLT').ok).toBe(false);
+  });
+});
+
 // ── NOP / HLT ────────────────────────────────────────────────────────────────
 describe('NOP / HLT', () => {
   it('NOP does not change registers', () => {
