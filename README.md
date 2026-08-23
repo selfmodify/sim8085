@@ -170,7 +170,7 @@ by Vijay Kumar (1995) to a modern web platform.
 ## Keyboard Shortcuts
 
 | Key | Action |
-|-----|--------|
+| ----- | -------- |
 | `F5` / `F6` | Assemble (Build) / Reset |
 | `F7` / `F8` | Step one instruction / Step over subroutine |
 | `F9` / `F10` | Run/Stop / Step out of subroutine |
@@ -183,7 +183,7 @@ by Vijay Kumar (1995) to a modern web platform.
 
 ## Project Structure
 
-```
+```text
 sim8085-web/
 ├── core/                    # Portable C core (compiles to WASM or native)
 │   ├── sim8085_core.h       # All types, constants, machine struct, macros
@@ -210,6 +210,7 @@ sim8085-web/
 ### Run the web app locally
 
 **Easiest way:**
+
 ```bash
 # From the repo root
 ./run.sh           # macOS / Linux
@@ -218,6 +219,7 @@ sim8085-web/
 ```
 
 **Or manually:**
+
 ```bash
 cd web
 npm install
@@ -311,17 +313,18 @@ mysub:
 ```
 
 **Supported directives:**
+
 | Directive | Example | Effect |
-|-----------|---------|--------|
-| `ORG`     | `org 100H` | Set assembly pointer |
+| ----------- | --------- | -------- |
+| `ORG` | `org 100H` | Set assembly pointer |
 | `KICKOFF` | `kickoff 100H` | Set execution entry point |
-| `EQU`     | `MAX EQU 0FFH` | Equate a symbol to a constant value |
-| `DB`      | `db 10H, 20H` | Define Byte(s) in memory |
-| `DW`      | `dw 1234H` | Define Word(s) in memory (little-endian) |
-| `DS`      | `ds 10H` | Define Storage (reserve zero-filled bytes) |
+| `EQU` | `MAX EQU 0FFH` | Equate a symbol to a constant value |
+| `DB` | `db 10H, 20H` | Define Byte(s) in memory |
+| `DW` | `dw 1234H` | Define Word(s) in memory (little-endian) |
+| `DS` | `ds 10H` | Define Storage (reserve zero-filled bytes) |
 | `SETBYTE` | `setbyte 300H, 42H` | Pre-load one byte |
 | `SETWORD` | `setword 300H, 1234H` | Pre-load two bytes |
-| `ASSERT`  | `assert A, 42H` | Halt execution if assertion fails |
+| `ASSERT` | `assert A, 42H` | Halt execution if assertion fails |
 
 **Number formats:** `42H` or `42h` (hex), `42` (hex by default),
 `42D` (decimal), `00101010B` (binary)
@@ -333,7 +336,7 @@ mysub:
 Programs can use the Intel SDK monitor calls:
 
 | C reg | Function |
-|-------|----------|
+| ------- | ---------- |
 | 00H | System reset |
 | 01H | Read hex key → A |
 | 02H | Write digit to LED (B = field, HL → data) |
@@ -342,6 +345,7 @@ Programs can use the Intel SDK monitor calls:
 | 0BH | Scroll LED display (same as 09H) |
 
 Example (from `LED Scroll`):
+
 ```asm
     mvi  c, 0bH        ; scroll function
     mov  d, a          ; digit to insert
@@ -352,7 +356,7 @@ Example (from `LED Scroll`):
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────┐
 │  React UI  (App.jsx)                │
 │  Editor │ Disasm │ Regs │ Mem │ LED │

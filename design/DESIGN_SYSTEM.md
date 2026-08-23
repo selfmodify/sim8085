@@ -2,7 +2,7 @@
 
 > 8085 Microprocessor Simulator. A single-page React web app that ports the original 1995 DOS-era **sim8085** by Vijay Kumar to a modern web platform. The aesthetic is unapologetically **retro-terminal** — dark slate background, terminal green primary, amber/red signal colors, monospace-forward typography, dense panels with thin borders.
 
-**Live demo:** https://selfmodify.github.io/sim8085/
+**Live demo:** <https://selfmodify.github.io/sim8085/>
 
 ---
 
@@ -25,7 +25,7 @@ There is **only one product** in this system: the sim8085 web simulator. There i
 
 ## Index
 
-```
+```text
 sim8085-design/
 ├── README.md                 # this file
 ├── SKILL.md                  # for Claude Code / Skills downloads
@@ -67,6 +67,7 @@ A 60px topbar holds the brand chip ("8085" — green block, mono, kerned), an Ex
 **Voice.** Direct, technical, second-person ("you"), zero marketing fluff. Copy reads like manpages and inline help, not like a landing page. Sentence fragments are common; full stops are optional in tight UI strings.
 
 **Casing.**
+
 - **Panel headers** — `ALL CAPS`, mono, 11px, letter-spacing 2px. (`REGISTERS`, `LED DISPLAY`, `I/O PORTS`).
 - **Sub-section headers** — `ALL CAPS`, mono, 9px, letter-spacing 1.5px. (`INPUT  RETURNED BY IN`, `KEYBOARD  C=01H SYSCALL INPUT`).
 - **Buttons** — Title Case for verbs (`Build`, `Step`, `Run`, `Reset`); ALL CAPS only for hardware-style toggles (`FIRE`, `OFF`, `HEX`, `PC↓`).
@@ -77,11 +78,13 @@ A 60px topbar holds the brand chip ("8085" — green block, mono, kerned), an Ex
 **Abbreviations are first-class.** The audience knows what `PC`, `SP`, `IFF`, `RST 7.5`, `AC`, `CY`, `IN`, `OUT`, `HLT` are — never expand them inline. Help popups *do* expand on demand.
 
 **Tone vibe.**
-- *Mechanical, not friendly.* No exclamation marks except inside error strings. No "Let's…", no "Awesome!". 
+
+- *Mechanical, not friendly.* No exclamation marks except inside error strings. No "Let's…", no "Awesome!".
 - *Educational, not condescending.* When help is offered it's a `?` button — opt-in, never pushed.
 - *Hardware-aware.* Words like `FIRE`, `KICKOFF`, `TRAP`, `HALT-WAIT`, `RAM`, `SDK` show up plainly. The product does not abstract the chip away.
 
 **Specific copy examples (lifted from `App.jsx`):**
+
 - Topbar status (running): `▶ Running...` (green, blinking)
 - Status (halted): `⏸ Halted` (amber)
 - Status (error): `✕ <error msg>` (red)
@@ -99,6 +102,7 @@ A 60px topbar holds the brand chip ("8085" — green block, mono, kerned), an Ex
 ## VISUAL FOUNDATIONS
 
 ### Color
+
 - **Surface stack** is monochrome and very dark. Only four neutrals do real work: `#0d0f14` page → `#141720` panel → `#1a1e2b` panel header → `#20253a` chip/input. Borders ride 1px in `#2a3050` (default) → `#3a4568` (hover).
 - **Brand color is a single terminal green** — `#4af0a0`. It marks anything *live, current, or correct*: PC arrow, status while running, "changed register" left-bar, run button, primary CTA on dark bg.
 - **Amber `#f0a840`** is the *attention* color: SP highlight, pending interrupts, help popup borders, halted state, hex-mode toggle.
@@ -108,18 +112,21 @@ A 60px topbar holds the brand chip ("8085" — green block, mono, kerned), an Ex
 - All colored backgrounds on dark surfaces are **low-opacity tints** of the same hue (6 / 12 / 15 / 18 / 20 / 28 % alpha) — not solid fills.
 
 ### Type
+
 - **Sans** (IBM Plex Sans, 400/600) is for prose only — modal body, help popups, chat copy.
 - **Mono** (JetBrains Mono, 400/600/700, fallback Fira Code → Cascadia Code → system) is the default everywhere CPU state lives. Roughly 80% of visible text is mono.
 - Sizes are aggressive and small: 9px section headers, 11px panel headers / tags, 12–13px most rows, 14px register values, 16px brand chip. The welcome modal goes up to ~20px h2; nothing in the live UI does.
 - **Letter-spacing** is the texture. Headers wear `2px`; sub-headers `1.5px`. Numbers and code never have tracked spacing.
 
 ### Backgrounds
+
 - **No images, no gradients, no textures.** The product is solid flat surfaces stacked by elevation.
 - **No full-bleed photography.** The hero image (`hero.png`) is a small inline 32×32-style asset used inside the welcome modal, not a hero billboard.
 - LED panel uses a subtly darker background (`#080a10`) than the main surface to read as a separate device.
 - Memory cell roles are conveyed by *tinted backgrounds*: code = soft blue, preset = soft green, PC = bright green, SP = amber.
 
 ### Animation
+
 - **Restrained.** Three motion primitives:
   1. `transition: all .12s` on hover for buttons.
   2. `blink 1s infinite` (opacity 1↔.5) on the running status text.
@@ -127,21 +134,25 @@ A 60px topbar holds the brand chip ("8085" — green block, mono, kerned), an Ex
 - No bounces, no springs, no sliding panels, no fade-in mounts. Nothing scales or rotates.
 
 ### Hover states
+
 - **Buttons**: `border-color: --border` → `--border2`, `background: --bg2` → `--bg3`. Color does not change.
 - **Rows** (registers / memory cells / disasm): subtle background shift to `--bg2`/`--bg3`.
 - **Resize handles**: switch to accent color on hover (`--accent` or `--accent2`).
 - **Disabled**: `opacity: .4`, `cursor: default`, no other change.
 
 ### Press / active states
+
 - No explicit transform-on-press. The hover hover-color simply persists; clicked buttons rely on the resulting state change (status flips, panel scrolls, etc.) for feedback.
 
 ### Borders
+
 - Panels: `1px solid --border` separating header from body.
 - Buttons: `1px solid --border`, semantic variants restate the border in `--blue` / `--accent2` / `--red` / `--amber`.
 - "Changed" register rows use a **2px left border** in green, matching IDE conventions.
 - Memory editing cell uses `1px solid --accent` outline, *not* a border — preserves the grid.
 
 ### Shadows
+
 - **No inset shadows.** Strictly outer drop-shadows for floating elements.
 - Three elevations:
   - `--shadow-pop` `0 4px 16px rgba(0,0,0,.5)` — context menus, instruction tooltips.
@@ -150,10 +161,12 @@ A 60px topbar holds the brand chip ("8085" — green block, mono, kerned), an Ex
 - LED digits get a single CSS filter glow: `drop-shadow(0 0 5px rgba(255, 40, 0, .8))`.
 
 ### Capsules vs gradients
+
 - The brand chip is a green **filled capsule** (4px radius, dark text on green) — the only inverted-color element in the app. Everywhere else, color is conveyed by stroke + tinted fill, never solid gradient capsules.
 - No gradient anywhere. No glassmorphism, no blur, no transparency on chrome.
 
 ### Layout
+
 - **Three columns, full viewport height.** No max-width, no centering. The app fills any window edge-to-edge and scrolls horizontally only if forced narrow.
 - Columns are draggable to resize via 4px `ew-resize` handles in `--bg3`.
 - Columns: 340px editor (min 180), flex center (min 280), 300px right (min 200).
@@ -161,13 +174,16 @@ A 60px topbar holds the brand chip ("8085" — green block, mono, kerned), an Ex
 - Nothing floats over content except: dropdown menus, the calculator window (draggable, fixed-positioned), help popups, the welcome modal.
 
 ### Use of transparency / blur
+
 - Transparency: only as low-opacity color tints on flat surfaces (see Color above). No backdrop blur. No frosted glass. No translucent overlays.
 
 ### Corner radii
+
 - Tight: 3 / 4 / 6 / 7 / 10px. The default radius is 3–4px. The largest element (welcome modal) is 10px. Buttons are 4px. Mem cells, chips, inputs are 3px.
 - Nothing is fully rounded (no pills, no circles for chips).
 
 ### Cards
+
 - Panels are the closest thing to "cards":
   - `1px` border in `--border`.
   - `--bg1` body, `--bg2` header strip.
@@ -175,6 +191,7 @@ A 60px topbar holds the brand chip ("8085" — green block, mono, kerned), an Ex
   - Headers are 24px tall, mono caps centered text with optional emoji icon.
 
 ### Density
+
 - *Very* dense. Vertical padding inside rows is typically 1–2px; horizontal padding 6–10px. This is intentional — the simulator is meant to show as much CPU state as possible at once.
 
 ---
@@ -207,6 +224,7 @@ The product uses **three distinct icon sources** depending on context:
 5. **The 7-segment LED digit** is a custom inline SVG component (`SevenSeg`) in `App.jsx`. Eight `<path>` elements (segments a–g + decimal point) over a 17×23 viewBox, lit segments fill `#FF2200` and unlit segments fill `rgba(255,34,0,0.15)`. The whole `<svg>` gets a red glow drop-shadow. Treat this as a **brand asset** — recreate it pixel-for-pixel; do not improvise a different 7-seg shape.
 
 **Substitution policy.**
+
 - ✅ Use the unicode chars and emoji as listed above.
 - ✅ Use the supplied SVG sprite for social.
 - ❌ Do **not** introduce Lucide / Heroicons / Material / Phosphor or any third-party icon set — the codebase uses none.

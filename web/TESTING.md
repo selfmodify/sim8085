@@ -5,7 +5,7 @@
 The test suite covers four layers of the application:
 
 | Layer | File | What it tests |
-|---|---|---|
+| --- | --- | --- |
 | Utilities | `src/utils.test.js` | Pure helper functions: hex formatting, base conversion, flag evaluation |
 | Simulator core | `src/sim8085.test.js` | Every 8085 instruction group, flags, stack, I/O, cycle counting |
 | User journeys | `src/userJourneys.test.js` | End-to-end flows: assemble → run → inspect, breakpoints, memory editing |
@@ -38,11 +38,13 @@ All commands run from the `web/` directory.
 **Component testing**: [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/) + [@testing-library/jest-dom](https://github.com/testing-library/jest-dom) for DOM assertions.
 
 **Setup file** (`vitest.setup.js`):
+
 - Extends `expect` with jest-dom matchers (`toBeInTheDocument`, `toHaveClass`, etc.)
 - Calls `cleanup()` after every test to unmount React trees
 - Stubs `navigator.clipboard` so `useCopy` works in happy-dom
 
 **Vitest config** (in `vite.config.js` under `test:`):
+
 ```js
 test: {
   globals: true,
@@ -142,7 +144,7 @@ Panels that use `useCollapsible` default to their stored state (or `defaultColla
 ## Coverage Targets
 
 | Area | Target |
-|---|---|
+| --- | --- |
 | `utils.js` | 100% — pure functions, fully deterministic |
 | `sim8085Bridge.js` | >80% line coverage of instruction dispatch |
 | Hooks | 100% branch coverage |

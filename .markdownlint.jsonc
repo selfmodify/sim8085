@@ -1,0 +1,9 @@
+{
+  // MD013 (line-length) is disabled: this repo's docs favor long,
+  // hand-wrapped descriptive lines over hard 80-column wrapping.
+  "MD013": false,
+  // MD033 (no-inline-html) is disabled: README.md uses raw <table>/<sub>
+  // markup for multi-column screenshot galleries with captions, which
+  // plain Markdown tables can't reproduce.
+  "MD033": false
+}

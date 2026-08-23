@@ -25,7 +25,7 @@ If the destination is a **fresh codebase**, React + Vite + plain CSS variables (
 
 ## Files in This Bundle
 
-```
+```text
 design_handoff_sim8085_design_system/
 ├── README.md                          # this file — start here
 ├── DESIGN_SYSTEM.md                   # full design system spec (the source of truth)
@@ -50,16 +50,19 @@ design_handoff_sim8085_design_system/
 The full token set lives in `tokens/colors_and_type.css`. Highlights:
 
 ### Surfaces (dark stack — lowest = deepest)
+
 - `--bg`   `#0d0f14` — page / outermost
 - `--bg1`  `#141720` — panel body
 - `--bg2`  `#1a1e2b` — panel header / button rest
 - `--bg3`  `#20253a` — panel header hover / chip / input
 
 ### Borders
+
 - `--border`  `#2a3050` — default 1px panel/cell border
 - `--border2` `#3a4568` — hover / focused border
 
 ### Brand + signal
+
 - `--accent`  `#4af0a0` — terminal green: live / current / correct / primary CTA
 - `--accent2` `#2ac878` — darker green hover
 - `--amber`   `#f0a840` — attention: SP, pending interrupts, halted, hex toggle
@@ -68,17 +71,20 @@ The full token set lives in `tokens/colors_and_type.css`. Highlights:
 - `--led-on`  `#FF2200` — 7-segment LED illuminated only
 
 ### Text ramp
+
 - `--text`  `#c8d4e8` — primary
 - `--text2` `#7888a8` — secondary / labels
 - `--text3` `#4a5470` — tertiary / disabled / hints
 
 ### Type
+
 - **Mono**: `JetBrains Mono` → `Fira Code` → `Cascadia Code` → system. ~80% of visible text.
 - **Sans**: `IBM Plex Sans`. Prose only — modal body, help, chat copy.
 - Sizes are aggressive and small: **9px** section headers · **11px** panel headers/tags · **12–13px** rows · **14px** register values · **16px** brand chip.
 - **Letter-spacing is the texture**: headers `2px`, sub-headers `1.5px`. Numbers and code never tracked.
 
 ### Radii (small, restrained)
+
 - `3px` mem cells / inputs / chips
 - `4px` buttons / brand chip
 - `6px` floating windows / popups
@@ -86,6 +92,7 @@ The full token set lives in `tokens/colors_and_type.css`. Highlights:
 - `10px` welcome modal (largest in the system)
 
 ### Shadows
+
 - `--shadow-pop`   `0 4px 16px rgba(0,0,0,.5)` — context menus, tooltips
 - `--shadow-menu`  `0 8px 24px rgba(0,0,0,.6)` — dropdowns
 - `--shadow-modal` `0 12px 40px rgba(0,0,0,.7)` — welcome modal
@@ -93,6 +100,7 @@ The full token set lives in `tokens/colors_and_type.css`. Highlights:
 - **Panels themselves cast no shadow.** Only floating elements.
 
 ### Spacing rhythm
+
 `2 / 4 / 6 / 8 / 10 / 14 / 16 / 24px`. The app stays tight; few large gaps. Vertical row padding 1–2px, horizontal 6–10px.
 
 ## Iconography — Substitution Policy
@@ -116,6 +124,7 @@ The app uses **three distinct icon sources**; do not introduce a fourth.
 ## Animation Budget
 
 Three motion primitives, full stop:
+
 1. `transition: all .12s` on hover for buttons.
 2. `blink 1s infinite` (opacity 1↔.5) on running status text.
 3. `pc-flash .35s ease-out` — current disassembly row briefly brightens green when PC moves.
