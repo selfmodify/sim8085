@@ -19,6 +19,15 @@ const throughput = { steps: 0, ms: 0, mhz: 0, pendingSteps: 0 };
 let lastUiMs = 0;
 let wasHaltWaiting = false;
 
+// Adaptive chunk size: how many steps doRun() executes before we re-check the
+// clock and stopRequested. Sized dynamically toward TARGET_CHUNK_MS so a single
+// chunk never blocks the worker's message queue (and thus Stop) for long,
+// regardless of how fast the device/engine actually is.
+const TARGET_CHUNK_MS = 20;
+const MIN_CHUNK = 1000;
+const MAX_CHUNK = 2000000;
+let chunkSize = 20000;
+
 // ── WASM heap helpers ─────────────────────────────────────────────────────────
 const alloc = n => M._malloc(n);
 const free_ = p => M._free(p);
@@ -154,14 +163,22 @@ function scheduleTick() { tickChannel.port2.postMessage(null); }
 function warpTick() {
   if (!running) return;
 
-  // Run at full speed for up to 100 ms per tick
+  // Run at full speed for up to 100 ms per tick, in adaptively-sized chunks
   let n = 0;
   const t0 = performance.now();
   while (performance.now() - t0 < 100) {
-    const chunk = doRun(2000000);
+    const size = chunkSize;
+    const chunkT0 = performance.now();
+    const chunk = doRun(size);
+    const chunkMs = performance.now() - chunkT0;
     n += chunk;
-    if (chunk < 2000000) break;   // sim stopped early
+
+    if (chunk < size) break;   // sim stopped early
     if (stopRequested) break;
+
+    // Retarget chunk size toward TARGET_CHUNK_MS, damped to avoid oscillation
+    const scale = chunkMs > 0 ? Math.min(4, Math.max(0.25, TARGET_CHUNK_MS / chunkMs)) : 2;
+    chunkSize = Math.round(Math.min(MAX_CHUNK, Math.max(MIN_CHUNK, chunkSize * scale)));
   }
   const execMs = performance.now() - t0;
 
