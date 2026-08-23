@@ -4,7 +4,7 @@
  * simProxy is mocked so tests run without WASM or live simulator state.
  */
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SimulatorContext } from './SimulatorContext.jsx';
 
@@ -25,7 +25,17 @@ vi.mock('./simProxy.js', () => ({
 import * as simProxyMock from './simProxy.js';
 
 // Clear localStorage before each test so useCollapsible starts fresh
-beforeEach(() => { localStorage.clear(); });
+beforeEach(() => {
+  localStorage.clear();
+});
+
+afterEach(() => {
+  simProxyMock.simDisassemble.mockReset();
+  simProxyMock.simDisassemble.mockImplementation((addr) => ({
+    text: `${addr.toString(16).padStart(4, '0').toUpperCase()} 76   HLT`,
+    len: 1, cycles: 7, mnem: 'HLT',
+  }));
+});
 
 // ── Context helper ────────────────────────────────────────────────────────────
 function withCtx(ui, ctxOverrides = {}) {
@@ -526,6 +536,25 @@ describe('DisasmPanel', () => {
   it('renders DISASSEMBLY header', () => {
     render(<DisasmPanel {...baseDisasmProps} />);
     expect(screen.getByText(/DISASSEMBLY/)).toBeInTheDocument();
+  });
+
+  it('updates disassembly when buildId changes', () => {
+    simProxyMock.simDisassemble.mockImplementation((addr) => {
+      if (addr === 0x100) return { text: '0100 00   NOP', len: 1, cycles: 4, mnem: 'NOP' };
+      return { text: `${addr.toString(16).padStart(4, '0').toUpperCase()} 76   HLT`, len: 1, cycles: 7, mnem: 'HLT' };
+    });
+    
+    const { rerender } = render(<DisasmPanel {...baseDisasmProps} buildId={1} />);
+    expect(screen.getByText(/NOP/)).toBeInTheDocument();
+
+    simProxyMock.simDisassemble.mockImplementation((addr) => {
+      if (addr === 0x100) return { text: '0100 76   HLT', len: 1, cycles: 7, mnem: 'HLT' };
+      return { text: `${addr.toString(16).padStart(4, '0').toUpperCase()} 76   HLT`, len: 1, cycles: 7, mnem: 'HLT' };
+    });
+
+    rerender(<DisasmPanel {...baseDisasmProps} buildId={2} />);
+    expect(screen.queryByText(/NOP/)).toBeNull();
+    expect(screen.getAllByText(/HLT/).length).toBeGreaterThan(0);
   });
 
   it('renders disassembly rows', () => {
