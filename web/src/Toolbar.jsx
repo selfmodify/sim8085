@@ -88,9 +88,9 @@ export function Toolbar({
       <button className={`btn btn-asm${isDirty ? ' btn-asm-dirty' : ''}`} onClick={onBuild} title={isDirty ? "Unsaved changes — click to rebuild" : "Code is up to date"}>
         ⚙ Build{isDirty ? ' •' : ''}  <kbd>F5</kbd>
       </button>
-      <button className="btn btn-step" onClick={onStep} disabled={running || appState === 'error'}>↓ Step    <kbd>F7</kbd></button>
-      <button className="btn btn-step-over" onClick={onStepOver} disabled={running || appState === 'error'}>↷ Over    <kbd>F8</kbd></button>
-      <button className="btn btn-step-out" onClick={onStepOut} disabled={running || appState === 'error'}>↵ Out     <kbd>F10</kbd></button>
+      <button className="btn btn-step" onClick={onStep} disabled={running || appState === 'error'} title="Step into: execute one instruction">↓ Step    <kbd>F7</kbd></button>
+      <button className="btn btn-step-over" onClick={onStepOver} disabled={running || appState === 'error'} title="Step over: run a CALL without stepping into it">↷ Over    <kbd>F8</kbd></button>
+      <button className="btn btn-step-out" onClick={onStepOut} disabled={running || appState === 'error'} title="Step out: run until the current CALL returns">↵ Out     <kbd>F10</kbd></button>
       <button className="btn btn-back" onClick={onStepBack} disabled={running || appState === 'error' || histLen === 0} title={`Undo last step (${histLen} available)`}>⟲ Back{histLen > 0 ? ` (${histLen})` : ''}</button>
       <button className={`btn ${running ? 'btn-stop' : 'btn-run'}`} onClick={onRun} disabled={!running && appState === 'error'}>
         {running ? '■ Stop' : '▶ Run'}  <kbd>F9</kbd>
