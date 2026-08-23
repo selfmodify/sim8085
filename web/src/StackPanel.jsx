@@ -6,16 +6,16 @@ import { hex4, fmtWord, BASE_CYCLE } from './utils.js';
 import { useSimulator } from './SimulatorContext.jsx';
 import { PopoutWindow } from './PopoutWindow.jsx';
 
-const StackRow = memo(function StackRow({ addr, val, isTop, regBase }) {
+const StackRow = memo(function StackRow({ addr, val, isTop, changed, regBase }) {
   return (
-    <div className={`stack-row${isTop ? ' stack-top' : ''}`}>
+    <div className={`stack-row${isTop ? ' stack-top' : ''}${changed ? ' changed' : ''}`}>
       <span className="stack-addr">{hex4(addr)}</span>
       <span className="stack-sep">→</span>
       <span className="stack-val">{fmtWord(val, regBase)}</span>
     </div>
   );
 }, (prev, next) => {
-  return prev.val === next.val && prev.isTop === next.isTop && prev.regBase === next.regBase;
+  return prev.val === next.val && prev.isTop === next.isTop && prev.changed === next.changed && prev.regBase === next.regBase;
 });
 
 export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver, theme, popoutCrtProps }) {
@@ -34,12 +34,22 @@ export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver,
       localStorage.setItem('sim8085_stack_popped_out', String(poppedOut))
     } catch {}
   }, [poppedOut])
+  // Tracks the word last seen at each address so a value can be flagged as
+  // "changed" — scoped to just the ~64 words currently shown, same as the
+  // rest of the read (no whole-memory diffing).
+  const prevStackValsRef = useRef(null)
   const entries = useMemo(() => {
+    const prevVals = prevStackValsRef.current
+    const nextVals = new Map()
     const out = []
     for (let i = 0; i < 64; i++) {
       const a = (regs.sp + i*2) & 0xFFFF
-      out.push({ addr: a, val: sim.simReadByte(a) | (sim.simReadByte((a+1)&0xFFFF)<<8) })
+      const val = sim.simReadByte(a) | (sim.simReadByte((a+1)&0xFFFF)<<8)
+      const changed = !!prevVals && prevVals.has(a) && prevVals.get(a) !== val
+      out.push({ addr: a, val, changed })
+      nextVals.set(a, val)
     }
+    prevStackValsRef.current = nextVals
     return out
   }, [regs])
 
@@ -49,7 +59,7 @@ export function StackPanel({ regs, dragHandleProps, dropTargetProps, isDragOver,
           {entries.length === 0
             ? <div className="stack-empty">empty</div>
             : entries.map((e, i) => (
-                <StackRow key={e.addr} addr={e.addr} val={e.val} isTop={i === 0} regBase={regBase} />
+                <StackRow key={e.addr} addr={e.addr} val={e.val} isTop={i === 0} changed={e.changed} regBase={regBase} />
               ))}
         </div>
     </div>

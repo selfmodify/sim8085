@@ -1400,12 +1400,12 @@ button.build-chip:hover {
 .reg-row.clickable { cursor: pointer }
 .reg-row.clickable:hover { background: var(--bg3) }
 @keyframes reg-flash {
-  0%   { background: var(--tint-accent-flash) }
-  100% { background: var(--tint-accent) }
+  0%   { background: var(--red) }
+  100% { background: var(--tint-red) }
 }
 .reg-row.changed {
-  border-left-color: var(--accent);
-  background: var(--tint-accent);
+  border-left-color: var(--red);
+  background: var(--tint-red);
   animation: reg-flash .45s ease-out;
 }
 .reg-row.wide {}
@@ -1425,7 +1425,7 @@ button.build-chip:hover {
   border-left: 2px solid transparent; transition: background .1s;
   overflow: hidden;
 }
-.pair-row.changed { border-left-color: var(--accent); background: var(--tint-accent) }
+.pair-row.changed { border-left-color: var(--red); background: var(--tint-red); animation: reg-flash .45s ease-out }
 .pair-addr {
   flex: 2; min-width: 0; overflow: hidden;
   color: var(--accent); font-weight: 600; cursor: pointer;
@@ -1464,8 +1464,8 @@ button.build-chip:hover {
   background: var(--bg3);
 }
 .reg-row.changed:has(+ .reg-bits) + .reg-bits {
-  background: var(--tint-accent);
-  border-left-color: var(--accent);
+  background: var(--tint-red);
+  border-left-color: var(--red);
   animation: reg-flash .45s ease-out;
 }
 .reg-bits {
@@ -1515,8 +1515,8 @@ button.build-chip:hover {
 .reg-pair-cell.clickable { cursor: pointer }
 .reg-pair-cell.clickable:hover { background: var(--bg3) }
 .reg-pair-cell.changed {
-  border-left-color: var(--accent);
-  background: var(--tint-accent);
+  border-left-color: var(--red);
+  background: var(--tint-red);
   animation: reg-flash .45s ease-out;
 }
 .reg-pair-input { width: 60px }
@@ -1555,6 +1555,11 @@ button.build-chip:hover {
 }
 .flag.flag-on .flag-lbl { color: var(--accent) }
 .flag.flag-on .flag-val { color: var(--accent) }
+.flag.changed {
+  border-color: var(--red);
+  background: var(--tint-red);
+  animation: reg-flash .45s ease-out;
+}
 
 /* ── Interrupts ──────────────────────────────────────────────────── */
 .int-panel { padding: 6px 8px 8px }
@@ -1663,6 +1668,11 @@ button.build-chip:hover {
 }
 .disasm-row.bp .disasm-bp { color: var(--red) }
 .disasm-row.cur.bp { border-left-color: var(--red) }
+.disasm-row.changed {
+  background: var(--tint-red);
+  border-left-color: var(--red);
+  animation: reg-flash .45s ease-out;
+}
 
 @keyframes disasm-flash-highlight {
   0%   { background: var(--tint-amber); border-left-color: var(--amber); }
@@ -1785,7 +1795,18 @@ button.build-chip:hover {
 .mem-cell.mem-pc     { background: var(--tint-accent-pc); color: var(--accent); font-weight: 700 }
 .mem-cell.mem-sp     { background: var(--tint-amber-sp); color: var(--amber); font-weight: 700 }
 .mem-cell.mem-cursor { outline: 1px solid rgba(100,160,255,.7); outline-offset: -1px }
-.mem-cell.mem-diff   { background: var(--tint-accent-flash) }
+@keyframes mem-diff-flash {
+  0%   { background: var(--red) }
+  100% { background: var(--tint-red) }
+}
+.mem-cell.mem-diff {
+  background: var(--tint-red);
+  outline: 1px solid var(--red);
+  outline-offset: -1px;
+  color: var(--red);
+  font-weight: 700;
+  animation: mem-diff-flash .5s ease-out;
+}
 @keyframes mem-cell-flash {
   0%   { background: var(--tint-amber); outline: 1px solid var(--amber); outline-offset: -1px }
   30%  { background: transparent; outline-color: transparent }
@@ -2189,8 +2210,8 @@ button.build-chip:hover {
 }
 .watch-row:hover { background: var(--bg2) }
 .watch-row.changed {
-  border-left-color: var(--accent);
-  background: var(--tint-accent);
+  border-left-color: var(--red);
+  background: var(--tint-red);
   animation: reg-flash .45s ease-out;
 }
 .watch-label { color: var(--accent2); min-width: 48px; flex-shrink: 0; white-space: nowrap; }
@@ -2214,12 +2235,20 @@ button.build-chip:hover {
   padding: 2px 10px;
   font-family: var(--mono);
   font-size: 13px;
+  border-left: 2px solid transparent;
+  transition: background .1s;
 }
 .stack-row.stack-top { background: var(--tint-accent) }
+.stack-row.changed {
+  border-left-color: var(--red);
+  background: var(--tint-red);
+  animation: reg-flash .45s ease-out;
+}
 .stack-addr { color: var(--text3); width: 36px }
 .stack-sep  { color: var(--text3) }
 .stack-val  { color: var(--text2); font-weight: 600 }
 .stack-row.stack-top .stack-val { color: var(--accent) }
+.stack-row.changed .stack-val { color: var(--red) }
 
 /* ── Disassembly label line ────────────────────────────────────────── */
 .disasm-label {

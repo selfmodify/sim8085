@@ -20,7 +20,7 @@ const DisasmRow = memo(function DisasmRow({
       )}
       <div
         ref={cur ? curRowRef : null}
-        className={`disasm-row${cur ? ' cur' : ''}${bp ? ' bp' : ''}${row.mnem === 'ASSERT' ? ' assert' : ''}`}
+        className={`disasm-row${cur ? ' cur' : ''}${bp ? ' bp' : ''}${row.mnem === 'ASSERT' ? ' assert' : ''}${row.changed ? ' changed' : ''}`}
         data-addr={row.addr}
         onClick={() => onGotoLine?.(row.addr)}
         onContextMenu={e => { 
@@ -97,6 +97,7 @@ const DisasmRow = memo(function DisasmRow({
   if (prev.row.text !== next.row.text) return false;
   if (prev.row.cycles !== next.row.cycles) return false;
   if (prev.row.mnem !== next.row.mnem) return false;
+  if (prev.row.changed !== next.row.changed) return false;
   if (prev.hasHit && next.hasHit && prev.currentMax !== next.currentMax) return false;
   return true;
 });
@@ -120,16 +121,33 @@ export function DisasmPanel({ regs, breakpoints, onToggleBp, onClearAllBps, onSe
     return m
   }, [symbols])
 
+  // `regs` is a fresh object exactly when the engine decides the UI needs
+  // updating — rAF-debounced in refresh() for single-step/stop, and internally
+  // throttled inside the warp workers while running freely (see sim.worker.js /
+  // simJs.worker.js `doUi`). So reacting to `regs` here means this recomputes
+  // on that same condition, not on a timer of its own: once per step, once per
+  // engine-decided UI tick while running. That's also what makes self-modifying
+  // code show up live instead of the stale text a [viewStart, buildId]-only
+  // dependency would freeze in place.
+  // Remembers the text last shown at each address so a row can be flagged
+  // `changed` when self-modifying code rewrites its bytes — reset on rebuild
+  // (a fresh build/reset is a new baseline, not a "change" to flash).
+  const prevDisasmRef = useRef({ buildId: null, texts: new Map() })
   const lines = useMemo(() => {
+    const prevTexts = prevDisasmRef.current.buildId === buildId ? prevDisasmRef.current.texts : new Map()
+    const nextTexts = new Map()
     const out = []
     let addr = viewStart
     for (let i = 0; i < 100 && addr <= 0xFFFF; i++) {
       const d = sim.simDisassemble(addr)
-      out.push({ addr, ...d })
+      const changed = prevTexts.has(addr) && prevTexts.get(addr) !== d.text
+      out.push({ addr, ...d, changed })
+      nextTexts.set(addr, d.text)
       addr += Math.max(1, d.len)
     }
+    prevDisasmRef.current = { buildId, texts: nextTexts }
     return out
-  }, [viewStart, buildId])
+  }, [viewStart, buildId, regs])
 
   const hoveredRef  = useRef(false)
   const listRef     = useRef(null)
