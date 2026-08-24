@@ -47,7 +47,7 @@ export function PairPanel({ regs = { b:0, c:0, d:0, e:0, h:0, l:0 }, prev = {}, 
         sim.simSetRegisters({ [def.hi]: (n >> 8) & 0xFF, [def.lo]: n & 0xFF })
       } else {
         sim.simWriteByte(addr, n & 0xFF)
-        onMemoryEdited?.()
+        onMemoryEdited?.(addr)
       }
       onEdit()
     }

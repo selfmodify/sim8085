@@ -291,7 +291,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
     const v = parseInt(raw, 16)
     if (!isNaN(v)) {
       sim.simWriteByte(addr, v)
-      onMemoryEdited?.()
+      onMemoryEdited?.(addr)
     }
     setEditing(null)
     refresh()
@@ -353,7 +353,7 @@ export function MemPanel({ memStart, onJump, regs, buildId, changedAddrs, progra
     const end   = Math.min(Math.max(from, to) & 0xFFFF, 0xFFFF)
     for (let a = start; a <= end; a++) sim.simWriteByte(a, val & 0xFF)
     refresh()
-    onMemoryEdited?.()
+    onMemoryEdited?.(start)
   }
 
   function runExport() {

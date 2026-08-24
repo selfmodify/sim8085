@@ -557,6 +557,16 @@ describe('DisasmPanel', () => {
     expect(screen.getAllByText(/HLT/).length).toBeGreaterThan(0);
   });
 
+  it('adds flash-highlight class when flashReq matches address', async () => {
+    const { rerender } = render(<DisasmPanel {...baseDisasmProps} flashReq={null} />);
+    rerender(<DisasmPanel {...baseDisasmProps} flashReq={{ addr: 0x100, ts: Date.now() }} />);
+    await waitFor(() => {
+      const row = document.querySelector('.disasm-row[data-addr="256"]');
+      expect(row).not.toBeNull();
+      expect(row.classList.contains('flash-highlight')).toBe(true);
+    });
+  });
+
   it('renders disassembly rows', () => {
     render(<DisasmPanel {...baseDisasmProps} />);
     expect(document.querySelectorAll('.disasm-row').length).toBeGreaterThan(0);
