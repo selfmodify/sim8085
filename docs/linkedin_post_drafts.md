@@ -42,7 +42,8 @@ _The DOS based simulator, written in Borland C++_
 
 ## The Outcome
 > Seeing code I first compiled in DOS with Borland C++ now running at warp speed in a browser, fully modernized with AI, is incredibly fulfilling. Here's to the next generation of students learning microprocessor architecture. 🛠️
-
 >
+> 🔗 Try the simulator: https://selfmodify.github.io/sim8085/
+> 🐙 Source Code: https://github.com/selfmodify/sim8085
 >
 > #Intel8085 #SoftwareEngineering #Microprocessors #AI #AgenticAI #Coding #EdTech #WebAssembly #ReactJS #Vite #BorlandCpp #DOS
