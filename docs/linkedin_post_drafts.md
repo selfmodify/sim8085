@@ -47,3 +47,42 @@ _The DOS based simulator, written in Borland C++_
 > 🐙 Source Code: https://github.com/selfmodify/sim8085
 >
 > #Intel8085 #SoftwareEngineering #Microprocessors #AI #AgenticAI #Coding #EdTech #WebAssembly #ReactJS #Vite #BorlandCpp #DOS
+
+---
+
+# Version 2: Condensed LinkedIn Post (Under 3,000 Characters Limit)
+
+Here is a version optimized to fit within LinkedIn's 3,000 character limit (2,733 characters, including spaces and links):
+
+> **From Borland C++ (DOS) to React & AI: Rebuilding a 30-Year-Old Simulator 🚀**
+>
+> In 1995, I compiled the first version of an Intel 8085 microprocessor simulator in Borland C++ on DOS to solve a lab bottleneck: physical trainer kits were expensive and fragile. It gave students virtual hardware to write assembly and step through registers. It was later published with Ramesh Gaonkar's classic textbook and used in labs worldwide.
+>
+> ### 30 Years Later: A Web Rebirth
+>
+> Three decades later, I gave it a fresh life for the modern web—React, Vite, WebAssembly, and CodeMirror 6—built in collaboration with Claude and Gemini. The AI acted as a systems engineer to solve complex architecture challenges:
+>
+> * ⚡ **Web Worker Emulation:** Offloaded instruction execution (millions of ops/sec) to a background thread to keep the UI fully responsive at warp speed.
+> * ✏️ **Real-Time Linting:** Built a side-effect-free "dry-run" compiler integrated into CodeMirror 6 to show syntax errors instantly without corrupting live state.
+> * 🔬 **Register Validation:** Rewrote the parser to strictly validate register widths and operand pairs, matching the physical limits of 8085 silicon.
+> * 🧪 **395 Automated Tests:** The AI expanded test coverage via WSL to ensure zero regressions across all instructions.
+> * 🎨 **Retro Themes & Icons:** Recreated nostalgic CRT monitor effects and designed a pixel-art 40-pin DIP microprocessor favicon set.
+>
+> ### Caution: AI Makes Tall Claims!
+>
+> Working with agentic AI is no longer just autocomplete—it's having an autonomous partner that writes its own tests. But it confidently assures you "everything is fine" when it isn't. My main job shifted from writing syntax to testing edge cases the AI wouldn't think of, then feeding results back to refine the logic.
+>
+> ### An Unexpected Contributor
+>
+> My 10-year-old was watching me use AI to code. Inspired, he figured out how to prompt the model himself and successfully contributed the "Chaos Mode" glitch effect for the retro themes.
+>
+> ### The Takeaway
+>
+> Software engineering is changing. My role shifted from writing syntax to directing architecture, designing test cases, and debugging edge cases. The AI is a powerful accelerator, but human oversight and hands-on testing are still the ultimate gatekeepers of quality.
+>
+> Seeing code I first compiled in DOS now running at warp speed in a browser, fully modernized with AI, is incredibly fulfilling. Here's to the next generation of students learning microprocessor architecture! 🛠️
+>
+> 🔗 Try the simulator: https://selfmodify.github.io/sim8085/
+> 🐙 Source Code: https://github.com/selfmodify/sim8085
+>
+> #Intel8085 #SoftwareEngineering #Microprocessors #AI #AgenticAI #Coding #EdTech #WebAssembly #ReactJS #Vite #BorlandCpp #DOS
