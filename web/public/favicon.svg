@@ -1,6 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- pins -->
+  <path stroke="#7888a8" stroke-width="1.5" stroke-linecap="round" d="M5 4v4 M8 4v4 M11 4v4 M14 4v4 M17 4v4 M20 4v4 M23 4v4 M26 4v4 M29 4v4 M5 24v4 M8 24v4 M11 24v4 M14 24v4 M17 24v4 M20 24v4 M23 24v4 M26 24v4 M29 24v4"/>
   <!-- chip body -->
-  <rect x="1" y="1" width="30" height="30" rx="3" fill="#1a1e2b"/>
-  <rect x="1" y="1" width="30" height="30" rx="3" fill="none" stroke="#2a3050" stroke-width="1.5"/>
+  <path fill="#1a1e2b" stroke="#2a3050" stroke-width="1.5" stroke-linejoin="miter" d="M 2 8 h 28 v 16 H 2 v -6 a 2 2 0 0 1 0 -4 Z"/>
+  <!-- pin 1 dot -->
+  <circle cx="5" cy="11" r="0.75" fill="#4af0a0"/>
+  <!-- text "8085" -->
   <path fill="none" stroke="#4af0a0" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter" d="M 4 12 h 3 v 8 h -3 z M 4 16 h 3 M 11 12 h 3 v 8 h -3 z M 18 12 h 3 v 8 h -3 z M 18 16 h 3 M 28 12 h -3 v 4 h 3 v 4 h -3"/>
 </svg>

@@ -27,7 +27,7 @@ export function WelcomeModal({ onClose, onBrewCoffee }) {
       <div className="welcome-modal" onClick={e => e.stopPropagation()}>
         <div className="welcome-hd">
           <div className="welcome-logo">
-            <div className="brand-chip" style={{fontSize:'22px',padding:'10px 14px',lineHeight:'1'}}>8085</div>
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="8085 Microchip" style={{ width: '48px', height: '48px', flexShrink: 0 }} />
             <div>
               <div className="welcome-title">8085 Simulator</div>
               <div className="welcome-sub">Intel 8085 microprocessor simulator — running in your browser</div>
